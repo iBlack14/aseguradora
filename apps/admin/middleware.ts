@@ -1,0 +1,3 @@
+import {NextRequest,NextResponse} from 'next/server';import {SESSION_COOKIE,validSession} from './lib/session';
+export async function middleware(request:NextRequest){const path=request.nextUrl.pathname;const authenticated=await validSession(request.cookies.get(SESSION_COOKIE)?.value);if(path==='/login'){if(authenticated)return NextResponse.redirect(new URL('/',request.url));return NextResponse.next()}if(!authenticated){const login=new URL('/login',request.url);login.searchParams.set('next',path);return NextResponse.redirect(login)}return NextResponse.next()}
+export const config={matcher:['/','/cotizaciones','/login']};
