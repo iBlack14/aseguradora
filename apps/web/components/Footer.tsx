@@ -1,0 +1,1 @@
+export function Footer(){return <footer className="footer"><div className="container">© 2026 Corredores de Seguros Falabella S.A.C. RUC 20509608467 · Propuesta de rediseño. Los precios actuales son demostrativos.</div></footer>}

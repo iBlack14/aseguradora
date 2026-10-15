@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  OPERATIONS
+  SALES
+  SUPPORT
+  AUDITOR
+}
+
+enum QuoteStatus {
+  DRAFT
+  QUOTED
+  SELECTED
+  PAYMENT_PENDING
+  PAID
+  ISSUED
+  FAILED
+  EXPIRED
+}
+
+enum OrderStatus {
+  PENDING
+  PAYMENT_PENDING
+  PAID
+  ISSUING
+  ISSUED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String
+  role      UserRole   @default(OPERATIONS)
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  auditLogs AuditLog[]
+}
+
+model Customer {
+  id             String   @id @default(cuid())
+  documentType   String
+  documentNumber String
+  firstName      String
+  lastName       String
+  email          String
+  phone          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  quotes         Quote[]
+
+  @@unique([documentType, documentNumber])
+  @@index([email])
+}
+
+model Vehicle {
+  id         String   @id @default(cuid())
+  plate      String   @unique
+  type       String
+  use        String
+  department String
+  createdAt  DateTime @default(now())
+  quotes     Quote[]
+}
+
+model Insurer {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  logoPath  String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  offers    Offer[]
+}
+
+model Quote {
+  id         String      @id @default(cuid())
+  code       String      @unique
+  status     QuoteStatus @default(DRAFT)
+  startsAt   DateTime
+  expiresAt  DateTime?
+  customerId String
+  vehicleId  String
+  customer   Customer    @relation(fields: [customerId], references: [id])
+  vehicle    Vehicle     @relation(fields: [vehicleId], references: [id])
+  offers     Offer[]
+  order      Order?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model Offer {
+  id          String   @id @default(cuid())
+  quoteId     String
+  insurerId   String
+  annualPrice Decimal? @db.Decimal(10, 2)
+  currency    String   @default("PEN")
+  benefits    Json?
+  rawResponse Json?
+  available   Boolean  @default(true)
+  quotedAt    DateTime @default(now())
+  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  insurer     Insurer  @relation(fields: [insurerId], references: [id])
+  order       Order?
+
+  @@unique([quoteId, insurerId])
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  code             String      @unique
+  status           OrderStatus @default(PENDING)
+  quoteId          String      @unique
+  offerId          String      @unique
+  amount           Decimal     @db.Decimal(10, 2)
+  paymentReference String?
+  policyNumber     String?
+  policyUrl        String?
+  quote            Quote       @relation(fields: [quoteId], references: [id])
+  offer            Offer       @relation(fields: [offerId], references: [id])
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}

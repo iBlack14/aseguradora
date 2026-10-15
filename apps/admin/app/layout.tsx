@@ -1,0 +1,3 @@
+import './globals.css';import Image from 'next/image';import Link from 'next/link';
+export const metadata={title:'Operaciones | Seguros Falabella'};
+export default function Layout({children}:{children:React.ReactNode}){return <html lang="es"><body><div className="shell"><aside className="sidebar"><Image src="/assets/logos/seguros-falabella-header.png" alt="Seguros Falabella" width={203} height={82} priority/><nav className="menu"><Link className="active" href="/">Resumen</Link><Link href="/cotizaciones">Cotizaciones</Link><Link href="#">Ventas</Link><Link href="#">Aseguradoras</Link><Link href="#">Tarifas</Link><Link href="#">Usuarios y roles</Link><Link href="#">Auditoría</Link></nav></aside><main className="content">{children}</main></div></body></html>}
