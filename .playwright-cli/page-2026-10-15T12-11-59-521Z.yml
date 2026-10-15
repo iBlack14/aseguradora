@@ -1,0 +1,410 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: "GRUPO FALABELLA:"
+      - link "Falabella.com" [ref=e6] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e7]: "|"
+      - link "Banco Falabella" [ref=e8] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e9]: "|"
+      - link "Viajes Falabella" [ref=e10] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e11]: "|"
+      - link "Seguros Falabella" [ref=e12] [cursor=pointer]:
+        - /url: "#"
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e16]: 🇵🇪
+        - generic [ref=e17]: Perú
+      - generic [ref=e18]: Corredores de Seguros Falabella · RUC 20509608467
+  - banner [ref=e19]:
+    - generic [ref=e20]:
+      - link "Seguros Falabella - Inicio" [ref=e21] [cursor=pointer]:
+        - /url: "#"
+        - img "Seguros Falabella" [ref=e22]
+      - navigation "Navegación principal" [ref=e23]:
+        - link "Seguros" [ref=e24] [cursor=pointer]:
+          - /url: "#"
+        - link "Promociones" [ref=e25] [cursor=pointer]:
+          - /url: "#"
+        - link "Centro de ayuda" [ref=e26] [cursor=pointer]:
+          - /url: "#"
+        - link "Vigencia de SOAT" [ref=e27] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=e28]:
+        - button "lock Mis seguros" [ref=e29] [cursor=pointer]:
+          - generic [ref=e30]: lock
+          - generic [ref=e31]: Mis seguros
+        - link "Cotizar SOAT arrow_forward" [ref=e32] [cursor=pointer]:
+          - /url: "#cotizador"
+          - generic [ref=e33]: Cotizar SOAT
+          - generic [ref=e34]: arrow_forward
+  - main [ref=e35]:
+    - generic [ref=e37]:
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - generic [ref=e40]:
+            - generic [ref=e41]: verified
+            - generic [ref=e42]: SOAT 100% digital
+          - heading "Cotiza y compara tu SOAT en minutos" [level=1] [ref=e43]
+          - paragraph [ref=e44]: Encuentra la compañía ideal para tu auto o moto y recibe tu póliza digital.
+        - tablist [ref=e45]:
+          - button "directions_car Auto / Camioneta" [ref=e46] [cursor=pointer]:
+            - generic [ref=e47]: directions_car
+            - generic [ref=e48]: Auto / Camioneta
+          - button "two_wheeler Moto" [ref=e49] [cursor=pointer]:
+            - generic [ref=e50]: two_wheeler
+            - generic [ref=e51]: Moto
+          - button "electric_rickshaw Mototaxi" [ref=e52] [cursor=pointer]:
+            - generic [ref=e53]: electric_rickshaw
+            - generic [ref=e54]: Mototaxi
+          - button "airport_shuttle Van" [ref=e55] [cursor=pointer]:
+            - generic [ref=e56]: airport_shuttle
+            - generic [ref=e57]: Van
+          - button "local_shipping Carga / Pesado" [ref=e58] [cursor=pointer]:
+            - generic [ref=e59]: local_shipping
+            - generic [ref=e60]: Carga / Pesado
+        - generic [ref=e61]:
+          - generic [ref=e62]:
+            - generic [ref=e63]: Número de placa *
+            - generic [ref=e64]:
+              - generic:
+                - generic:
+                  - generic: 🇵🇪
+                  - generic: PE
+              - textbox "Número de placa *" [ref=e65]:
+                - /placeholder: ABC-123
+                - text: ABC-123
+            - paragraph [ref=e66]: "Ejemplo: ABC-123 para autos o 12-34AB para motos."
+          - generic [ref=e67]:
+            - generic [ref=e68]:
+              - generic [ref=e69]: Departamento de circulación *
+              - generic [ref=e70]:
+                - combobox "Departamento de circulación *" [ref=e71]:
+                  - option "Lima y Callao" [selected]
+                  - option "Arequipa"
+                  - option "La Libertad (Trujillo)"
+                  - option "Cusco"
+                  - option "Piura"
+                  - option "Lambayeque (Chiclayo)"
+                  - option "Junín (Huancayo)"
+                  - option "Otro departamento"
+                - generic: expand_more
+            - generic [ref=e72]:
+              - generic [ref=e73]: Documento del contratante *
+              - generic [ref=e74]:
+                - combobox "Documento del contratante *" [ref=e75]:
+                  - option "DNI" [selected]
+                  - option "CE"
+                  - option "RUC"
+                  - option "PAS"
+                - textbox "74839201" [ref=e76]
+          - generic [ref=e77]:
+            - generic [ref=e78]: Fecha de inicio de vigencia de póliza *
+            - textbox "Fecha de inicio de vigencia de póliza *" [ref=e80]
+            - generic [ref=e81]:
+              - generic [ref=e82]: info
+              - generic [ref=e83]:
+                - strong [ref=e84]: "Aviso legal:"
+                - text: La fecha de inicio debe ser por lo menos 1 día después del fin de vigencia de tu SOAT actual para evitar vacíos o superposiciones en el MTC.
+          - button "local_offer Tengo un cupón o código de descuento" [ref=e86] [cursor=pointer]:
+            - generic [ref=e87]: local_offer
+            - generic [ref=e88]: Tengo un cupón o código de descuento
+          - generic [ref=e90] [cursor=pointer]:
+            - checkbox "Acepto las políticas de privacidad y autorizo el tratamiento de mis datos personales para la emisión de la póliza y ofertas personalizadas." [checked] [ref=e91]
+            - generic [ref=e92]:
+              - text: Acepto las
+              - link "políticas de privacidad" [ref=e93]:
+                - /url: "#"
+              - text: y autorizo el tratamiento de mis datos personales para la emisión de la póliza y ofertas personalizadas.
+          - button "Ver precios y comparar arrow_forward" [ref=e94] [cursor=pointer]:
+            - generic [ref=e95]: Ver precios y comparar
+            - generic [ref=e96]: arrow_forward
+          - paragraph [ref=e98]:
+            - generic [ref=e99]: lock
+            - generic [ref=e100]: "Comisión por intermediación: 8,6% | Consulta nuestras políticas de privacidad y seguridad"
+      - generic [ref=e101]:
+        - generic [ref=e102]:
+          - generic [ref=e103]:
+            - text: Cobertura Integral Nacional
+            - heading "Protección obligatoria inmediata" [level=3] [ref=e104]
+          - generic [ref=e105]:
+            - img "Moto, mototaxi, camión y van representando los vehículos que pueden cotizar SOAT" [ref=e106]
+            - generic [ref=e107]:
+              - generic [ref=e108]: Válido en todo el Perú
+              - generic [ref=e109]: Ley N° 27181
+          - generic [ref=e110]:
+            - generic [ref=e111]:
+              - generic [ref=e112]: send_to_mobile
+              - generic [ref=e114]:
+                - generic [ref=e115]: Entrega inmediata en PDF
+                - generic [ref=e116]: Recíbelo en tu correo y vía SMS al segundo de pagar.
+            - generic [ref=e117]:
+              - generic [ref=e118]: cloud_done
+              - generic [ref=e120]:
+                - generic [ref=e121]: Registrado en MTC y APESEG
+                - generic [ref=e122]: Sincronización automática con la base nacional en línea.
+            - generic [ref=e123]:
+              - generic [ref=e124]: local_police
+              - generic [ref=e126]:
+                - generic [ref=e127]: Válido ante cualquier fiscalización
+                - generic [ref=e128]: Aceptado por la PNP, SUTRAN y municipios distritales.
+        - generic [ref=e129]:
+          - generic [ref=e130]:
+            - generic [ref=e131]: support_agent
+            - generic [ref=e133]:
+              - paragraph [ref=e134]: ¿Dudas con tu placa?
+              - paragraph [ref=e135]: Chatea con un asesor por WhatsApp al instante.
+          - link "Chatear" [ref=e136] [cursor=pointer]:
+            - /url: https://wa.me/5116156000
+    - generic [ref=e138]:
+      - heading "Comparamos opciones de compañías reconocidas" [level=2] [ref=e139]
+      - paragraph [ref=e140]: Seguros Falabella actúa como corredor de seguros autorizado intermediando pólizas con las principales aseguradoras reguladas del Perú.
+      - generic [ref=e141]:
+        - img "La Positiva Seguros" [ref=e143]
+        - img "MAPFRE Perú" [ref=e145]
+        - img "Protecta Security" [ref=e147]
+        - img "Interseguro" [ref=e149]
+        - img "Pacífico Seguros" [ref=e151]
+    - generic [ref=e152]:
+      - generic [ref=e153]:
+        - text: Transparencia Total
+        - heading "Todo claro antes de elegir tu SOAT" [level=2] [ref=e154]
+        - paragraph [ref=e155]: Conoce exactamente los alcances establecidos por el MTC para circular protegido y conforme a ley.
+      - generic [ref=e156]:
+        - generic [ref=e157]:
+          - generic [ref=e158]:
+            - generic [ref=e159]: health_and_safety
+            - heading "Qué cubre" [level=3] [ref=e161]
+            - list [ref=e162]:
+              - listitem [ref=e163]:
+                - generic [ref=e164]: check_circle
+                - generic [ref=e165]:
+                  - strong [ref=e166]: "Muerte por accidente:"
+                  - text: hasta 4 UIT por cada persona afectada.
+              - listitem [ref=e167]:
+                - generic [ref=e168]: check_circle
+                - generic [ref=e169]:
+                  - strong [ref=e170]: "Invalidez permanente:"
+                  - text: indemnización de hasta 4 UIT.
+              - listitem [ref=e171]:
+                - generic [ref=e172]: check_circle
+                - generic [ref=e173]:
+                  - strong [ref=e174]: "Incapacidad temporal:"
+                  - text: hasta 1 UIT.
+              - listitem [ref=e175]:
+                - generic [ref=e176]: check_circle
+                - generic [ref=e177]:
+                  - strong [ref=e178]: "Gastos médicos y hospitalarios:"
+                  - text: cobertura hasta 5 UIT.
+              - listitem [ref=e179]:
+                - generic [ref=e180]: check_circle
+                - generic [ref=e181]:
+                  - strong [ref=e182]: "Gastos de sepelio:"
+                  - text: cubierto hasta 1 UIT.
+          - generic [ref=e183]: "Unidad Impositiva Tributaria (UIT) 2026: S/ 5,500"
+        - generic [ref=e184]:
+          - generic [ref=e185]:
+            - generic [ref=e186]: cancel
+            - heading "Qué no cubre" [level=3] [ref=e188]
+            - list [ref=e189]:
+              - listitem [ref=e190]:
+                - generic [ref=e191]: remove_circle
+                - generic [ref=e192]:
+                  - strong [ref=e193]: "Daños materiales a los vehículos:"
+                  - text: El SOAT cubre personas, no latas ni autopartes.
+              - listitem [ref=e194]:
+                - generic [ref=e195]: remove_circle
+                - generic [ref=e196]:
+                  - strong [ref=e197]: "Accidentes fuera del territorio nacional:"
+                  - text: Solo rige dentro de la República del Perú.
+              - listitem [ref=e198]:
+                - generic [ref=e199]: remove_circle
+                - generic [ref=e200]:
+                  - strong [ref=e201]: "Siniestros en carreras ilegales o piques:"
+                  - text: Actividades recreativas o competitivas sin autorización.
+              - listitem [ref=e202]:
+                - generic [ref=e203]: remove_circle
+                - generic [ref=e204]:
+                  - strong [ref=e205]: "Lugares no autorizados para tránsito:"
+                  - text: Predios privados o vías cerradas al público.
+          - link "¿Buscas cubrir tu vehículo? Conoce Seguros Vehiculares open_in_new" [ref=e207] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=e208]: ¿Buscas cubrir tu vehículo? Conoce Seguros Vehiculares
+            - generic [ref=e209]: open_in_new
+        - generic [ref=e210]:
+          - generic [ref=e211]:
+            - generic [ref=e212]: emergency
+            - heading "Cómo usar tu SOAT" [level=3] [ref=e214]
+            - list [ref=e215]:
+              - listitem [ref=e216]:
+                - generic [ref=e217]: info
+                - generic [ref=e218]:
+                  - strong [ref=e219]: "Atención médica inmediata:"
+                  - text: En cualquier centro de salud, posta o clínica del Perú sin requerir pago previo.
+              - listitem [ref=e220]:
+                - generic [ref=e221]: group
+                - generic [ref=e222]:
+                  - strong [ref=e223]: "Cobertura universal:"
+                  - text: Cubre de forma indistinta al chofer, a todos los ocupantes y a los peatones afectados.
+              - listitem [ref=e224]:
+                - generic [ref=e225]: phone_in_talk
+                - generic [ref=e226]:
+                  - strong [ref=e227]: "Llamada de emergencia:"
+                  - text: Notifica de inmediato a la aseguradora contratada indicando tu número de placa.
+              - listitem [ref=e228]:
+                - generic [ref=e229]: description
+                - generic [ref=e230]:
+                  - strong [ref=e231]: "Constatación policial:"
+                  - text: Realiza la denuncia correspondiente en la comisaría del sector.
+          - generic [ref=e232]: Ley General de Transporte y Tránsito Terrestre
+    - generic [ref=e234]:
+      - generic [ref=e235]:
+        - text: Proceso Veloz
+        - heading "Así funciona tu compra en 3 pasos" [level=2] [ref=e236]
+        - paragraph [ref=e237]: Sin papeleos ni trámites engorrosos. Diseñado para estar listo antes de salir a la pista.
+      - generic [ref=e238]:
+        - generic [ref=e239]:
+          - generic [ref=e240]: "1"
+          - heading "Completa tus datos" [level=3] [ref=e241]
+          - paragraph [ref=e242]: Ingresa tu placa y número de documento en menos de un minuto. Nuestro sistema consulta automáticamente los datos del auto en el MTC.
+        - generic [ref=e243]:
+          - generic [ref=e244]: "2"
+          - heading "Compara precios y coberturas" [level=3] [ref=e245]
+          - paragraph [ref=e246]: Revisa las ofertas de las aseguradoras líderes y elige la más conveniente según el uso de tu vehículo y departamento.
+        - generic [ref=e247]:
+          - generic [ref=e248]: "3"
+          - heading "Compra y recibe tu póliza" [level=3] [ref=e249]
+          - paragraph [ref=e250]: Paga con cualquier tarjeta o billetera digital y recibe tu certificado digital al instante en tu correo electrónico y SMS.
+    - generic [ref=e251]:
+      - generic [ref=e252]:
+        - text: El Respaldo Falabella
+        - heading "¿Por qué emitir tu SOAT con nosotros?" [level=2] [ref=e253]
+        - paragraph [ref=e254]: Más de 20 años protegiendo a las familias conductoras del Perú con respaldo institucional ininterrumpido.
+      - generic [ref=e255]:
+        - generic [ref=e256]:
+          - generic [ref=e257]: smartphone
+          - heading "100% Digital" [level=3] [ref=e259]
+          - paragraph [ref=e260]: Sin filas, sin firmas en papel y con emisión inmediata disponible las 24 horas del día, los 365 días del año.
+        - generic [ref=e261]:
+          - generic [ref=e262]: balance
+          - heading "Múltiples aseguradoras" [level=3] [ref=e264]
+          - paragraph [ref=e265]: Compara precios reales sin salir de casa y elige libremente la compañía de seguros de tu preferencia.
+        - generic [ref=e266]:
+          - generic [ref=e267]: forum
+          - heading "Soporte por WhatsApp" [level=3] [ref=e269]
+          - paragraph [ref=e270]: Asesoría personalizada por asesores expertos antes, durante y después de tu compra en casos de emergencia.
+        - generic [ref=e271]:
+          - generic [ref=e272]: fact_check
+          - heading "Consulta vigencia MTC" [level=3] [ref=e274]
+          - paragraph [ref=e275]: Verificación en tiempo real del registro de tu póliza directamente en el portal oficial del MTC y APESEG.
+    - generic [ref=e277]:
+      - generic [ref=e278]:
+        - generic [ref=e279]:
+          - heading "Accesos rápidos y trámites frecuentes" [level=3] [ref=e280]
+          - paragraph [ref=e281]: Gestiona tu póliza actual sin demoras
+        - generic [ref=e282]: Atención digital 24/7
+      - generic [ref=e283]:
+        - link "search Consultar vigencia de mi SOAT Revisar estado en APESEG" [ref=e284] [cursor=pointer]:
+          - /url: "#"
+          - generic [ref=e285]: search
+          - generic [ref=e287]:
+            - generic [ref=e288]: Consultar vigencia de mi SOAT
+            - text: Revisar estado en APESEG
+        - link "download Descargar copia de certificado Reenvío a tu correo" [ref=e289] [cursor=pointer]:
+          - /url: "#"
+          - generic [ref=e290]: download
+          - generic [ref=e292]:
+            - generic [ref=e293]: Descargar copia de certificado
+            - text: Reenvío a tu correo
+        - link "help_outline Centro de ayuda y reclamos Respuestas y Libro digital" [ref=e294] [cursor=pointer]:
+          - /url: "#"
+          - generic [ref=e295]: help_outline
+          - generic [ref=e297]:
+            - generic [ref=e298]: Centro de ayuda y reclamos
+            - text: Respuestas y Libro digital
+        - link "e911_emergency Reportar un siniestro Central de emergencias 24h" [ref=e299] [cursor=pointer]:
+          - /url: "#"
+          - generic [ref=e300]: e911_emergency
+          - generic [ref=e302]:
+            - generic [ref=e303]: Reportar un siniestro
+            - text: Central de emergencias 24h
+    - generic [ref=e304]:
+      - generic [ref=e305]:
+        - text: Dudas Frecuentes
+        - heading "Preguntas frecuentes sobre el SOAT" [level=2] [ref=e306]
+        - paragraph [ref=e307]: Información legal y práctica para circular tranquilo por las vías peruanas.
+      - generic [ref=e308]:
+        - group [ref=e309]:
+          - generic "¿Qué es el SOAT electrónico y tiene la misma validez que el físico? expand_more" [ref=e310] [cursor=pointer]:
+            - generic [ref=e311]: ¿Qué es el SOAT electrónico y tiene la misma validez que el físico?
+            - generic [ref=e312]: expand_more
+        - group [ref=e313]:
+          - generic "¿Qué pasa si manejo sin SOAT o con el SOAT vencido? expand_more" [ref=e314] [cursor=pointer]:
+            - generic [ref=e315]: ¿Qué pasa si manejo sin SOAT o con el SOAT vencido?
+            - generic [ref=e316]: expand_more
+        - group [ref=e317]:
+          - generic "¿Cómo demuestra el conductor que tiene SOAT electrónico a la Policía Nacional? expand_more" [ref=e318] [cursor=pointer]:
+            - generic [ref=e319]: ¿Cómo demuestra el conductor que tiene SOAT electrónico a la Policía Nacional?
+            - generic [ref=e320]: expand_more
+        - group [ref=e321]:
+          - generic "¿Cuánto tiempo antes de que venza mi SOAT actual puedo renovarlo? expand_more" [ref=e322] [cursor=pointer]:
+            - generic [ref=e323]: ¿Cuánto tiempo antes de que venza mi SOAT actual puedo renovarlo?
+            - generic [ref=e324]: expand_more
+  - contentinfo [ref=e325]:
+    - generic [ref=e326]:
+      - generic [ref=e327]:
+        - generic [ref=e328]:
+          - img "Seguros Falabella" [ref=e329]
+          - paragraph [ref=e330]: Supervisado y regulado por la Superintendencia de Banca, Seguros y AFP (SBS). Corredores de Seguros Falabella S.A.C. intermediando pólizas con transparencia.
+          - generic [ref=e331]:
+            - paragraph [ref=e332]:
+              - strong [ref=e333]: Corredores de Seguros Falabella S.A.C.
+              - text: "| RUC 20509608467"
+            - paragraph [ref=e334]:
+              - strong [ref=e335]: Falabella Servicios Generales S.A.C.
+              - text: "| RUC 20510400233"
+            - paragraph [ref=e336]: Registro SBS N° J-0692
+        - generic [ref=e337]:
+          - heading "Canales de atención al cliente" [level=4] [ref=e338]
+          - generic [ref=e339]:
+            - generic [ref=e340]:
+              - generic [ref=e341]: call
+              - generic [ref=e342]:
+                - text: "Central Telefónica y WhatsApp:"
+                - strong [ref=e343]: (01) 615-6000
+            - generic [ref=e344]:
+              - generic [ref=e345]: schedule
+              - generic [ref=e346]: Lunes a sábado de 9:00 a 19:00 hrs.
+            - generic [ref=e347]:
+              - generic [ref=e348]: mail
+              - generic [ref=e349]: servicioalcliente@segurosfalabella.com.pe
+            - generic [ref=e350]:
+              - generic [ref=e351]: location_on
+              - generic [ref=e352]: Av. Paseo de la República 3220, San Isidro, Lima - Perú
+        - generic [ref=e353]:
+          - heading "Protección al consumidor" [level=4] [ref=e354]
+          - paragraph [ref=e355]: Conforme a lo establecido en el Código de Protección y Defensa del Consumidor, contamos con Libro de Reclamaciones a tu disposición.
+          - link "menu_book Libro de reclamaciones Registro virtual oficial" [ref=e357] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=e358]: menu_book
+            - generic [ref=e359]:
+              - generic [ref=e360]: Libro de reclamaciones
+              - generic [ref=e361]: Registro virtual oficial
+      - generic [ref=e362]:
+        - link "Derecho de arrepentimiento" [ref=e363] [cursor=pointer]:
+          - /url: "#"
+        - link "Términos y condiciones" [ref=e364] [cursor=pointer]:
+          - /url: "#"
+        - link "Política de privacidad" [ref=e365] [cursor=pointer]:
+          - /url: "#"
+        - link "Libro de reclamaciones" [ref=e366] [cursor=pointer]:
+          - /url: "#"
+        - link "Vigencia MTC/APESEG" [ref=e367] [cursor=pointer]:
+          - /url: "#"
+        - link "Canales de atención" [ref=e368] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=e369]:
+        - paragraph [ref=e370]: © 2026 Corredores de Seguros Falabella S.A.C. RUC 20509608467. Todos los derechos reservados.
+        - paragraph [ref=e371]: Seguros Falabella actúa exclusivamente en calidad de corredor de seguros según la Ley N° 26702 y las normas vigentes de la SBS. Las coberturas, exclusiones y términos definitivos corresponden a los pactados en la póliza emitida por la compañía de seguros elegida libremente por el contratante. Consulta periódicamente la vigencia de tu póliza en el Registro Nacional de SOAT del MTC.
