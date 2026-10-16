@@ -79,7 +79,8 @@ export default function Dashboard() {
             <span>Cuando un usuario cotice su placa en la web o registres una en oficina, aparecerá aquí.</span>
           </div>
         ) : (
-          <table>
+          <div className="dashboard-table-wrap">
+          <table className="dashboard-table">
             <thead>
               <tr>
                 <th>Código</th>
@@ -93,33 +94,34 @@ export default function Dashboard() {
             <tbody>
               {quotes.slice(0, 6).map((q) => (
                 <tr key={q.id}>
-                  <td>
+                  <td data-label="Código">
                     <strong>{q.code}</strong>
                   </td>
-                  <td>
+                  <td data-label="Vehículo">
                     <strong style={{ fontSize: 14 }}>{q.plate}</strong>
                     <small>
                       {q.vehicle ? `${q.vehicle.brand} ${q.vehicle.model}` : q.vehicleType}
                     </small>
                   </td>
-                  <td>
+                  <td data-label="Tarifa SOAT">
                     <span className="price-pill">
                       S/ {q.selectedPrice ? q.selectedPrice.toFixed(2) : '65.00'}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="Canal">
                     <span className={`source ${q.source.toLowerCase()}`}>
                       {q.source === 'WEB' ? 'Web Pública' : 'Gestión Interna'}
                     </span>
                   </td>
-                  <td>
-                    <span className="status">Nueva</span>
+                  <td data-label="Estado">
+                    <span className="status">{q.status === 'EMITIDA' ? 'EMITIDO' : 'NUEVA'}</span>
                   </td>
-                  <td>{new Date(q.createdAt).toLocaleString('es-PE')}</td>
+                  <td data-label="Fecha">{new Date(q.createdAt).toLocaleString('es-PE')}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </section>
     </>

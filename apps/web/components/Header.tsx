@@ -22,7 +22,7 @@ export function Header() {
               Seguros Falabella
             </Link>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-[#dde3eb] text-[11px] font-semibold">
               <span>🇵🇪</span>
               <span>Perú</span>
@@ -81,9 +81,10 @@ export function Header() {
             )}
             <Link
               href="/#cotizador"
-              className="inline-flex items-center justify-center gap-2 px-5 h-11 rounded-lg bg-[#8bc500] hover:bg-[#7ab000] text-[#344d00] font-bold text-[14px] shadow-sm active:scale-[0.98] transition-all"
+              className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 h-11 rounded-lg bg-[#8bc500] hover:bg-[#7ab000] text-[#344d00] font-extrabold text-[13px] sm:text-[14px] shadow-sm active:scale-[0.98] transition-all"
             >
-              <span>Cotizar SOAT</span>
+              <span className="hidden sm:inline">Cotizar SOAT</span>
+              <span className="sm:hidden">Cotizar</span>
               <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </Link>
           </div>

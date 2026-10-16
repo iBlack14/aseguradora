@@ -18,6 +18,16 @@
 .offer-name{font-weight:800;font-size:14px;margin-top:2px}
 .offer-plan{font-size:12px;color:var(--muted)}
 .offer-radio{margin-top:6px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ink)}
+.internal-quote-result{margin-top:20px;padding:18px;border:1px solid #d8e7bd;border-radius:14px;background:#f8fbf2}
+.internal-quote-heading h3{margin:4px 0;font-size:18px}
+.internal-quote-heading p{margin:0;color:var(--muted);font-size:13px}
+.internal-quote-grid{display:grid;grid-template-columns:1.2fr .8fr 1fr 1fr;gap:14px;align-items:end;margin-top:16px}
+.internal-quote-grid label{display:grid;gap:7px;font-size:12px;font-weight:800}
+.internal-quote-grid select,.internal-quote-grid input{width:100%;height:44px;border:1px solid #cfd8c5;border-radius:9px;background:#fff;padding:0 11px;outline:none}
+.internal-quote-grid select:focus,.internal-quote-grid input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(139,197,0,.16)}
+.selected-price-result{min-height:66px;display:grid;align-content:center;padding:9px 14px;border-radius:10px;background:#e9f8c7;color:var(--green)}
+.selected-price-result span{font-size:11px;font-weight:800}
+.selected-price-result strong{font-size:24px;line-height:1.1}
 
 /* Modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(18,25,12,.6);backdrop-filter:blur(3px);display:grid;place-items:center;z-index:99;padding:16px}
@@ -31,6 +41,106 @@
 .offers-table th{background:#f1f5eb;font-size:12px;text-transform:uppercase;color:var(--muted);padding:8px 12px}
 .offers-table td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--line)}
 .price-pill{font-weight:800;color:var(--green);font-size:14px}
+.quote-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* Responsive admin workspace */
+@media(max-width:1100px){
+  .shell{grid-template-columns:220px minmax(0,1fr)}
+  .content{min-width:0;padding:24px 20px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .topbar{gap:16px;flex-wrap:wrap}
+  .table-scroll{width:100%;max-width:100%}
+  .quotes-table{min-width:920px}
+  .internal-quote-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+@media(max-width:850px){
+  .shell{display:block}
+  .sidebar{padding:14px 16px}
+  .sidebar img{width:160px;max-width:55vw}
+  .internal-badge{margin-top:10px}
+  .menu{display:flex;gap:6px;margin-top:12px;overflow-x:auto;scrollbar-width:thin;padding-bottom:4px}
+  .menu a{flex:0 0 auto;padding:9px 11px;font-size:13px}
+  .logout-form{margin-top:10px}
+  .logout-form button{padding:9px}
+  .content{padding:18px 14px}
+  .topbar{align-items:flex-start}
+  .topbar>div{min-width:0}
+  .topbar h1,.topbar h2{overflow-wrap:anywhere}
+  .card{padding:16px;border-radius:14px}
+  .form-heading{gap:12px;flex-wrap:wrap}
+  .form-actions{flex-wrap:wrap}
+  .modal-box{padding:20px;max-height:94vh}
+  .detail-grid{grid-template-columns:1fr}
+}
+
+@media(max-width:700px){
+  .grid{grid-template-columns:1fr;gap:10px;margin:18px 0}
+  .metric{font-size:26px}
+  .topbar{display:grid;grid-template-columns:1fr;width:100%}
+  .topbar>.button{width:100%}
+  .table-scroll{overflow:visible}
+  .quotes-table{display:block;min-width:0}
+  .quotes-table thead{display:none}
+  .quotes-table tbody{display:grid;gap:12px}
+  .quotes-table tr{display:grid;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;box-shadow:0 4px 14px rgba(24,33,13,.04)}
+  .quotes-table td{display:grid;grid-template-columns:minmax(96px,34%) minmax(0,1fr);gap:10px;align-items:start;padding:9px 0;border-bottom:1px solid #edf1e8;font-size:13px;overflow-wrap:anywhere}
+  .quotes-table td:last-child{border-bottom:0}
+  .quotes-table td::before{content:attr(data-label);color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.03em;text-transform:uppercase}
+  .quote-actions{display:grid;grid-template-columns:1fr;gap:7px}
+  .quote-actions .button{width:100%;white-space:normal}
+  .form-actions{display:grid;grid-template-columns:1fr;width:100%}
+  .form-actions .button{width:100%}
+  .offers-grid{grid-template-columns:1fr}
+  .internal-quote-grid{grid-template-columns:1fr}
+  .modal-overlay{padding:8px;place-items:end center}
+  .modal-box{width:100%;max-height:96vh;padding:16px;border-radius:16px 16px 0 0}
+  .modal-top{gap:12px;align-items:flex-start}
+  .offers-table{display:block;overflow-x:auto;white-space:nowrap}
+}
+
+@media(max-width:430px){
+  .content{padding:14px 10px}
+  .card{padding:13px;border-radius:12px}
+  .quotes-table td{grid-template-columns:88px minmax(0,1fr)}
+  .plate-search{display:grid;grid-template-columns:1fr}
+  .lookup-button{height:42px}
+  .vehicle-result{grid-template-columns:1fr}
+  .vehicle-result small{grid-column:auto}
+}
+
+/* Visual refinement */
+body{font-family:Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.5}
+button,input,select{font:inherit}
+.shell{grid-template-columns:250px minmax(0,1fr)}
+.sidebar{background:linear-gradient(180deg,#17200d 0%,#202d13 100%)}
+.internal-badge{color:#b8e65b;font-size:10px;letter-spacing:.14em}
+.menu{gap:6px}
+.menu a{padding:11px 12px;border-radius:10px;font-size:13px;font-weight:700;transition:.18s ease}
+.menu a:hover{transform:translateX(2px)}
+.content{min-width:0;padding:clamp(20px,3vw,38px)}
+.topbar h1{font-size:clamp(28px,3vw,40px);line-height:1.08;letter-spacing:-.035em;margin:4px 0}
+.topbar h2{font-size:clamp(20px,2vw,26px);line-height:1.2;letter-spacing:-.02em;margin:0 0 6px}
+.topbar p{margin:0}
+.grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{border-radius:18px;padding:22px;box-shadow:0 8px 28px rgba(36,53,17,.045)}
+.metric{font-size:34px;line-height:1;letter-spacing:-.04em;margin-top:10px}
+th{color:#667085;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+th,td{font-size:13px}
+.button{border-radius:10px;font-weight:800;cursor:pointer;transition:.18s ease}
+.button:hover{filter:brightness(.94);transform:translateY(-1px)}
+.dashboard-table-wrap{width:100%;overflow-x:auto}
+
+@media(max-width:700px){
+  .dashboard-table-wrap{overflow:visible}
+  .dashboard-table{display:block}
+  .dashboard-table thead{display:none}
+  .dashboard-table tbody{display:grid;gap:12px}
+  .dashboard-table tr{display:grid;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+  .dashboard-table td{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;padding:9px 0;border-bottom:1px solid #edf1e8;overflow-wrap:anywhere}
+  .dashboard-table td:last-child{border-bottom:0}
+  .dashboard-table td::before{content:attr(data-label);color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+}
 
 /* Print Clean Styles for SOAT Certificate */
 @media print {

@@ -1,0 +1,62 @@
+body {
+  font-family: Manrope, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  text-rendering: optimizeLegibility;
+}
+
+.marketing-home h1,
+.marketing-home h2,
+.marketing-home h3 {
+  font-family: Manrope, system-ui, sans-serif;
+  text-wrap: balance;
+}
+
+.marketing-home h1 {
+  max-width: 760px;
+  font-size: clamp(2.35rem, 4.6vw, 3.65rem) !important;
+  font-weight: 800 !important;
+  line-height: 1.04 !important;
+  letter-spacing: -.045em !important;
+}
+
+.marketing-home h2 {
+  font-weight: 800 !important;
+  line-height: 1.12 !important;
+  letter-spacing: -.035em !important;
+}
+
+.marketing-home h3 {
+  line-height: 1.25;
+  letter-spacing: -.015em;
+}
+
+.marketing-home p { line-height: 1.7; }
+.marketing-home input,
+.marketing-home select,
+.marketing-home button { font-family: inherit; }
+.marketing-home form { box-shadow: 0 20px 55px rgba(44, 66, 19, .09) !important; }
+
+@media (max-width: 1024px) {
+  .marketing-home h1 { font-size: clamp(2.25rem, 7vw, 3.25rem) !important; }
+}
+
+@media (max-width: 640px) {
+  body { font-size: 15px; }
+  .marketing-home h1 {
+    font-size: 2.25rem !important;
+    line-height: 1.08 !important;
+    letter-spacing: -.038em !important;
+  }
+  .marketing-home h2 { font-size: 1.75rem !important; }
+  .marketing-home p { line-height: 1.62; }
+  .marketing-home section { scroll-margin-top: 76px; }
+  .marketing-home form { padding: 18px !important; border-radius: 18px !important; }
+  .marketing-home button { min-height: 44px; }
+  header img { max-width: 155px; height: auto !important; }
+}
+
+@media (max-width: 390px) {
+  .marketing-home h1 { font-size: 2rem !important; }
+  .marketing-home form { padding: 15px !important; }
+}

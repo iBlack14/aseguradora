@@ -244,7 +244,7 @@ export default function HomePage() {
   const currentTab = vehicleTabs.find((t) => t.type === vehicleType) || vehicleTabs[0];
 
   return (
-    <main className="flex-grow">
+    <main className="marketing-home flex-grow">
       {/* 3. HERO SECTION (Layout 2 columnas) */}
       <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 lg:pt-12 lg:pb-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">

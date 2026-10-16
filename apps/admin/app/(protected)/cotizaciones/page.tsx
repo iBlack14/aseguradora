@@ -179,6 +179,7 @@ export default function Quotes() {
       if (result.offers && result.offers.length > 0) {
         setOffers(result.offers);
         setSelectedOfferId(result.offers[0].id);
+        setRealPriceOverride(result.offers[0].price.toFixed(2));
       }
     } catch (error) {
       alert(error instanceof Error ? error.message : 'No pudimos consultar esa placa.');
@@ -198,6 +199,7 @@ export default function Quotes() {
         if (result.data) {
           setOffers(result.data);
           setSelectedOfferId(result.data[0]?.id || 'la-positiva');
+          setRealPriceOverride(result.data[0] ? result.data[0].price.toFixed(2) : '');
         }
       }
     } catch {}
@@ -209,6 +211,15 @@ export default function Quotes() {
     const form = new FormData(formElement);
     const chosenOffer = offers.find((o) => o.id === selectedOfferId) || offers[0];
     const finalPrice = realPriceOverride ? parseFloat(realPriceOverride) : (chosenOffer ? chosenOffer.price : undefined);
+
+    if (!vehicle) {
+      alert('Primero consulta la placa para obtener los datos del vehículo.');
+      return;
+    }
+    if (!chosenOffer || !finalPrice || !Number.isFinite(finalPrice)) {
+      alert('Selecciona una aseguradora con un precio válido.');
+      return;
+    }
 
     const body = {
       ...Object.fromEntries(form),
@@ -243,6 +254,8 @@ export default function Quotes() {
       formElement.reset();
       setVehicle(null);
       setOffers([]);
+      setRealPriceOverride('');
+      setAssistedNotes('');
       setVehicleType('AUTO');
       setShowForm(false);
       load();
@@ -252,6 +265,9 @@ export default function Quotes() {
   }
 
   const selectedOffer = offers.find((o) => o.id === selectedOfferId);
+  const selectedFinalPrice = realPriceOverride
+    ? Number(realPriceOverride)
+    : selectedOffer?.price;
 
   return (
     <>
@@ -286,9 +302,11 @@ export default function Quotes() {
                   required
                   maxLength={9}
                   placeholder="ABC-123 o 1274-UP"
-                  onChange={() => {
-                    setVehicle(null);
-                  }}
+                   onChange={() => {
+                     setVehicle(null);
+                     setOffers([]);
+                     setRealPriceOverride('');
+                   }}
                 />
                 <button
                   type="button"
@@ -352,99 +370,6 @@ export default function Quotes() {
             </label>
           </div>
 
-          {/* Módulo de Cotización Asistida en Portales Oficiales */}
-          <div style={{ marginTop: 20, padding: 16, background: '#f8faf4', border: '1.5px solid #d8e7bd', borderRadius: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <div>
-                <strong style={{ fontSize: 14, color: 'var(--green)' }}>
-                  Módulo de Cotización Asistida en Portales Oficiales (5 Aseguradoras)
-                </strong>
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--muted)' }}>
-                  Abre el sitio oficial de cada aseguradora con la placa lista, consulta el precio y regístralo aquí:
-                </p>
-              </div>
-              <button
-                type="button"
-                className="button ghost"
-                style={{ fontSize: 12, padding: '6px 12px' }}
-                onClick={() => {
-                  const p = (document.getElementById('plate') as HTMLInputElement)?.value.trim() || 'ABC-123';
-                  navigator.clipboard.writeText(p);
-                  setCopiedPlate(true);
-                  setTimeout(() => setCopiedPlate(false), 2000);
-                }}
-              >
-                {copiedPlate ? '✓ ¡Placa copiada!' : '📋 Copiar placa'}
-              </button>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginBottom: 14 }}>
-              {[
-                { id: 'la-positiva', name: 'La Positiva', url: 'https://www.lapositiva.com.pe/wps/portal/corporativo/home/cotizador/' },
-                { id: 'pacifico', name: 'Pacífico Seguros', url: 'https://www.pacifico.com.pe/seguros/soat' },
-                { id: 'mapfre', name: 'MAPFRE Perú', url: 'https://www.mapfre.com.pe/seguro-soat/' },
-                { id: 'interseguro', name: 'Interseguro', url: 'https://www.interseguro.pe/soat' },
-                { id: 'protecta', name: 'Protecta Security', url: 'https://www.protectasecurity.pe/soat' },
-              ].map((ins) => (
-                <a
-                  key={ins.id}
-                  href={ins.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 12px',
-                    background: '#fff',
-                    border: '1px solid #cfd8c5',
-                    borderRadius: 8,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: '#18210d',
-                    textDecoration: 'none'
-                  }}
-                >
-                  <span>{ins.name}</span>
-                  <span style={{ color: 'var(--green)' }}>↗</span>
-                </a>
-              ))}
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-              <label style={{ display: 'grid', gap: 6, fontSize: 12, fontWeight: 700 }}>
-                Precio real obtenido (S/):
-                <input
-                  type="number"
-                  step="0.10"
-                  placeholder="Ej. 68.00"
-                  value={realPriceOverride}
-                  onChange={(e) => setRealPriceOverride(e.target.value)}
-                  style={{ height: 40, border: '1px solid #cfd8c5', borderRadius: 8, padding: '0 10px', fontWeight: 800, color: 'var(--green)' }}
-                />
-              </label>
-              <label style={{ display: 'grid', gap: 6, fontSize: 12, fontWeight: 700 }}>
-                Asesor responsable (Trazabilidad):
-                <input
-                  type="text"
-                  value={advisorName}
-                  onChange={(e) => setAdvisorName(e.target.value)}
-                  style={{ height: 40, border: '1px solid #cfd8c5', borderRadius: 8, padding: '0 10px' }}
-                />
-              </label>
-              <label style={{ display: 'grid', gap: 6, fontSize: 12, fontWeight: 700 }}>
-                Observaciones del cotizador:
-                <input
-                  type="text"
-                  placeholder="Ej. Validado con DNI, incluye auxilio"
-                  value={assistedNotes}
-                  onChange={(e) => setAssistedNotes(e.target.value)}
-                  style={{ height: 40, border: '1px solid #cfd8c5', borderRadius: 8, padding: '0 10px' }}
-                />
-              </label>
-            </div>
-          </div>
-
           {vehicle && (
             <div className="vehicle-result" aria-live="polite">
               <div>
@@ -478,43 +403,55 @@ export default function Quotes() {
           )}
 
           {offers.length > 0 && (
-            <div className="offers-section">
-              <div className="offers-heading">
-                <h3>Tarifas disponibles para este vehículo ({vehicleLabels[vehicleType]})</h3>
-                <p className="muted">
-                  Selecciona la aseguradora y plan convenido con el cliente para registrar la cotización:
-                </p>
+            <section className="internal-quote-result" aria-live="polite">
+              <div className="internal-quote-heading">
+                <div>
+                  <span className="vehicle-kicker">Cotización interna completada</span>
+                  <h3>Selecciona la aseguradora</h3>
+                  <p>El sistema conservará únicamente la aseguradora elegida y su precio final.</p>
+                </div>
               </div>
 
-              <div className="offers-grid">
-                {offers.map((offer) => {
-                  const isSelected = selectedOfferId === offer.id;
-                  return (
-                    <div
-                      key={offer.id}
-                      className={`admin-offer-card ${isSelected ? 'selected' : ''}`}
-                      onClick={() => setSelectedOfferId(offer.id)}
-                    >
-                      <div className="offer-header">
-                        <span className="offer-name">{offer.name}</span>
-                        <span className="offer-badge">{offer.badge}</span>
-                      </div>
-                      <div className="offer-plan">{offer.plan}</div>
-                      <div className="offer-price">S/ {offer.price.toFixed(2)}</div>
-                      <div className="offer-radio">
-                        <input
-                          type="radio"
-                          name="selectedOfferRadio"
-                          checked={isSelected}
-                          onChange={() => setSelectedOfferId(offer.id)}
-                        />
-                        <span>{isSelected ? 'Seleccionada' : 'Elegir'}</span>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="internal-quote-grid">
+                <label>
+                  Aseguradora
+                  <select
+                    value={selectedOfferId}
+                    onChange={(event) => {
+                      const id = event.target.value;
+                      const offer = offers.find((item) => item.id === id);
+                      setSelectedOfferId(id);
+                      setRealPriceOverride(offer ? offer.price.toFixed(2) : '');
+                    }}
+                  >
+                    {offers.map((offer) => (
+                      <option key={offer.id} value={offer.id}>
+                        {offer.name} - {offer.plan}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="selected-price-result">
+                  <span>Precio de la aseguradora seleccionada</span>
+                  <strong>S/ {(selectedFinalPrice || 0).toFixed(2)}</strong>
+                </div>
+
+                <label>
+                  Asesor responsable
+                  <input value={advisorName} onChange={(event) => setAdvisorName(event.target.value)} />
+                </label>
+
+                <label>
+                  Observaciones
+                  <input
+                    value={assistedNotes}
+                    onChange={(event) => setAssistedNotes(event.target.value)}
+                    placeholder="Opcional"
+                  />
+                </label>
               </div>
-            </div>
+            </section>
           )}
 
           <div className="form-actions">
@@ -522,7 +459,7 @@ export default function Quotes() {
               Cancelar
             </button>
             <button className="button" type="submit">
-              Guardar cotización {selectedOffer ? `(S/ ${selectedOffer.price.toFixed(2)})` : ''}
+              Guardar cotización {selectedOffer && selectedFinalPrice ? `(S/ ${selectedFinalPrice.toFixed(2)})` : ''}
             </button>
           </div>
         </form>
@@ -552,7 +489,7 @@ export default function Quotes() {
           </div>
         ) : (
           <div className="table-scroll">
-            <table>
+            <table className="quotes-table">
               <thead>
                 <tr>
                   <th>Código</th>
@@ -568,10 +505,10 @@ export default function Quotes() {
               <tbody>
                 {quotes.map((q) => (
                   <tr key={q.id}>
-                    <td>
+                    <td data-label="Código">
                       <strong>{q.code}</strong>
                     </td>
-                    <td>
+                    <td data-label="Vehículo">
                       <strong style={{ fontSize: 15, letterSpacing: '0.04em' }}>{q.plate}</strong>
                       <small>
                         {q.vehicle
@@ -579,10 +516,10 @@ export default function Quotes() {
                           : vehicleLabels[q.vehicleType] || q.vehicleType}
                       </small>
                     </td>
-                    <td>
+                    <td data-label="Documento">
                       {q.documentType} {q.documentNumber.replace(/.(?=.{3})/g, '•')}
                     </td>
-                    <td>
+                    <td data-label="Aseguradora / Tarifa">
                       <span className="price-pill">
                         S/ {q.selectedPrice ? q.selectedPrice.toFixed(2) : '65.00'}
                       </span>
@@ -590,12 +527,12 @@ export default function Quotes() {
                         {q.selectedOfferId ? q.selectedOfferId.replace('-', ' ') : 'Oferta base'}
                       </small>
                     </td>
-                    <td>
+                    <td data-label="Canal">
                       <span className={`source ${q.source.toLowerCase()}`}>
                         {q.source === 'WEB' ? 'Web Pública' : 'Gestión Interna'}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Estado">
                       {q.status === 'EMITIDA' ? (
                         <span
                           style={{
@@ -610,20 +547,15 @@ export default function Quotes() {
                             fontWeight: 700
                           }}
                         >
-                          ✓ Emitida
+                          EMITIDO
                         </span>
                       ) : (
                         <span className="status">Nueva</span>
                       )}
-                      {q.policyNumber && (
-                        <small style={{ display: 'block', fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>
-                          {q.policyNumber}
-                        </small>
-                      )}
                     </td>
-                    <td>{new Date(q.createdAt).toLocaleString('es-PE')}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 6 }}>
+                    <td data-label="Fecha">{new Date(q.createdAt).toLocaleString('es-PE')}</td>
+                    <td data-label="Acciones">
+                      <div className="quote-actions">
                         <button
                           className="button ghost"
                           style={{ padding: '6px 10px', fontSize: 12 }}

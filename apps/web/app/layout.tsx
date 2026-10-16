@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './polish.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 
@@ -32,7 +33,7 @@ const tailwindConfigScript = `
           "error-container": "#ffdad6"
         },
         fontFamily: {
-          sans: ["Inter", "sans-serif"]
+          sans: ["Manrope", "system-ui", "sans-serif"]
         }
       }
     }
@@ -47,7 +48,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
         />
         <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries" async />
