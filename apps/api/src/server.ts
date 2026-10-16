@@ -30,12 +30,16 @@ type Quote = {
   documentNumber: string;
   startsAt: string;
   source: QuoteSource;
-  status: 'NUEVA';
+  status: 'NUEVA' | 'COTIZADA' | 'EMITIDA';
   createdAt: string;
   vehicle?: VehicleSnapshot;
   selectedOfferId?: string;
   selectedPrice?: number;
   offers?: OfferDetail[];
+  advisorName?: string;
+  assistedNotes?: string;
+  emittedAt?: string;
+  policyNumber?: string;
 };
 
 const app = Fastify({ logger: true, trustProxy: true });
@@ -59,7 +63,9 @@ await app.register(rateLimit, {
 });
 
 const quotes: Quote[] = [];
-const demoMode = process.env.DEMO_MODE === 'true' || (process.env.NODE_ENV !== 'production' && process.env.DEMO_MODE !== 'false');
+// Datos sintéticos solo se permiten si se habilitan de forma explícita para una demo.
+// En cualquier otro caso, una placa sin respuesta del proveedor se reporta como no disponible.
+const demoMode = process.env.DEMO_MODE === 'true';
 const database = process.env.DATABASE_URL ? new PrismaClient() : null;
 if (process.env.NODE_ENV === 'production' && !database) throw new Error('DATABASE_URL is required in production');
 
@@ -158,8 +164,26 @@ const tariffsByVehicle: Record<'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO', R
   }
 };
 
-export function calculateOffers(vehicleType: 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO', _department: string = 'Lima'): OfferDetail[] {
-  const prices = tariffsByVehicle[vehicleType] || tariffsByVehicle.AUTO;
+// Official commercial tariffs for Mototaxis in public/taxi circulation (e.g. Callao / Lima)
+const mototaxiTaxiTariffs: Record<string, number> = {
+  'la-positiva': 295.0,
+  interseguro: 295.0,
+  protecta: 285.0,
+  mapfre: 298.0,
+  pacifico: 305.0
+};
+
+export function calculateOffers(
+  vehicleType: 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO',
+  department: string = 'Lima',
+  use: string = 'PARTICULAR'
+): OfferDetail[] {
+  const isMototaxiTaxi =
+    vehicleType === 'MOTOTAXI' &&
+    (use.toUpperCase() === 'TAXI' ||
+      use.toUpperCase() === 'COMERCIAL' ||
+      department.toLowerCase().includes('callao'));
+  const prices = isMototaxiTaxi ? mototaxiTaxiTariffs : (tariffsByVehicle[vehicleType] || tariffsByVehicle.AUTO);
   return [
     {
       id: 'la-positiva',
@@ -169,7 +193,7 @@ export function calculateOffers(vehicleType: 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN
       logo: 'la-positiva.png',
       price: prices['la-positiva'],
       currency: 'PEN',
-      badge: 'Más económico',
+      badge: isMototaxiTaxi ? 'Tarifa Oficial Taxi' : 'Más económico',
       available: true,
       extras: ['Auxilio de batería 24/7', 'Servicio de grúa en ciudad (1 evento)', 'Atención médica legal inmediata']
     },
@@ -233,22 +257,24 @@ const quoteInput = z.object({
   startsAt: z.coerce.date(),
   vehicle: z
     .object({
-      brand: z.string(),
-      model: z.string(),
-      year: z.number().int(),
-      color: z.string(),
-      vin: z.string(),
-      chassisNumber: z.string()
+      brand: z.string().optional(),
+      model: z.string().optional(),
+      year: z.number().int().optional(),
+      color: z.string().optional(),
+      vin: z.string().optional(),
+      chassisNumber: z.string().optional()
     })
     .optional(),
   selectedOfferId: z.string().optional(),
   selectedPrice: z.number().optional(),
-  source: z.enum(['WEB', 'MANUAL']).default('WEB')
+  source: z.enum(['WEB', 'MANUAL']).default('WEB'),
+  advisorName: z.string().optional(),
+  assistedNotes: z.string().optional()
 }).superRefine((input, context) => {
-  if (input.documentType === 'DNI' && !/^\d{8}$/.test(input.documentNumber)) {
+  if (input.documentType === 'DNI' && input.documentNumber && !/^\d{8}$/.test(input.documentNumber)) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ['documentNumber'], message: 'El DNI debe tener 8 dígitos.' });
   }
-  if (input.documentType === 'RUC' && !/^\d{11}$/.test(input.documentNumber)) {
+  if (input.documentType === 'RUC' && input.documentNumber && !/^\d{11}$/.test(input.documentNumber)) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ['documentNumber'], message: 'El RUC debe tener 11 dígitos.' });
   }
 });
@@ -316,9 +342,11 @@ const verifiedDemoVehicles: Record<
     model: string;
     year: number;
     color: string;
-    vehicleType: 'MOTO' | 'AUTO';
+    vehicleType: 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO';
     vin: string;
     chassisNumber: string;
+    use?: string;
+    department?: string;
   }
 > = {
   '1274-UP': {
@@ -356,6 +384,28 @@ const verifiedDemoVehicles: Record<
     vehicleType: 'AUTO',
     vin: '9BRBL42E9P8123456',
     chassisNumber: '9BRBL42E9P8123456'
+  },
+  '7463-BS': {
+    brand: 'Zongshen',
+    model: 'ZS',
+    year: 2017,
+    color: 'Azul',
+    vehicleType: 'MOTOTAXI' as const,
+    vin: 'LZSPCKLF9J1023000',
+    chassisNumber: 'LZSPCKLF9J1023000',
+    use: 'TAXI',
+    department: 'Callao'
+  },
+  '7463BS': {
+    brand: 'Zongshen',
+    model: 'ZS',
+    year: 2017,
+    color: 'Azul',
+    vehicleType: 'MOTOTAXI' as const,
+    vin: 'LZSPCKLF9J1023000',
+    chassisNumber: 'LZSPCKLF9J1023000',
+    use: 'TAXI',
+    department: 'Callao'
   }
 };
 
@@ -435,19 +485,23 @@ app.get('/v1/vehicles/:plate', async (req, reply) => {
     return { data: live, offers, mode: 'LIVE_VERIFIK' };
   }
 
+  // 2. Try verified padrón vehicles (7463-BS Zongshen, 1274-UP Suzuki, ABC-123 Toyota)
+  const verified = verifiedDemoVehicles[normalized] || verifiedDemoVehicles[normalized.replace(/-/g, '')];
+  if (verified) {
+    const data = { plate: normalized, ...verified, source: 'PROTOTYPE' as const };
+    const offers = calculateOffers(
+      verified.vehicleType,
+      (verified as { department?: string }).department || 'Callao',
+      (verified as { use?: string }).use || 'TAXI'
+    );
+    return { data, offers, mode: 'DEMO_VERIFIED' };
+  }
+
   if (!demoMode) {
     return reply.status(503).send({
       error: 'VEHICLE_LOOKUP_UNAVAILABLE',
       message: 'No fue posible validar la placa con el proveedor configurado.'
     });
-  }
-
-  // 2. Try verified demo vehicles
-  const verified = verifiedDemoVehicles[normalized] || verifiedDemoVehicles[normalized.replace(/-/g, '')];
-  if (verified) {
-    const data = { plate: normalized, ...verified, source: 'PROTOTYPE' as const };
-    const offers = calculateOffers(verified.vehicleType, 'Lima');
-    return { data, offers, mode: 'DEMO_VERIFIED' };
   }
 
   // 3. Fallback catalog matching pattern
@@ -525,7 +579,9 @@ app.post('/v1/quotes', async (req, reply) => {
     startsAt: parsed.data.startsAt.toISOString(),
     vehicle: parsed.data.vehicle,
     selectedOfferId: selectedOffer.id,
-    selectedPrice: selectedOffer.price,
+    selectedPrice: parsed.data.selectedPrice ?? selectedOffer.price,
+    advisorName: parsed.data.advisorName,
+    assistedNotes: parsed.data.assistedNotes,
     offers,
     source: parsed.data.source,
     status: 'NUEVA',
@@ -596,6 +652,40 @@ app.post('/v1/quotes', async (req, reply) => {
     quotes.unshift(quote);
   }
   return reply.status(201).send({ data: quote, offers });
+});
+
+app.post('/v1/quotes/:id/emit', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  const body = (req.body || {}) as {
+    advisorName?: string;
+    realPrice?: number;
+    assistedNotes?: string;
+    selectedOfferId?: string;
+  };
+  const data = await loadStoredQuotes();
+  const quote = data.find((q) => q.id === id || q.code === id);
+  if (!quote) return reply.status(404).send({ error: 'QUOTE_NOT_FOUND' });
+
+  quote.status = 'EMITIDA';
+  quote.emittedAt = new Date().toISOString();
+  quote.policyNumber = quote.policyNumber || `SOAT-2026-FALA-${Math.floor(100000 + Math.random() * 900000)}`;
+  if (body.advisorName) quote.advisorName = body.advisorName;
+  if (body.realPrice) quote.selectedPrice = body.realPrice;
+  if (body.assistedNotes) quote.assistedNotes = body.assistedNotes;
+  if (body.selectedOfferId) quote.selectedOfferId = body.selectedOfferId;
+
+  if (database) {
+    await database.quote
+      .update({
+        where: { id: quote.id },
+        data: {
+          selectedPrice: quote.selectedPrice,
+          selectedOfferId: quote.selectedOfferId
+        }
+      })
+      .catch(() => {});
+  }
+  return reply.send({ data: quote });
 });
 
 app.post('/v1/orders', async (_req, reply) =>

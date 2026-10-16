@@ -31,3 +31,41 @@
 .offers-table th{background:#f1f5eb;font-size:12px;text-transform:uppercase;color:var(--muted);padding:8px 12px}
 .offers-table td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--line)}
 .price-pill{font-weight:800;color:var(--green);font-size:14px}
+
+/* Print Clean Styles for SOAT Certificate */
+@media print {
+  body, html {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .sidebar, .topbar, .grid, .card:not(.modal-overlay *), .table-scroll, .modal-top, .modal-overlay button, .modal-overlay .ghost, .internal-badge, .menu, .logout-form {
+    display: none !important;
+  }
+  .modal-overlay {
+    position: static !important;
+    background: none !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    display: block !important;
+    inset: auto !important;
+  }
+  .modal-box {
+    box-shadow: none !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    border: none !important;
+    overflow: visible !important;
+  }
+  .soat-printable-sheet {
+    border: 2px solid #000 !important;
+    padding: 20px !important;
+    width: 100% !important;
+    page-break-inside: avoid !important;
+  }
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+}
