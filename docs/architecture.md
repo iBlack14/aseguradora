@@ -6,7 +6,6 @@
 - **Administración (`apps/admin`)**: operaciones, cotizaciones, ventas, tarifas, usuarios y auditoría.
 - **API (`apps/api`)**: contratos HTTP, validación, orquestación de cotizaciones y emisión.
 - **PostgreSQL**: clientes, vehículos, ofertas, órdenes y auditoría.
-- **Redis**: caché de cotizaciones y futura cola de integraciones.
 
 ## Flujo objetivo
 
@@ -20,4 +19,4 @@
 
 ## Estado actual
 
-La navegación y las interfaces están implementadas con información demostrativa. Los adaptadores reales, autenticación, proveedor de pago, almacenamiento de pólizas y notificaciones requieren credenciales y contratos de producción.
+La navegación, consulta vehicular mediante Verifik y persistencia de cotizaciones están implementadas. Las tarifas siguen siendo demostrativas y los adaptadores reales de aseguradoras, proveedor de pago, almacenamiento de pólizas y notificaciones requieren credenciales y contratos de producción. En producción, `DEMO_MODE=false` impide devolver vehículos simulados cuando falla el proveedor.

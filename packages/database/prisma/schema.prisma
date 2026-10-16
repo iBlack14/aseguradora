@@ -69,6 +69,12 @@ model Vehicle {
   type       String
   use        String
   department String
+  brand      String?
+  model      String?
+  year       Int?
+  color      String?
+  vin        String?
+  chassisNumber String?
   createdAt  DateTime @default(now())
   quotes     Quote[]
 }
@@ -89,9 +95,15 @@ model Quote {
   status     QuoteStatus @default(DRAFT)
   startsAt   DateTime
   expiresAt  DateTime?
-  customerId String
+  source     String      @default("WEB")
+  documentType String
+  documentNumber String
+  department String
+  selectedOfferId String?
+  selectedPrice Decimal? @db.Decimal(10, 2)
+  customerId String?
   vehicleId  String
-  customer   Customer    @relation(fields: [customerId], references: [id])
+  customer   Customer?   @relation(fields: [customerId], references: [id])
   vehicle    Vehicle     @relation(fields: [vehicleId], references: [id])
   offers     Offer[]
   order      Order?

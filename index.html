@@ -252,10 +252,11 @@
 <span>PE</span>
 </div>
 </div>
-<input aria-describedby="placa-help" class="w-full h-[52px] pl-16 pr-4 rounded-lg border border-surface-variant bg-surface-container-lowest text-on-surface text-center font-bold tracking-widest text-[18px] uppercase focus:border-primary focus:ring-4 focus:ring-primary-container/25 transition-all" id="placa" maxlength="7" name="placa" placeholder="ABC-123" type="text" value="ABC-123"/>
+<input aria-describedby="placa-help" class="w-full h-[52px] pl-16 pr-4 rounded-lg border border-surface-variant bg-surface-container-lowest text-on-surface text-center font-bold tracking-widest text-[18px] uppercase focus:border-primary focus:ring-4 focus:ring-primary-container/25 transition-all" id="placa" maxlength="9" name="placa" placeholder="ABC-123 o 1274-UP" type="text" value="ABC-123"/>
 </div>
+<div id="plate-lookup-info" class="hidden mt-2 p-3 rounded-lg border text-caption font-caption transition-all"></div>
 <p class="mt-1.5 text-caption font-caption text-on-surface-variant" id="placa-help">
-                Ejemplo: ABC-123 para autos o 12-34AB para motos.
+                Ejemplo: ABC-123 para autos o 1274-UP para motos.
               </p>
 </div>
 <!-- Grilla 2 columnas: Departamento y Documento -->
@@ -830,20 +831,106 @@
 <!-- Micro-interacción: tab toggle y validación de placa básica -->
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Formato automático de placa ABC-123
       const placaInput = document.getElementById('placa');
-      if (placaInput) {
-        placaInput.addEventListener('input', (e) => {
-          let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-          if (value.length > 3) {
-            value = value.slice(0, 3) + '-' + value.slice(3, 6);
+      const lookupInfo = document.getElementById('plate-lookup-info');
+      const vigenciaInput = document.getElementById('fecha_vigencia');
+      const tabButtons = document.querySelectorAll('[role="tablist"] button');
+      let detectedVehicle = null;
+      let lookupTimer = null;
+      const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[character]));
+
+      if (vigenciaInput && !vigenciaInput.value) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        vigenciaInput.value = tomorrow.toISOString().split('T')[0];
+      }
+
+      function selectTabByType(vehicleType) {
+        tabButtons.forEach(btn => {
+          const text = btn.textContent.toUpperCase();
+          const match =
+            (vehicleType === 'MOTO' && text.includes('MOTO') && !text.includes('MOTOTAXI')) ||
+            (vehicleType === 'MOTOTAXI' && text.includes('MOTOTAXI')) ||
+            (vehicleType === 'VAN' && text.includes('VAN')) ||
+            (vehicleType === 'CARGO' && (text.includes('CARGA') || text.includes('PESADO'))) ||
+            (vehicleType === 'AUTO' && text.includes('AUTO'));
+
+          if (match) {
+            tabButtons.forEach(b => {
+              b.classList.remove('bg-surface-container-lowest', 'text-primary', 'shadow-sm');
+              b.classList.add('text-on-surface-variant', 'hover:text-on-surface', 'hover:bg-surface-container-low');
+            });
+            btn.classList.add('bg-surface-container-lowest', 'text-primary', 'shadow-sm');
+            btn.classList.remove('text-on-surface-variant', 'hover:text-on-surface', 'hover:bg-surface-container-low');
           }
-          e.target.value = value;
         });
       }
 
-      // Vehículo tabs toggle visual
-      const tabButtons = document.querySelectorAll('[role="tablist"] button');
+      async function queryPlate(plateValue) {
+        const clean = plateValue.trim().toUpperCase();
+        if (clean.length < 5) {
+          if (lookupInfo) lookupInfo.classList.add('hidden');
+          detectedVehicle = null;
+          return;
+        }
+
+        if (lookupInfo) {
+          lookupInfo.className = 'mt-2 p-2.5 rounded-lg border border-primary/40 bg-surface-container-low text-on-surface text-caption font-caption flex items-center gap-2';
+          lookupInfo.innerHTML = '<span class="material-symbols-outlined text-[16px] text-primary animate-spin">sync</span><span>Consultando padrón vehicular…</span>';
+          lookupInfo.classList.remove('hidden');
+        }
+
+        try {
+          const res = await fetch(`/api/backend/v1/vehicles/${encodeURIComponent(clean)}`);
+          if (!res.ok) throw new Error();
+          const json = await res.json();
+          const v = json.data;
+          detectedVehicle = v;
+          selectTabByType(v.vehicleType);
+
+          const minPrice = json.offers && json.offers.length > 0 ? json.offers[0].price : 65;
+          if (lookupInfo) {
+            lookupInfo.className = 'mt-2 p-2.5 rounded-lg border border-[#4e7f00] bg-[#f4f9ea] text-[#1c3300] text-caption font-caption flex items-start gap-2 shadow-xs';
+            lookupInfo.innerHTML = `
+              <span class="material-symbols-outlined text-[18px] text-[#4e7f00] shrink-0 mt-0.5">verified</span>
+              <div>
+                <strong class="font-bold text-[13px] block text-[#1c3300]">Vehículo identificado: ${escapeHtml(v.brand)} ${escapeHtml(v.model)} (${escapeHtml(v.year || '2023')})</strong>
+                <span>Color: ${escapeHtml(v.color || 'Registrado')} · Placa: <strong>${escapeHtml(v.plate)}</strong> · SOAT desde <strong class="text-[#4e7f00] text-[13px]">S/ ${minPrice.toFixed(2)}</strong></span>
+              </div>
+            `;
+          }
+        } catch {
+          detectedVehicle = null;
+          if (lookupInfo) {
+            lookupInfo.className = 'mt-2 p-2 rounded-lg border border-red-200 bg-red-50 text-red-800 text-caption font-caption flex items-center gap-2';
+            lookupInfo.innerHTML = '<span class="material-symbols-outlined text-[16px]">error</span><span>No pudimos validar la placa. Revisa el dato o inténtalo nuevamente.</span>';
+          }
+        }
+      }
+
+      if (placaInput) {
+        placaInput.addEventListener('input', (e) => {
+          let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+          if (/^\d{4}/.test(value) && value.length > 4) {
+            value = value.slice(0, 4) + '-' + value.slice(4, 7);
+          } else if (value.length > 3) {
+            value = value.slice(0, 3) + '-' + value.slice(3, 7);
+          }
+          e.target.value = value;
+
+          clearTimeout(lookupTimer);
+          if (value.length >= 6) {
+            lookupTimer = setTimeout(() => queryPlate(value), 400);
+          } else {
+            if (lookupInfo) lookupInfo.classList.add('hidden');
+          }
+        });
+
+        if (placaInput.value.length >= 6) {
+          queryPlate(placaInput.value);
+        }
+      }
+
       tabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
           tabButtons.forEach(b => {
@@ -853,6 +940,65 @@
           btn.classList.add('bg-surface-container-lowest', 'text-primary', 'shadow-sm');
           btn.classList.remove('text-on-surface-variant', 'hover:text-on-surface', 'hover:bg-surface-container-low');
         });
+      });
+
+      const quoteSubmit = document.getElementById('quote-submit');
+      quoteSubmit?.addEventListener('click', async (event) => {
+        event.preventDefault();
+        const plate = document.getElementById('placa').value.trim();
+        const documentNumber = document.getElementById('num_doc').value.trim();
+        const startsAt = document.getElementById('fecha_vigencia').value;
+        if (!plate || !documentNumber || !startsAt) {
+          alert('Completa la placa, documento y fecha de inicio para cotizar.');
+          return;
+        }
+        if (!detectedVehicle) {
+          alert('Primero debemos validar la placa con el proveedor vehicular.');
+          return;
+        }
+
+        const activeTab = [...tabButtons].find(button => button.classList.contains('bg-surface-container-lowest'));
+        const label = activeTab?.textContent.toUpperCase() || 'AUTO';
+        const vehicleType = label.includes('MOTOTAXI') ? 'MOTOTAXI' : label.includes('MOTO') ? 'MOTO' : label.includes('VAN') ? 'VAN' : label.includes('CARGA') ? 'CARGO' : 'AUTO';
+
+        const original = quoteSubmit.innerHTML;
+        quoteSubmit.setAttribute('aria-busy', 'true');
+        quoteSubmit.innerHTML = '<span>Calculando mejores precios…</span>';
+
+        try {
+          const response = await fetch('/api/backend/v1/quotes', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              plate,
+              vehicleType,
+              department: document.getElementById('departamento').value,
+              documentType: document.getElementById('tipo_doc').value.toUpperCase(),
+              documentNumber,
+              startsAt,
+              vehicle: detectedVehicle ? {
+                brand: detectedVehicle.brand,
+                model: detectedVehicle.model,
+                year: Number(detectedVehicle.year) || 2023,
+                color: detectedVehicle.color || 'No informado',
+                vin: detectedVehicle.vin || 'DEMO',
+                chassisNumber: detectedVehicle.chassisNumber || 'DEMO'
+              } : undefined,
+              source: 'WEB'
+            })
+          });
+
+          if (!response.ok) throw new Error('No fue posible registrar la cotización');
+          const result = await response.json();
+          sessionStorage.setItem('falabella_quote', JSON.stringify(result.data));
+          sessionStorage.setItem('falabella_offers', JSON.stringify(result.offers));
+          sessionStorage.setItem('falabella_plate', plate);
+          location.href = '/resultados.html';
+        } catch (error) {
+          alert('No pudimos calcular la cotización. Verifica que la API esté activa.');
+          quoteSubmit.innerHTML = original;
+          quoteSubmit.removeAttribute('aria-busy');
+        }
       });
     });
   </script>

@@ -241,7 +241,7 @@
 <div class="flex items-center gap-2">
 <div class="border-2 border-on-surface bg-surface-container-lowest rounded-md px-3 py-1 shadow-xs flex items-center gap-2">
 <span class="text-[9px] font-bold text-primary tracking-widest uppercase">PERÚ</span>
-<span class="font-bold tracking-wider text-headline-sm font-headline-sm text-on-surface">ABC-123</span>
+<span class="font-bold tracking-wider text-headline-sm font-headline-sm text-on-surface" id="summary-plate">ABC-123</span>
 </div>
 </div>
 <div class="h-8 w-px bg-surface-variant hidden sm:block"></div>
@@ -249,19 +249,19 @@
 <div class="grid grid-cols-2 sm:flex sm:items-center gap-4 sm:gap-6 text-body-sm font-body-sm">
 <div>
 <span class="block text-caption font-caption text-on-surface-variant">Tipo de vehículo:</span>
-<span class="font-semibold text-on-surface">Auto / Camioneta</span>
+<span class="font-semibold text-on-surface" id="summary-vehicle-type">Auto / Camioneta</span>
 </div>
 <div>
-<span class="block text-caption font-caption text-on-surface-variant">Uso registrado:</span>
-<span class="font-semibold text-on-surface">Particular</span>
+<span class="block text-caption font-caption text-on-surface-variant">Vehículo detectado:</span>
+<span class="font-semibold text-on-surface" id="summary-vehicle-model">Particular</span>
 </div>
 <div>
 <span class="block text-caption font-caption text-on-surface-variant">Circulación:</span>
-<span class="font-semibold text-on-surface">Lima y Callao</span>
+<span class="font-semibold text-on-surface" id="summary-department">Lima y Callao</span>
 </div>
 <div>
 <span class="block text-caption font-caption text-on-surface-variant">Inicio vigencia:</span>
-<span class="font-semibold text-primary">03/01/2025</span>
+<span class="font-semibold text-primary" id="summary-starts-at">03/01/2025</span>
 </div>
 </div>
 </div>
@@ -953,6 +953,100 @@
 </div>
 </footer>
 <script>
+  // 1. Dynamic Hydration from SessionStorage
+  const quoteRaw = sessionStorage.getItem('falabella_quote');
+  const offersRaw = sessionStorage.getItem('falabella_offers');
+  let currentQuote = null;
+  let currentOffers = [];
+
+  const typeMap = {
+    AUTO: 'Auto / Camioneta',
+    MOTO: 'Moto lineal',
+    MOTOTAXI: 'Mototaxi',
+    VAN: 'Van / Combi',
+    CARGO: 'Carga / Pesado'
+  };
+
+  if (quoteRaw) {
+    try {
+      currentQuote = JSON.parse(quoteRaw);
+      const plateEl = document.getElementById('summary-plate');
+      if (plateEl && currentQuote.plate) plateEl.textContent = currentQuote.plate;
+
+      const typeEl = document.getElementById('summary-vehicle-type');
+      if (typeEl && currentQuote.vehicleType) {
+        typeEl.textContent = typeMap[currentQuote.vehicleType] || currentQuote.vehicleType;
+      }
+
+      const modelEl = document.getElementById('summary-vehicle-model');
+      if (modelEl) {
+        if (currentQuote.vehicle && currentQuote.vehicle.brand) {
+          modelEl.textContent = `${currentQuote.vehicle.brand} ${currentQuote.vehicle.model} (${currentQuote.vehicle.year || '2023'})`;
+        } else {
+          modelEl.textContent = typeMap[currentQuote.vehicleType] || 'Particular';
+        }
+      }
+
+      const depEl = document.getElementById('summary-department');
+      if (depEl && currentQuote.department) depEl.textContent = currentQuote.department;
+
+      const vigEl = document.getElementById('summary-starts-at');
+      if (vigEl && currentQuote.startsAt) {
+        vigEl.textContent = currentQuote.startsAt.split('T')[0];
+      }
+    } catch (e) {
+      console.warn('Could not parse quote:', e);
+    }
+  }
+
+  // Insurer ID matching keywords
+  const insurerKeys = [
+    { id: 'la-positiva', name: 'La Positiva' },
+    { id: 'pacifico', name: 'Pacífico' },
+    { id: 'mapfre', name: 'MAPFRE' },
+    { id: 'interseguro', name: 'Interseguro' },
+    { id: 'protecta', name: 'Protecta' }
+  ];
+
+  if (offersRaw) {
+    try {
+      currentOffers = JSON.parse(offersRaw);
+      // Map prices into cards
+      const articles = document.querySelectorAll('article');
+      articles.forEach(article => {
+        const text = article.textContent || '';
+        const match = insurerKeys.find(k => text.includes(k.name));
+        if (match) {
+          const offer = currentOffers.find(o => o.id === match.id);
+          if (offer) {
+            // Update big price numbers in card
+            const priceSpan = article.querySelector('.text-headline-lg');
+            if (priceSpan) {
+              priceSpan.textContent = offer.price.toFixed(2);
+            }
+            // Update compare checkbox data-price
+            const compareInput = article.querySelector('.offer-compare');
+            if (compareInput) {
+              compareInput.dataset.price = `S/ ${offer.price.toFixed(2)}`;
+            }
+            // Update "Elegir esta oferta" button
+            const btn = article.querySelector('button, a.button');
+            if (btn && btn.textContent.includes('Elegir esta oferta')) {
+              btn.addEventListener('click', (ev) => {
+                ev.preventDefault();
+                sessionStorage.setItem('falabella_selected_offer', JSON.stringify(offer));
+                location.href = `/pago?oferta=${offer.id}&placa=${encodeURIComponent(currentQuote?.plate || 'ABC-123')}&precio=${offer.price}`;
+              });
+            }
+          }
+        }
+      });
+    } catch (e) {
+      console.warn('Could not parse offers:', e);
+    }
+  }
+
+  // 2. Comparison Bar Functionality
   const compareInputs = [...document.querySelectorAll('.offer-compare')];
   const compareCount = document.getElementById('compare-count');
   const compareLabel = document.getElementById('compare-label');
@@ -961,29 +1055,40 @@
 
   function renderComparison() {
     const selected = compareInputs.filter((input) => input.checked);
-    compareCount.textContent = selected.length;
-    compareLabel.textContent = `Comparando ${selected.length} de 3 ofertas seleccionadas`;
-    compareChips.innerHTML = selected.map((input) => `
-      <button class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container text-caption font-caption text-on-surface font-medium border border-surface-variant" data-remove="${input.dataset.name}" type="button">
-        ${input.dataset.name} (${input.dataset.price})
-        <span class="material-symbols-outlined text-[14px]">close</span>
-      </button>`).join('');
-    compareAction.classList.toggle('opacity-50', selected.length < 2);
-    compareAction.classList.toggle('pointer-events-none', selected.length < 2);
-    compareAction.setAttribute('aria-disabled', selected.length < 2 ? 'true' : 'false');
+    if (compareCount) compareCount.textContent = selected.length;
+    if (compareLabel) compareLabel.textContent = `Comparando ${selected.length} de 3 ofertas seleccionadas`;
+    if (compareChips) {
+      compareChips.innerHTML = selected.map((input) => `
+        <button class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container text-caption font-caption text-on-surface font-medium border border-surface-variant" data-remove="${input.dataset.name}" type="button">
+          ${input.dataset.name} (${input.dataset.price})
+          <span class="material-symbols-outlined text-[14px]">close</span>
+        </button>`).join('');
+    }
+    if (compareAction) {
+      compareAction.classList.toggle('opacity-50', selected.length < 2);
+      compareAction.classList.toggle('pointer-events-none', selected.length < 2);
+      compareAction.setAttribute('aria-disabled', selected.length < 2 ? 'true' : 'false');
+      const selectedIds = selected.map(s => {
+        const item = insurerKeys.find(k => s.dataset.name.includes(k.name));
+        return item ? item.id : 'la-positiva';
+      });
+      compareAction.href = `/comparar?ofertas=${selectedIds.join(',')}`;
+    }
     compareInputs.forEach((input) => {
       input.disabled = !input.checked && selected.length >= 3;
     });
   }
 
   compareInputs.forEach((input) => input.addEventListener('change', renderComparison));
-  compareChips.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-remove]');
-    if (!button) return;
-    const input = compareInputs.find((item) => item.dataset.name === button.dataset.remove);
-    if (input) input.checked = false;
-    renderComparison();
-  });
+  if (compareChips) {
+    compareChips.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-remove]');
+      if (!button) return;
+      const input = compareInputs.find((item) => item.dataset.name === button.dataset.remove);
+      if (input) input.checked = false;
+      renderComparison();
+    });
+  }
   renderComparison();
 </script>
 </body></html>

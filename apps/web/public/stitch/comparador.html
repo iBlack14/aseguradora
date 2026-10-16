@@ -138,6 +138,45 @@
   <footer class="mt-8 border-t border-slate-200 bg-white px-4 py-8 text-center text-xs text-slate-500">
     © 2026 Corredores de Seguros Falabella S.A.C. RUC 20509608467 · Propuesta de rediseño con datos demostrativos.
   </footer>
+
+  <script>
+    const quoteRaw = sessionStorage.getItem('falabella_quote');
+    const offersRaw = sessionStorage.getItem('falabella_offers');
+    if (quoteRaw) {
+      try {
+        const quote = JSON.parse(quoteRaw);
+        const badge = document.querySelector('strong.ml-2');
+        if (badge) {
+          const vName = quote.vehicle ? `${quote.vehicle.brand} ${quote.vehicle.model}` : quote.vehicleType;
+          badge.textContent = `${quote.plate} · ${vName} · ${quote.department || 'Lima'}`;
+        }
+      } catch (e) {}
+    }
+
+    if (offersRaw) {
+      try {
+        const offers = JSON.parse(offersRaw);
+        const map = {
+          'la-positiva': offers.find(o => o.id === 'la-positiva'),
+          'pacifico': offers.find(o => o.id === 'pacifico'),
+          'mapfre': offers.find(o => o.id === 'mapfre')
+        };
+        const ths = document.querySelectorAll('thead th');
+        if (ths[1] && map['la-positiva']) {
+          const p = ths[1].querySelector('.text-3xl');
+          if (p) p.textContent = `S/ ${map['la-positiva'].price.toFixed(2)}`;
+        }
+        if (ths[2] && map['pacifico']) {
+          const p = ths[2].querySelector('.text-3xl');
+          if (p) p.textContent = `S/ ${map['pacifico'].price.toFixed(2)}`;
+        }
+        if (ths[3] && map['mapfre']) {
+          const p = ths[3].querySelector('.text-3xl');
+          if (p) p.textContent = `S/ ${map['mapfre'].price.toFixed(2)}`;
+        }
+      } catch (e) {}
+    }
+  </script>
 </body>
 </html>
 

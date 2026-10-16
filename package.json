@@ -2,7 +2,10 @@
   "name": "seguros-falabella-platform",
   "version": "0.2.0",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "npm run dev -w @falabella/web",
     "dev:web": "npm run dev -w @falabella/web",
@@ -13,5 +16,13 @@
     "db:generate": "npm run generate -w @falabella/database",
     "db:migrate": "npm run migrate -w @falabella/database"
   },
-  "engines": { "node": ">=20" }
+  "overrides": {
+    "postcss": "$postcss"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "postcss": "^8.5.30"
+  }
 }
