@@ -45,6 +45,8 @@ type Quote = {
     color?: string;
     vin?: string;
     chassisNumber?: string;
+    use?: string;
+    department?: string;
   };
 };
 
@@ -58,6 +60,8 @@ type Vehicle = {
   chassisNumber: string;
   source: 'VERIFIK' | 'PROTOTYPE';
   vehicleType: 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO';
+  use?: string;
+  department?: string;
 };
 
 const departments = [
@@ -106,7 +110,7 @@ const insurerLabels: Record<string, string> = {
 };
 
 type TariffEditor = { annualPrice: string; installmentAmount: string; installmentCount: string };
-type TariffResponse = { baseTariffs: Record<string, Record<string, number>>; tariffs: Array<{ insurerSlug: string; vehicleType: string; annualPrice: number; installmentAmount?: number; installmentCount?: number }> };
+type TariffResponse = { baseTariffs: Record<string, Record<string, number>>; tariffs: Array<{ insurerSlug: string; vehicleType: string; vehicleUse: string; department: string; annualPrice: number; installmentAmount?: number; installmentCount?: number }> };
 
 export default function Quotes() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -125,6 +129,8 @@ export default function Quotes() {
   const [advisorName, setAdvisorName] = useState('Carlos Mendoza (Asesor SBS Falabella)');
   const [assistedNotes, setAssistedNotes] = useState('');
   const [tariffType, setTariffType] = useState<Vehicle['vehicleType']>('MOTO');
+  const [tariffUse, setTariffUse] = useState('PARTICULAR');
+  const [tariffDepartment, setTariffDepartment] = useState('Lima');
   const [tariffDrafts, setTariffDrafts] = useState<Record<string, TariffEditor>>({});
   const [savingTariff, setSavingTariff] = useState<string | null>(null);
 
@@ -133,6 +139,8 @@ export default function Quotes() {
   const [adminModel, setAdminModel] = useState('');
   const [adminYear, setAdminYear] = useState('2023');
   const [adminVin, setAdminVin] = useState('');
+  const [adminUse, setAdminUse] = useState('PARTICULAR');
+  const [adminDepartment, setAdminDepartment] = useState('Lima');
   const [adminCustomBrand, setAdminCustomBrand] = useState(false);
   const [adminCustomModel, setAdminCustomModel] = useState(false);
 
@@ -145,6 +153,8 @@ export default function Quotes() {
   const [editModel, setEditModel] = useState('');
   const [editYear, setEditYear] = useState('2023');
   const [editVin, setEditVin] = useState('');
+  const [editUse, setEditUse] = useState('PARTICULAR');
+  const [editDepartment, setEditDepartment] = useState('Lima');
   const [editOfferId, setEditOfferId] = useState('la-positiva');
   const [editPrice, setEditPrice] = useState('65.00');
   const [editCustomBrand, setEditCustomBrand] = useState(false);
@@ -161,6 +171,8 @@ export default function Quotes() {
     setEditModel(q.vehicle?.model || '');
     setEditYear(String(q.vehicle?.year || 2023));
     setEditVin(q.vehicle?.chassisNumber || q.vehicle?.vin || '');
+    setEditUse(q.vehicle?.use || 'PARTICULAR');
+    setEditDepartment(q.vehicle?.department || q.department || 'Lima');
     setEditOfferId(q.selectedOfferId || 'la-positiva');
     setEditPrice(q.selectedPrice ? q.selectedPrice.toFixed(2) : '65.00');
     setEditCustomBrand(false);
@@ -242,7 +254,7 @@ export default function Quotes() {
       .then((result: TariffResponse) => {
         const drafts: Record<string, TariffEditor> = {};
         Object.entries(insurerLabels).forEach(([id]) => {
-          const dynamic = result.tariffs.find((item) => item.insurerSlug === id && item.vehicleType === tariffType);
+          const dynamic = result.tariffs.find((item) => item.insurerSlug === id && item.vehicleType === tariffType && item.vehicleUse === tariffUse && item.department.toLowerCase() === tariffDepartment.toLowerCase());
           const base = result.baseTariffs[tariffType]?.[id] || 0;
           const count = dynamic?.installmentCount || (tariffType === 'MOTO' ? 4 : 1);
           drafts[id] = {
@@ -254,7 +266,7 @@ export default function Quotes() {
         setTariffDrafts(drafts);
       })
       .catch(() => {});
-  }, [tariffType]);
+  }, [tariffType, tariffUse, tariffDepartment]);
 
   useEffect(() => { loadTariffs(); }, [loadTariffs]);
 
@@ -272,7 +284,7 @@ export default function Quotes() {
     try {
       const response = await fetch('/api/backend/v1/admin/tariffs', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ insurerSlug, vehicleType: tariffType, department: 'Lima', vehicleUse: 'PARTICULAR', annualPrice, installmentAmount, installmentCount, source: 'ADMIN' })
+        body: JSON.stringify({ insurerSlug, vehicleType: tariffType, department: tariffDepartment, vehicleUse: tariffUse, annualPrice, installmentAmount, installmentCount, source: 'ADMIN' })
       });
       if (!response.ok) throw new Error();
       alert('Precio actualizado correctamente.');
@@ -310,6 +322,8 @@ export default function Quotes() {
       }
       if (result.data.year) setAdminYear(String(result.data.year));
       if (result.data.vin || result.data.chassisNumber) setAdminVin(result.data.vin || result.data.chassisNumber);
+      if (result.data.use) setAdminUse(result.data.use);
+      if (result.data.department) setAdminDepartment(result.data.department);
       if (result.offers && result.offers.length > 0) {
         setOffers(result.offers);
         setSelectedOfferId(result.offers[0].id);
@@ -323,11 +337,11 @@ export default function Quotes() {
   }
 
   // Update offers if the operator manually changes the vehicle type
-  async function handleVehicleTypeChange(newType: Vehicle['vehicleType']) {
+  async function handleVehicleTypeChange(newType: Vehicle['vehicleType'], department = adminDepartment, use = adminUse) {
     setVehicleType(newType);
     const plate = (document.getElementById('plate') as HTMLInputElement)?.value.trim() || 'ABC-123';
     try {
-      const response = await fetch(`/api/backend/v1/offers?vehicleType=${encodeURIComponent(newType)}`);
+      const response = await fetch(`/api/backend/v1/offers?vehicleType=${encodeURIComponent(newType)}&department=${encodeURIComponent(department)}&use=${encodeURIComponent(use)}`);
       if (response.ok) {
         const result = (await response.json()) as { data: OfferDetail[] };
         if (result.data) {
@@ -369,7 +383,9 @@ export default function Quotes() {
         year: yearToUse,
         color: vehicle?.color || 'Plateado',
         vin: vinToUse,
-        chassisNumber: vinToUse
+        chassisNumber: vinToUse,
+        use: adminUse,
+        department: adminDepartment
       },
       source: 'MANUAL'
     };
@@ -393,6 +409,8 @@ export default function Quotes() {
       setAdminModel('');
       setAdminYear('2023');
       setAdminVin('');
+      setAdminUse('PARTICULAR');
+      setAdminDepartment('Lima');
       setAdminCustomBrand(false);
       setAdminCustomModel(false);
       setVehicleType('AUTO');
@@ -428,6 +446,14 @@ export default function Quotes() {
           </div>
           <select value={tariffType} onChange={(event) => setTariffType(event.target.value as Vehicle['vehicleType'])}>
             {Object.entries(vehicleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+          <select value={tariffUse} onChange={(event) => setTariffUse(event.target.value)}>
+            <option value="PARTICULAR">Particular</option>
+            <option value="PUBLICO">Servicio público / pasajeros</option>
+            <option value="COMERCIAL">Comercial / carga</option>
+          </select>
+          <select value={tariffDepartment} onChange={(event) => setTariffDepartment(event.target.value)}>
+            {departments.map((dep) => <option key={dep} value={dep}>{dep}</option>)}
           </select>
         </div>
         <div className="tariff-grid">
@@ -499,13 +525,22 @@ export default function Quotes() {
             </label>
 
             <label>
-              Departamento de circulación
-              <select name="department" defaultValue="Lima">
+              Departamento o ciudad de registro de la placa
+              <select name="department" value={adminDepartment} onChange={(event) => { const value = event.target.value; setAdminDepartment(value); handleVehicleTypeChange(vehicleType, value, adminUse); }}>
                 {departments.map((dep) => (
                   <option key={dep} value={dep}>
                     {dep}
                   </option>
                 ))}
+              </select>
+            </label>
+
+            <label>
+              Uso del vehículo
+              <select value={adminUse} onChange={(event) => { const value = event.target.value; setAdminUse(value); handleVehicleTypeChange(vehicleType, adminDepartment, value); }}>
+                <option value="PARTICULAR">Particular</option>
+                <option value="PUBLICO">Servicio público / transporte de pasajeros</option>
+                <option value="COMERCIAL">Comercial / carga</option>
               </select>
             </label>
 
@@ -711,6 +746,18 @@ export default function Quotes() {
                 <div className="selected-price-result">
                   <span>Precio de la aseguradora seleccionada</span>
                   <strong>S/ {(selectedFinalPrice || 0).toFixed(2)}</strong>
+                  <label style={{ display: 'block', marginTop: 8, fontSize: 11, fontWeight: 700 }}>
+                    Precio manual final (opcional)
+                    <input
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      value={realPriceOverride}
+                      onChange={(event) => setRealPriceOverride(event.target.value)}
+                      placeholder="Usar precio de la aseguradora"
+                      style={{ width: '100%', marginTop: 4 }}
+                    />
+                  </label>
                   {selectedOffer?.installmentAmount && selectedOffer.installmentCount && selectedOffer.installmentCount > 1 && (
                     <small>{selectedOffer.installmentCount} cuotas de S/ {selectedOffer.installmentAmount.toFixed(2)}</small>
                   )}
@@ -1144,6 +1191,26 @@ export default function Quotes() {
 
                   <div>
                     <label style={{ display: 'block', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                      Departamento o ciudad de registro
+                    </label>
+                    <select value={editDepartment} onChange={(e) => setEditDepartment(e.target.value)} style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1.5px solid #94a3b8', fontSize: 12, background: '#fff' }}>
+                      {departments.map((dep) => <option key={dep} value={dep}>{dep}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                      Uso del vehículo
+                    </label>
+                    <select value={editUse} onChange={(e) => setEditUse(e.target.value)} style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1.5px solid #94a3b8', fontSize: 12, background: '#fff' }}>
+                      <option value="PARTICULAR">Particular</option>
+                      <option value="PUBLICO">Servicio público / transporte de pasajeros</option>
+                      <option value="COMERCIAL">Comercial / carga</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                       Modelo del vehículo (Selector)
                     </label>
                     {modalAvailableModels.length > 0 ? (
@@ -1310,7 +1377,9 @@ export default function Quotes() {
                         model: finalModel,
                         year: finalYear,
                         chassisNumber: finalVin,
-                        vin: finalVin
+                        vin: finalVin,
+                        use: editUse,
+                        department: editDepartment
                       }
                     );
                   }

@@ -116,7 +116,7 @@ export default function HomePage() {
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
   const [year, setYear] = useState<number | string>(2023);
-  const [vehicleUse, setVehicleUse] = useState<'PARTICULAR' | 'TAXI'>('PARTICULAR');
+  const [vehicleUse, setVehicleUse] = useState<'PARTICULAR' | 'PUBLICO' | 'COMERCIAL'>('PARTICULAR');
   const [vin, setVin] = useState('');
   const [showTechDetails, setShowTechDetails] = useState(false);
   const [isCustomBrand, setIsCustomBrand] = useState(false);
@@ -196,7 +196,8 @@ export default function HomePage() {
         if (v.model) setModel(v.model);
         if (v.year) setYear(v.year);
         if (v.vin) setVin(v.vin);
-        if (v.use === 'TAXI') setVehicleUse('TAXI');
+        if (v.use === 'TAXI' || v.use === 'PUBLICO') setVehicleUse('PUBLICO');
+        if (v.use === 'COMERCIAL') setVehicleUse('COMERCIAL');
         if (v.zone) setDepartment(v.zone.toLowerCase().includes('callao') ? 'callao' : v.zone);
         setShowTechDetails(true);
         return v;
@@ -556,11 +557,12 @@ export default function HomePage() {
                         <label className="font-bold text-[#161c22] block mb-1">Uso del vehículo</label>
                         <select
                           value={vehicleUse}
-                          onChange={(e) => setVehicleUse(e.target.value as 'PARTICULAR' | 'TAXI')}
+                          onChange={(e) => setVehicleUse(e.target.value as 'PARTICULAR' | 'PUBLICO' | 'COMERCIAL')}
                           className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] bg-white text-xs font-semibold outline-none focus:border-[#486800]"
                         >
                           <option value="PARTICULAR">Particular (Personal)</option>
-                          <option value="TAXI">Taxi / Servicio Público</option>
+                          <option value="PUBLICO">Servicio público / transporte de pasajeros</option>
+                          <option value="COMERCIAL">Comercial / carga</option>
                         </select>
                       </div>
                       <div className="sm:col-span-2">
@@ -582,7 +584,7 @@ export default function HomePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[13px] font-bold text-[#161c22] mb-1.5" htmlFor="departamento">
-                    Departamento de circulación <span className="text-[#ba1a1a]">*</span>
+                    Departamento o ciudad de registro de la placa <span className="text-[#ba1a1a]">*</span>
                   </label>
                   <select
                     id="departamento"

@@ -28,7 +28,7 @@ for (const envCandidate of [
 }
 
 type QuoteSource = 'WEB' | 'MANUAL';
-type VehicleSnapshot = { brand?: string; model?: string; year?: number; color?: string; vin?: string; chassisNumber?: string };
+type VehicleSnapshot = { brand?: string; model?: string; year?: number; color?: string; vin?: string; chassisNumber?: string; use?: string; department?: string };
 type OfferDetail = {
   id: string;
   insurer: string;
@@ -52,6 +52,7 @@ type Quote = {
   plate: string;
   vehicleType: 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO';
   department: string;
+  vehicleUse?: string;
   documentType: string;
   documentNumber: string;
   startsAt: string;
@@ -122,7 +123,9 @@ function storedQuoteToApi(record: StoredQuote): Quote {
         year: record.vehicle.year || new Date().getFullYear(),
         color: record.vehicle.color || 'No informado',
         vin: record.vehicle.vin || 'No informado',
-        chassisNumber: record.vehicle.chassisNumber || 'No informado'
+        chassisNumber: record.vehicle.chassisNumber || 'No informado',
+        use: record.vehicle.use,
+        department: record.vehicle.department
       }
     : undefined;
   const holderName = record.customer
@@ -287,7 +290,7 @@ export function calculateOffers(
 ): OfferDetail[] {
   const isMototaxiTaxi =
     vehicleType === 'MOTOTAXI' &&
-    (use.toUpperCase() === 'TAXI' ||
+    (use.toUpperCase() === 'TAXI' || use.toUpperCase() === 'PUBLICO' ||
       use.toUpperCase() === 'COMERCIAL' ||
       department.toLowerCase().includes('callao'));
   const fallbackPrices = isMototaxiTaxi ? mototaxiTaxiTariffs : (tariffsByVehicle[vehicleType] || tariffsByVehicle.AUTO);
@@ -419,7 +422,9 @@ const quoteInput = z.object({
       year: z.number().int().optional(),
       color: z.string().optional(),
       vin: z.string().optional(),
-      chassisNumber: z.string().optional()
+      chassisNumber: z.string().optional(),
+      use: z.string().optional(),
+      department: z.string().optional()
     })
     .optional(),
   selectedOfferId: z.string().optional(),
@@ -459,13 +464,14 @@ app.get('/v1/insurers', async () => ({ data: insurers.map(({ id, name }) => ({ i
 
 app.get('/v1/offers', async (req, reply) => {
   const parsed = z
-    .object({
-      vehicleType: z.enum(['AUTO', 'MOTO', 'MOTOTAXI', 'VAN', 'CARGO']),
-      department: z.string().min(2).default('Lima')
+      .object({
+        vehicleType: z.enum(['AUTO', 'MOTO', 'MOTOTAXI', 'VAN', 'CARGO']),
+      department: z.string().min(2).default('Lima'),
+      use: z.string().default('PARTICULAR')
     })
     .safeParse(req.query);
   if (!parsed.success) return reply.status(400).send({ error: 'VALIDATION_ERROR', details: parsed.error.flatten() });
-  return { data: calculateOffers(parsed.data.vehicleType, parsed.data.department) };
+  return { data: calculateOffers(parsed.data.vehicleType, parsed.data.department, parsed.data.use) };
 });
 
 app.get('/v1/tariffs', async () => {
@@ -850,7 +856,8 @@ app.post('/v1/quotes', async (req, reply) => {
     return reply.status(400).send({ error: 'VALIDATION_ERROR', details: parsed.error.flatten() });
   }
 
-  const offers = calculateOffers(parsed.data.vehicleType, parsed.data.department);
+  const vehicleUse = parsed.data.vehicle?.use || 'PARTICULAR';
+  const offers = calculateOffers(parsed.data.vehicleType, parsed.data.department, vehicleUse);
   const selectedOffer = parsed.data.selectedOfferId
     ? offers.find((offer) => offer.id === parsed.data.selectedOfferId)
     : offers[0];
@@ -865,6 +872,7 @@ app.post('/v1/quotes', async (req, reply) => {
     plate: parsed.data.plate,
     vehicleType: parsed.data.vehicleType,
     department: parsed.data.department,
+    vehicleUse,
     documentType: parsed.data.documentType,
     documentNumber: parsed.data.documentNumber,
     startsAt: parsed.data.startsAt.toISOString(),
@@ -911,6 +919,7 @@ app.post('/v1/quotes', async (req, reply) => {
           where: { plate: quote.plate },
           update: {
             type: quote.vehicleType,
+            use: quote.vehicleUse || 'PARTICULAR',
             department: quote.department,
             brand: quote.vehicle?.brand,
             model: quote.vehicle?.model,
@@ -922,7 +931,7 @@ app.post('/v1/quotes', async (req, reply) => {
           create: {
             plate: quote.plate,
             type: quote.vehicleType,
-            use: 'PARTICULAR',
+            use: quote.vehicleUse || 'PARTICULAR',
             department: quote.department,
             brand: quote.vehicle?.brand,
             model: quote.vehicle?.model,
@@ -991,6 +1000,8 @@ app.post('/v1/quotes/:id/emit', async (req, reply) => {
       color?: string;
       vin?: string;
       chassisNumber?: string;
+      use?: string;
+      department?: string;
     };
   };
   const data = await loadStoredQuotes();
@@ -1089,7 +1100,9 @@ app.post('/v1/quotes/:id/emit', async (req, reply) => {
             brand: quote.vehicle.brand,
             model: quote.vehicle.model,
             year: quote.vehicle.year ? Number(quote.vehicle.year) : undefined,
-            chassisNumber: quote.vehicle.chassisNumber || quote.vehicle.vin
+            chassisNumber: quote.vehicle.chassisNumber || quote.vehicle.vin,
+            use: quote.vehicle.use || quote.vehicleUse || undefined,
+            department: quote.vehicle.department || quote.department
           }
         })
         .catch(() => {});

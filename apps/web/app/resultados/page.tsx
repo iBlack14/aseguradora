@@ -105,7 +105,7 @@ export default function ResultsPage() {
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
   const [year, setYear] = useState<number | string>(2023);
-  const [vehicleUse, setVehicleUse] = useState<'PARTICULAR' | 'TAXI'>('PARTICULAR');
+  const [vehicleUse, setVehicleUse] = useState<'PARTICULAR' | 'PUBLICO' | 'COMERCIAL'>('PARTICULAR');
   const [vin, setVin] = useState('');
   const [holderName, setHolderName] = useState('');
   const [docType, setDocType] = useState('DNI');
@@ -118,7 +118,7 @@ export default function ResultsPage() {
   const [editBrand, setEditBrand] = useState('');
   const [editModel, setEditModel] = useState('');
   const [editYear, setEditYear] = useState<number | string>(2023);
-  const [editUse, setEditUse] = useState<'PARTICULAR' | 'TAXI'>('PARTICULAR');
+  const [editUse, setEditUse] = useState<'PARTICULAR' | 'PUBLICO' | 'COMERCIAL'>('PARTICULAR');
   const [editDep, setEditDep] = useState('Lima');
   const [editVin, setEditVin] = useState('');
   const [editHolderName, setEditHolderName] = useState('');
@@ -162,7 +162,8 @@ export default function ResultsPage() {
     if (y) setYear(y);
 
     const u = (params.get('uso') || '').toUpperCase();
-    if (u === 'TAXI') setVehicleUse('TAXI');
+    if (u === 'TAXI' || u === 'PUBLICO') setVehicleUse('PUBLICO');
+    if (u === 'COMERCIAL') setVehicleUse('COMERCIAL');
 
     const s = params.get('serie');
     if (s) setVin(s);
@@ -191,7 +192,7 @@ export default function ResultsPage() {
             if (json.data.year) setYear(json.data.year);
             if (json.data.vehicleType) setVehicleType(json.data.vehicleType);
             if (json.data.vin) setVin(json.data.vin);
-            if (json.data.use === 'TAXI') setVehicleUse('TAXI');
+            if (json.data.use === 'TAXI' || json.data.use === 'PUBLICO') setVehicleUse('PUBLICO');
             if (json.data.department) setDepartment(json.data.department);
           }
         })
@@ -230,7 +231,7 @@ export default function ResultsPage() {
 
   const isMototaxiTaxi =
     vehicleType === 'MOTOTAXI' &&
-    (vehicleUse === 'TAXI' || department.toLowerCase().includes('callao'));
+    (vehicleUse === 'PUBLICO' || department.toLowerCase().includes('callao'));
 
   const isMoto = vehicleType === 'MOTO';
 
@@ -360,7 +361,7 @@ export default function ResultsPage() {
               {brand ? `${brand} ${model} (${year}) · ` : ''}Categoría: {vehicleLabel}
             </strong>
             <span className="text-[12px] text-[#434935] block">
-              Circulación: <strong>{department}</strong> · Uso: <strong>{vehicleUse === 'TAXI' ? 'Taxi / Público' : 'Particular'}</strong>
+              Circulación: <strong>{department}</strong> · Uso: <strong>{vehicleUse === 'PUBLICO' ? 'Servicio público / pasajeros' : vehicleUse === 'COMERCIAL' ? 'Comercial / carga' : 'Particular'}</strong>
               {vin ? ` · Serie: ${vin}` : ''}
             </span>
           </div>
@@ -549,11 +550,12 @@ export default function ResultsPage() {
                   <label className="font-bold text-[#161c22] block mb-1">Uso del vehículo</label>
                   <select
                     value={editUse}
-                    onChange={(e) => setEditUse(e.target.value as 'PARTICULAR' | 'TAXI')}
+                    onChange={(e) => setEditUse(e.target.value as 'PARTICULAR' | 'PUBLICO' | 'COMERCIAL')}
                     className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] text-xs font-semibold outline-none focus:border-[#486800] bg-white"
                   >
                     <option value="PARTICULAR">Particular (Uso privado)</option>
-                    <option value="TAXI">Taxi / Servicio de transporte público</option>
+                    <option value="PUBLICO">Servicio público / transporte de pasajeros</option>
+                    <option value="COMERCIAL">Comercial / carga</option>
                   </select>
                 </div>
                 <div className="sm:col-span-2">

@@ -117,7 +117,7 @@ export default function PaymentPage() {
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
   const [year, setYear] = useState<number | string>(2023);
-  const [vehicleUse, setVehicleUse] = useState<'PARTICULAR' | 'TAXI'>('PARTICULAR');
+  const [vehicleUse, setVehicleUse] = useState<'PARTICULAR' | 'PUBLICO' | 'COMERCIAL'>('PARTICULAR');
   const [vin, setVin] = useState('');
   const [customPrice, setCustomPrice] = useState<number | null>(null);
 
@@ -152,7 +152,8 @@ export default function PaymentPage() {
     if (y) setYear(y);
 
     const u = (params.get('uso') || '').toUpperCase();
-    if (u === 'TAXI') setVehicleUse('TAXI');
+    if (u === 'TAXI' || u === 'PUBLICO') setVehicleUse('PUBLICO');
+    if (u === 'COMERCIAL') setVehicleUse('COMERCIAL');
 
     const s = params.get('serie');
     if (s) setVin(s);
@@ -190,7 +191,7 @@ export default function PaymentPage() {
       setBrand('Zongshen');
       setModel('ZS');
       setYear(2017);
-      setVehicleUse('TAXI');
+      setVehicleUse('PUBLICO');
       setDepartment('Callao');
       setVin('LZSPCKLF9J1023000');
       if (!pr) setCustomPrice(295.0);
@@ -205,7 +206,7 @@ export default function PaymentPage() {
     if (customPrice && customPrice > 0) return customPrice;
     const isMototaxiTaxi =
       vehicleType === 'MOTOTAXI' &&
-      (vehicleUse === 'TAXI' || department.toLowerCase().includes('callao'));
+      (vehicleUse === 'PUBLICO' || department.toLowerCase().includes('callao'));
     if (isMototaxiTaxi) {
       const taxiPrices: Record<string, number> = {
         'la-positiva': 295.0,
@@ -251,7 +252,9 @@ export default function PaymentPage() {
         model: model || 'Estándar',
         year: Number(year) || 2023,
         vin: vin || undefined,
-        chassisNumber: vin || undefined
+        chassisNumber: vin || undefined,
+        use: vehicleUse,
+        department
       }
     };
 
@@ -549,7 +552,7 @@ export default function PaymentPage() {
               <div className="flex justify-between">
                 <dt className="text-[#434935]">Uso del vehículo:</dt>
                 <dd className="font-bold text-[#161c22]">
-                  {vehicleUse === 'TAXI' ? 'Taxi / Servicio Público' : 'Particular'}
+                  {vehicleUse === 'PUBLICO' ? 'Servicio público / pasajeros' : vehicleUse === 'COMERCIAL' ? 'Comercial / carga' : 'Particular'}
                 </dd>
               </div>
               <div className="flex justify-between">
