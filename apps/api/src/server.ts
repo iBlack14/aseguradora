@@ -141,11 +141,16 @@ function storedQuoteToApi(record: StoredQuote): Quote {
 
 async function loadStoredQuotes() {
   if (!database) return quotes;
-  const records = await database.quote.findMany({
-    include: { vehicle: true, offers: { include: { insurer: true } } },
-    orderBy: { createdAt: 'desc' }
-  });
-  return records.map(storedQuoteToApi);
+  try {
+    const records = await database.quote.findMany({
+      include: { vehicle: true, offers: { include: { insurer: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
+    return records.map(storedQuoteToApi);
+  } catch (err) {
+    app.log.warn({ err }, 'No fue posible consultar la base de datos para quotes, usando memoria local');
+    return quotes;
+  }
 }
 
 // Base tariffs by vehicle type in Peru (PEN - S/)
@@ -777,65 +782,70 @@ app.post('/v1/quotes', async (req, reply) => {
   };
 
   if (database) {
-    await database.$transaction(async (transaction) => {
-      const vehicle = await transaction.vehicle.upsert({
-        where: { plate: quote.plate },
-        update: {
-          type: quote.vehicleType,
-          department: quote.department,
-          brand: quote.vehicle?.brand,
-          model: quote.vehicle?.model,
-          year: quote.vehicle?.year,
-          color: quote.vehicle?.color,
-          vin: quote.vehicle?.vin,
-          chassisNumber: quote.vehicle?.chassisNumber
-        },
-        create: {
-          plate: quote.plate,
-          type: quote.vehicleType,
-          use: 'PARTICULAR',
-          department: quote.department,
-          brand: quote.vehicle?.brand,
-          model: quote.vehicle?.model,
-          year: quote.vehicle?.year,
-          color: quote.vehicle?.color,
-          vin: quote.vehicle?.vin,
-          chassisNumber: quote.vehicle?.chassisNumber
-        }
-      });
-      const storedQuote = await transaction.quote.create({
-        data: {
-          id: quote.id,
-          code: quote.code,
-          startsAt: new Date(quote.startsAt),
-          source: quote.source,
-          documentType: quote.documentType,
-          documentNumber: quote.documentNumber,
-          department: quote.department,
-          selectedOfferId: quote.selectedOfferId,
-          selectedPrice: quote.selectedPrice,
-          vehicleId: vehicle.id
-        }
-      });
-      for (const offer of offers) {
-        const insurer = await transaction.insurer.upsert({
-          where: { slug: offer.insurer },
-          update: { name: offer.name, logoPath: offer.logo, active: offer.available },
-          create: { slug: offer.insurer, name: offer.name, logoPath: offer.logo, active: offer.available }
-        });
-        await transaction.offer.create({
-          data: {
-            quoteId: storedQuote.id,
-            insurerId: insurer.id,
-            annualPrice: offer.price,
-            currency: offer.currency,
-            benefits: offer.extras,
-            rawResponse: JSON.parse(JSON.stringify(offer)),
-            available: offer.available
+    try {
+      await database.$transaction(async (transaction) => {
+        const vehicle = await transaction.vehicle.upsert({
+          where: { plate: quote.plate },
+          update: {
+            type: quote.vehicleType,
+            department: quote.department,
+            brand: quote.vehicle?.brand,
+            model: quote.vehicle?.model,
+            year: quote.vehicle?.year,
+            color: quote.vehicle?.color,
+            vin: quote.vehicle?.vin,
+            chassisNumber: quote.vehicle?.chassisNumber
+          },
+          create: {
+            plate: quote.plate,
+            type: quote.vehicleType,
+            use: 'PARTICULAR',
+            department: quote.department,
+            brand: quote.vehicle?.brand,
+            model: quote.vehicle?.model,
+            year: quote.vehicle?.year,
+            color: quote.vehicle?.color,
+            vin: quote.vehicle?.vin,
+            chassisNumber: quote.vehicle?.chassisNumber
           }
         });
-      }
-    });
+        const storedQuote = await transaction.quote.create({
+          data: {
+            id: quote.id,
+            code: quote.code,
+            startsAt: new Date(quote.startsAt),
+            source: quote.source,
+            documentType: quote.documentType,
+            documentNumber: quote.documentNumber,
+            department: quote.department,
+            selectedOfferId: quote.selectedOfferId,
+            selectedPrice: quote.selectedPrice,
+            vehicleId: vehicle.id
+          }
+        });
+        for (const offer of offers) {
+          const insurer = await transaction.insurer.upsert({
+            where: { slug: offer.insurer },
+            update: { name: offer.name, logoPath: offer.logo, active: offer.available },
+            create: { slug: offer.insurer, name: offer.name, logoPath: offer.logo, active: offer.available }
+          });
+          await transaction.offer.create({
+            data: {
+              quoteId: storedQuote.id,
+              insurerId: insurer.id,
+              annualPrice: offer.price,
+              currency: offer.currency,
+              benefits: offer.extras,
+              rawResponse: JSON.parse(JSON.stringify(offer)),
+              available: offer.available
+            }
+          });
+        }
+      });
+    } catch (err) {
+      app.log.warn({ err }, 'Error guardando en base de datos, almacenando cotización en memoria');
+      quotes.unshift(quote);
+    }
   } else {
     quotes.unshift(quote);
   }
@@ -884,8 +894,15 @@ app.post('/v1/orders', async (_req, reply) =>
 );
 
 const port = Number(process.env.API_PORT || 4000);
-if (database) await database.$connect();
+if (database) {
+  try {
+    await database.$connect();
+    app.log.info('Conexión con PostgreSQL establecida');
+  } catch (err) {
+    app.log.warn({ err }, 'No se pudo conectar con PostgreSQL al iniciar. Operando en memoria / modo contingencia.');
+  }
+}
 app.addHook('onClose', async () => {
-  await database?.$disconnect();
+  await database?.$disconnect().catch(() => {});
 });
 await app.listen({ port, host: '0.0.0.0' });
