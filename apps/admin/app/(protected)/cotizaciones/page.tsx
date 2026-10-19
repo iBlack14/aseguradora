@@ -117,7 +117,9 @@ export default function Quotes() {
       .finally(() => setLoading(false));
   }, []);
 
-  async function handleEmit(q: Quote, overridePrice?: number) {
+  async function handleEmit(q: Quote, overridePrice?: number, offerId?: string) {
+    const finalOfferId = offerId || q.selectedOfferId || selectedOfferId || 'la-positiva';
+    const finalPrice = overridePrice || (realPriceOverride ? parseFloat(realPriceOverride) : q.selectedPrice);
     try {
       const res = await fetch(`/api/backend/v1/quotes/${q.id}/emit`, {
         method: 'POST',
@@ -125,17 +127,21 @@ export default function Quotes() {
         body: JSON.stringify({
           advisorName,
           assistedNotes,
-          realPrice: overridePrice || (realPriceOverride ? parseFloat(realPriceOverride) : q.selectedPrice)
+          realPrice: finalPrice,
+          selectedOfferId: finalOfferId
         })
       });
       if (res.ok) {
         const result = await res.json();
-        setEmissionQuote(result.data || q);
+        const emittedData = result.data || { ...q, selectedOfferId: finalOfferId, selectedPrice: finalPrice };
+        if (!emittedData.selectedOfferId) emittedData.selectedOfferId = finalOfferId;
+        setEmissionQuote(emittedData);
       } else {
         setEmissionQuote({
           ...q,
           status: 'EMITIDA',
-          selectedPrice: overridePrice || (realPriceOverride ? parseFloat(realPriceOverride) : q.selectedPrice),
+          selectedOfferId: finalOfferId,
+          selectedPrice: finalPrice,
           policyNumber: q.policyNumber || `SOAT-2026-FALA-${Math.floor(100000 + Math.random() * 900000)}`,
           emittedAt: new Date().toISOString()
         });
@@ -144,7 +150,8 @@ export default function Quotes() {
       setEmissionQuote({
         ...q,
         status: 'EMITIDA',
-        selectedPrice: overridePrice || (realPriceOverride ? parseFloat(realPriceOverride) : q.selectedPrice),
+        selectedOfferId: finalOfferId,
+        selectedPrice: finalPrice,
         policyNumber: q.policyNumber || `SOAT-2026-FALA-${Math.floor(100000 + Math.random() * 900000)}`,
         emittedAt: new Date().toISOString()
       });
@@ -664,10 +671,20 @@ export default function Quotes() {
                       <tr
                         key={off.id}
                         style={{
-                          background: off.id === selectedQuote.selectedOfferId ? '#f4f9ea' : 'transparent'
+                          background: off.id === selectedQuote.selectedOfferId ? '#f4f9ea' : 'transparent',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => {
+                          setSelectedQuote({ ...selectedQuote, selectedOfferId: off.id, selectedPrice: off.price });
                         }}
                       >
-                        <td>
+                        <td style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <img
+                            src={`/assets/logos/${off.id}.png`}
+                            alt={off.name}
+                            style={{ height: 18, width: 45, objectFit: 'contain' }}
+                            onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                          />
                           <strong>{off.name}</strong>
                           {off.id === selectedQuote.selectedOfferId && (
                             <span
@@ -834,9 +851,17 @@ export default function Quotes() {
                   <strong style={{ display: 'block', fontSize: 13, fontFamily: 'monospace', color: '#0f172a' }}>
                     {emissionQuote.policyNumber || emissionQuote.code}
                   </strong>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--green)' }}>
-                    {emissionQuote.selectedOfferId ? emissionQuote.selectedOfferId.toUpperCase().replace('-', ' ') : 'LA POSITIVA'}
-                  </span>
+                  <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
+                    <img
+                      src={`/assets/logos/${(emissionQuote.selectedOfferId || 'la-positiva').toLowerCase().replace(/[^a-z-]/g, '')}.png`}
+                      alt="Logo aseguradora"
+                      style={{ height: 22, maxWidth: 100, objectFit: 'contain' }}
+                      onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                    />
+                    <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--green)' }}>
+                      {emissionQuote.selectedOfferId ? emissionQuote.selectedOfferId.toUpperCase().replace('-', ' ') : 'LA POSITIVA'}
+                    </span>
+                  </div>
                 </div>
               </div>
 

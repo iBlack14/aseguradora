@@ -22,6 +22,13 @@ interface QuoteForPdf {
     vin?: string;
     chassisNumber?: string;
   };
+  offers?: Array<{
+    id: string;
+    insurer?: string;
+    name: string;
+    price: number;
+    logo?: string;
+  }>;
 }
 
 const PURPLE: [number, number, number] = [89, 43, 145];
@@ -29,10 +36,71 @@ const MUTED: [number, number, number] = [158, 151, 174];
 const LIGHT: [number, number, number] = [167, 174, 178];
 const LINE: [number, number, number] = [216, 216, 222];
 
+interface InsurerMeta {
+  logoPath: string;
+  name: string;
+  emergencyPhone: string;
+  width: number;
+  height: number;
+}
+
+const INSURERS: Record<string, InsurerMeta> = {
+  'la-positiva': {
+    logoPath: '/assets/logos/la-positiva.png',
+    name: 'LA POSITIVA SEGUROS Y REASEGUROS',
+    emergencyPhone: '211 0211 LIMA Y/O PROVINCIAS',
+    width: 27.0,
+    height: 8.5
+  },
+  pacifico: {
+    logoPath: '/assets/logos/pacifico.png',
+    name: 'PACÍFICO COMPAÑÍA DE SEGUROS',
+    emergencyPhone: '(01) 415 1515 LIMA Y PROVINCIAS',
+    width: 26.0,
+    height: 8.0
+  },
+  mapfre: {
+    logoPath: '/assets/logos/mapfre.png',
+    name: 'MAPFRE PERÚ COMPAÑÍA DE SEGUROS',
+    emergencyPhone: '213 3333 LIMA / 0801 1 1133',
+    width: 27.0,
+    height: 7.2
+  },
+  interseguro: {
+    logoPath: '/assets/logos/interseguro.png',
+    name: 'INTERSEGURO COMPAÑÍA DE SEGUROS',
+    emergencyPhone: '500 0000 LIMA / 0801 0 0160',
+    width: 26.5,
+    height: 7.8
+  },
+  protecta: {
+    logoPath: '/assets/logos/protecta.png',
+    name: 'PROTECTA SECURITY COMPAÑÍA DE SEGUROS',
+    emergencyPhone: '391 3000 LIMA / 0801 1 1230',
+    width: 27.0,
+    height: 8.2
+  }
+};
+
+function normalizeInsurerKey(raw?: string): string {
+  if (!raw) return 'la-positiva';
+  const clean = raw.toLowerCase().trim();
+  if (clean.includes('positiva')) return 'la-positiva';
+  if (clean.includes('pacifico') || clean.includes('pacífico')) return 'pacifico';
+  if (clean.includes('mapfre')) return 'mapfre';
+  if (clean.includes('interseguro')) return 'interseguro';
+  if (clean.includes('protecta')) return 'protecta';
+  return clean.replace(/[^a-z0-9-]/g, '-');
+}
+
 function loadImageDataUrl(url: string): Promise<string> {
-  return fetch(url)
+  const fullUrl = typeof window !== 'undefined' && url.startsWith('/')
+    ? `${window.location.origin}${url}`
+    : url;
+
+  return fetch(fullUrl)
     .then((response) => {
-      if (!response.ok) throw new Error(`No se pudo cargar ${url}`);
+      if (!response.ok) throw new Error(`No se pudo cargar ${fullUrl}: ${response.status}`);
       return response.blob();
     })
     .then(
@@ -97,34 +165,22 @@ export async function generateAndDownloadSoatPdf(quote: QuoteForPdf) {
   end.setUTCFullYear(end.getUTCFullYear() + 1);
   const emitted = parseDate(quote.emittedAt || quote.createdAt);
   const policy = quote.policyNumber || quote.code || 'SIN-NÚMERO';
-  const insurerKey = (quote.selectedOfferId || 'la-positiva').toLowerCase();
-  const insurerNames: Record<string, string> = {
-    'la-positiva': 'LA POSITIVA SEGUROS Y REASEGUROS',
-    pacifico: 'PACÍFICO COMPAÑÍA DE SEGUROS',
-    mapfre: 'MAPFRE PERÚ',
-    interseguro: 'INTERSEGURO',
-    protecta: 'PROTECTA SECURITY'
-  };
-  const emergencyPhones: Record<string, string> = {
-    'la-positiva': '211 0211 LIMA Y/O PROVINCIAS',
-    pacifico: '(01) 415 1515',
-    mapfre: '213 3333',
-    interseguro: '500 0000',
-    protecta: '391 3000'
-  };
-  const insurer = insurerNames[insurerKey] || insurerKey.replace(/-/g, ' ').toUpperCase();
-  const emergency = emergencyPhones[insurerKey] || 'CONSULTAR A LA ASEGURADORA';
+
+  // Identificar la aseguradora elegida
+  const rawOfferId = quote.selectedOfferId || (quote.offers && quote.offers[0]?.id) || 'la-positiva';
+  const insurerKey = normalizeInsurerKey(rawOfferId);
+  const insurerInfo = INSURERS[insurerKey] || INSURERS['la-positiva'];
+
   const vin = quote.vehicle?.vin || quote.vehicle?.chassisNumber || 'NO INFORMADO';
   const vehicleClass = quote.vehicleType || 'Vehículo Menor';
   const holder = quote.holderName?.trim() || `TITULAR ${quote.documentType || 'DNI'} ${quote.documentNumber}`;
   const price = quote.selectedPrice || 0;
 
-  // Official government/MTC image supplied in the admin public assets.
+  // 1. Logo oficial del MTC en la cabecera superior izquierda
   try {
     const mtcLogo = await loadImageDataUrl('/assets/logos/mtc.png');
     doc.addImage(mtcLogo, 'PNG', 2.2, 0.15, 28.5, 9.5, undefined, 'FAST');
   } catch {
-    // Minimal fallback keeps the certificate usable if the public asset is unavailable.
     doc.setFillColor(239, 35, 35);
     doc.rect(7.7, 1.5, 5.6, 5.3, 'F');
     doc.setFont('helvetica', 'bold');
@@ -145,14 +201,34 @@ export async function generateAndDownloadSoatPdf(quote: QuoteForPdf) {
   doc.text('SOAT', pageWidth - margin, 15.5, { align: 'right' });
   divider(18.8);
 
-  heading('COMPAÑÍA DE SEGUROS', 3.5, 22.4, 5.5);
-  heading('EN CASO DE EMERGENCIAS', 34.8, 22.4, 5.2);
-  const insurerLines = doc.splitTextToSize(insurer, 27.5).slice(0, 2);
+  // 2. Sección COMPAÑÍA DE SEGUROS y EN CASO DE EMERGENCIAS
+  heading('COMPAÑÍA DE SEGUROS', 3.5, 22.2, 5.2);
+  heading('EN CASO DE EMERGENCIAS', 34.8, 22.2, 5.2);
+
+  // Cargar y dibujar el logo oficial correspondiente de la empresa aseguradora
+  let logoDrawn = false;
+  try {
+    const insurerLogo = await loadImageDataUrl(insurerInfo.logoPath);
+    doc.addImage(insurerLogo, 'PNG', 3.5, 23.4, insurerInfo.width, insurerInfo.height, undefined, 'FAST');
+    logoDrawn = true;
+  } catch (err) {
+    console.warn(`[PDF] No se pudo cargar el logo ${insurerInfo.logoPath}, usando texto:`, err);
+  }
+
+  // Si fallara la imagen, pintar el nombre legal como respaldo
+  if (!logoDrawn) {
+    const insurerLines = doc.splitTextToSize(insurerInfo.name, 27.5).slice(0, 2);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.4);
+    setColor(PURPLE);
+    doc.text(insurerLines, 3.5, 26.7, { lineHeightFactor: 1.18 });
+  }
+
+  // Teléfono oficial de emergencias 24/7 de la aseguradora
+  const emergencyLines = doc.splitTextToSize(insurerInfo.emergencyPhone, 27.2).slice(0, 2);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6.4);
   setColor(PURPLE);
-  doc.text(insurerLines, 3.5, 26.7, { lineHeightFactor: 1.18 });
-  const emergencyLines = doc.splitTextToSize(emergency, 27.2).slice(0, 2);
   doc.text(emergencyLines, 34.8, 26.7, { lineHeightFactor: 1.18 });
 
   // Diagonal security band from the model.
