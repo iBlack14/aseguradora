@@ -324,7 +324,7 @@ export function calculateOffers(
       installmentAmount: falabellaPrice.installmentAmount,
       installmentCount: falabellaPrice.installmentCount,
       currency: 'PEN',
-      badge: falabellaPrice.verified ? 'Tarifa Verificada en Vivo' : 'Gestión Falabella',
+      badge: falabellaPrice.verified ? 'Precio actualizado' : 'Gestión Falabella',
       available: true,
       extras: ['Asesoría personalizada', 'Emisión digital', 'Atención a través de Seguros Falabella']
     },
@@ -338,7 +338,7 @@ export function calculateOffers(
       installmentAmount: posPrice.installmentAmount,
       installmentCount: posPrice.installmentCount,
       currency: 'PEN',
-      badge: isMoto ? 'Tarifa Verificada en Vivo' : (posPrice.verified ? 'Tarifa Verificada en Vivo' : (isMototaxiTaxi ? 'Tarifa Oficial Taxi' : 'Más económico')),
+      badge: isMoto ? 'Precio actualizado' : (posPrice.verified ? 'Precio actualizado' : (isMototaxiTaxi ? 'Tarifa Oficial Taxi' : 'Más económico')),
       available: true,
       extras: ['Auxilio de batería 24/7', 'Servicio de grúa en ciudad (1 evento)', 'Atención médica legal inmediata']
     },
@@ -352,7 +352,7 @@ export function calculateOffers(
       installmentAmount: isMoto ? undefined : proPrice.installmentAmount,
       installmentCount: isMoto ? undefined : proPrice.installmentCount,
       currency: 'PEN',
-      badge: isMoto ? 'No disponible' : (proPrice.verified ? 'Tarifa Verificada en Vivo' : 'Precio preferente'),
+      badge: isMoto ? 'No disponible' : (proPrice.verified ? 'Precio actualizado' : 'Precio preferente'),
       available: !isMoto,
       unavailableReason: isMoto ? 'Protecta Security no cuenta con SOAT para motos lineales.' : undefined,
       extras: isMoto ? ['Excluido por política de riesgo'] : ['Asistencia telefónica 24 horas', 'Atención directa ante la SBS', 'Certificado digital verificable']
@@ -367,7 +367,7 @@ export function calculateOffers(
       installmentAmount: isMoto ? undefined : intPrice.installmentAmount,
       installmentCount: isMoto ? undefined : intPrice.installmentCount,
       currency: 'PEN',
-      badge: isMoto ? 'No disponible en web' : (intPrice.verified ? 'Tarifa Verificada en Vivo' : '100% digital'),
+      badge: isMoto ? 'No disponible en web' : (intPrice.verified ? 'Precio actualizado' : '100% digital'),
       available: !isMoto,
       unavailableReason: isMoto ? 'Interseguro no comercializa SOAT digital para motos lineales.' : undefined,
       extras: isMoto ? ['Canal web exclusivo para autos y taxis'] : ['Emisión y entrega instantánea por correo', 'Orientación médica telefónica', 'Sincronización MTC inmediata']
@@ -382,7 +382,7 @@ export function calculateOffers(
       installmentAmount: isMoto ? undefined : mapPrice.installmentAmount,
       installmentCount: isMoto ? undefined : mapPrice.installmentCount,
       currency: 'PEN',
-      badge: isMoto ? 'No disponible en web' : (mapPrice.verified ? 'Tarifa Verificada en Vivo' : 'Más asistencias'),
+      badge: isMoto ? 'No disponible en web' : (mapPrice.verified ? 'Precio actualizado' : 'Más asistencias'),
       available: !isMoto,
       unavailableReason: isMoto ? 'MAPFRE requiere evaluación presencial con asesor para motos.' : undefined,
       extras: isMoto ? ['Requiere cotización con asesor'] : ['Auxilio mecánico y cerrajería', 'Ambulancia 24 hrs en caso de emergencia', 'Descuentos exclusivos en talleres']
@@ -397,7 +397,7 @@ export function calculateOffers(
       installmentAmount: isMoto ? undefined : pacPrice.installmentAmount,
       installmentCount: isMoto ? undefined : pacPrice.installmentCount,
       currency: 'PEN',
-      badge: isMoto ? 'No disponible en web' : (pacPrice.verified ? 'Tarifa Verificada en Vivo' : 'Mejor valor'),
+      badge: isMoto ? 'No disponible en web' : (pacPrice.verified ? 'Precio actualizado' : 'Mejor valor'),
       available: !isMoto,
       unavailableReason: isMoto ? 'Pacífico no cuenta con emisión web directa para motos lineales.' : undefined,
       extras: isMoto ? ['Requiere evaluación comercial asistida'] : ['Red médica preferencial de clínicas', 'Hasta 2 grúas anuales por siniestro', '200 CMR Puntos de bienvenida']

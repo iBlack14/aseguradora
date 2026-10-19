@@ -243,7 +243,7 @@ export default function ResultsPage() {
             ...o,
             price: 630.0,
             available: true,
-            badge: 'Tarifa Verificada en Vivo',
+            badge: 'Precio actualizado',
             unavailableReason: undefined
           };
         }

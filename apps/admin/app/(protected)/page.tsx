@@ -66,8 +66,8 @@ export default function Dashboard() {
       <section className="card">
         <div className="topbar">
           <div>
-            <h2>Actividad Reciente en Tiempo Real</h2>
-            <p className="muted">Las cotizaciones realizadas en la web y en oficina se reflejan aquí de inmediato.</p>
+            <h2>Actividad Reciente</h2>
+            <p className="muted">Las cotizaciones realizadas en la web y en oficina se reflejan aquí.</p>
           </div>
           <Link href="/cotizaciones" className="table-link">
             Ver todas las cotizaciones →

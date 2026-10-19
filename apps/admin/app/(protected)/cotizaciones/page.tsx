@@ -451,7 +451,7 @@ export default function Quotes() {
             <div>
               <h2>Cotizador Interno de Emisión</h2>
               <p className="muted">
-                Ingresa la placa para consultar en tiempo real el vehículo y obtener las tarifas actualizadas para el cliente.
+                Ingresa la placa para consultar el vehículo y obtener las tarifas configuradas para el cliente.
               </p>
             </div>
           </div>
@@ -747,9 +747,9 @@ export default function Quotes() {
       <section className="card" style={{ marginTop: 24 }}>
         <div className="topbar">
           <div>
-            <h2>Bandeja de Cotizaciones en Vivo</h2>
+            <h2>Bandeja de Cotizaciones</h2>
             <p className="muted">
-              Visualiza en tiempo real las solicitudes que ingresan desde la web y las generadas por el equipo comercial.
+              Visualiza las solicitudes que ingresan desde la web y las generadas por el equipo comercial.
             </p>
           </div>
           <button className="button ghost" onClick={load}>
