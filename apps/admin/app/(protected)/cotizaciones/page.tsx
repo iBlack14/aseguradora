@@ -10,6 +10,8 @@ type OfferDetail = {
   plan: string;
   logo: string;
   price: number;
+  installmentAmount?: number;
+  installmentCount?: number;
   currency: string;
   badge: string;
   available: boolean;
@@ -94,6 +96,18 @@ const vehicleLabels = {
   CARGO: 'Carga / Pesado'
 };
 
+const insurerLabels: Record<string, string> = {
+  falabella: 'Seguros Falabella',
+  'la-positiva': 'La Positiva',
+  mapfre: 'MAPFRE',
+  interseguro: 'Interseguro',
+  pacifico: 'Pacífico',
+  protecta: 'Protecta Security'
+};
+
+type TariffEditor = { annualPrice: string; installmentAmount: string; installmentCount: string };
+type TariffResponse = { baseTariffs: Record<string, Record<string, number>>; tariffs: Array<{ insurerSlug: string; vehicleType: string; annualPrice: number; installmentAmount?: number; installmentCount?: number }> };
+
 export default function Quotes() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -110,6 +124,9 @@ export default function Quotes() {
   const [realPriceOverride, setRealPriceOverride] = useState('');
   const [advisorName, setAdvisorName] = useState('Carlos Mendoza (Asesor SBS Falabella)');
   const [assistedNotes, setAssistedNotes] = useState('');
+  const [tariffType, setTariffType] = useState<Vehicle['vehicleType']>('MOTO');
+  const [tariffDrafts, setTariffDrafts] = useState<Record<string, TariffEditor>>({});
+  const [savingTariff, setSavingTariff] = useState<string | null>(null);
 
   // States for + Nueva cotización Brand & Model selectors
   const [adminBrand, setAdminBrand] = useState('');
@@ -218,6 +235,51 @@ export default function Quotes() {
     load();
     setShowForm(new URLSearchParams(location.search).get('new') === '1');
   }, [load]);
+
+  const loadTariffs = useCallback(() => {
+    fetch('/api/backend/v1/tariffs')
+      .then((response) => response.json())
+      .then((result: TariffResponse) => {
+        const drafts: Record<string, TariffEditor> = {};
+        Object.entries(insurerLabels).forEach(([id]) => {
+          const dynamic = result.tariffs.find((item) => item.insurerSlug === id && item.vehicleType === tariffType);
+          const base = result.baseTariffs[tariffType]?.[id] || 0;
+          const count = dynamic?.installmentCount || (tariffType === 'MOTO' ? 4 : 1);
+          drafts[id] = {
+            annualPrice: String(dynamic?.annualPrice ?? base),
+            installmentAmount: String(dynamic?.installmentAmount ?? (count > 1 ? Math.max(150, base / count) : base)),
+            installmentCount: String(count)
+          };
+        });
+        setTariffDrafts(drafts);
+      })
+      .catch(() => {});
+  }, [tariffType]);
+
+  useEffect(() => { loadTariffs(); }, [loadTariffs]);
+
+  async function saveTariff(insurerSlug: string) {
+    const draft = tariffDrafts[insurerSlug];
+    if (!draft) return;
+    const annualPrice = Number(draft.annualPrice);
+    const installmentAmount = Number(draft.installmentAmount);
+    const installmentCount = Number(draft.installmentCount);
+    if (!annualPrice || annualPrice <= 0 || !installmentAmount || installmentCount < 1 || (tariffType === 'MOTO' && installmentAmount < 150)) {
+      alert(tariffType === 'MOTO' ? 'En motos la cuota mínima es S/ 150.' : 'Ingresa precios y cuotas válidos.');
+      return;
+    }
+    setSavingTariff(insurerSlug);
+    try {
+      const response = await fetch('/api/backend/v1/admin/tariffs', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ insurerSlug, vehicleType: tariffType, department: 'Lima', vehicleUse: 'PARTICULAR', annualPrice, installmentAmount, installmentCount, source: 'ADMIN' })
+      });
+      if (!response.ok) throw new Error();
+      alert('Precio actualizado correctamente.');
+      loadTariffs();
+    } catch { alert('No fue posible guardar el precio.'); }
+    finally { setSavingTariff(null); }
+  }
 
   async function lookupPlate() {
     const input = document.getElementById('plate') as HTMLInputElement;
@@ -357,6 +419,31 @@ export default function Quotes() {
           {showForm ? 'Cerrar formulario' : '+ Nueva cotización'}
         </button>
       </header>
+
+      <section className="card tariff-card">
+        <div className="topbar">
+          <div>
+            <h2>Precios por aseguradora</h2>
+            <p className="muted">Configura el precio anual y la alternativa de cuotas que verá el asesor.</p>
+          </div>
+          <select value={tariffType} onChange={(event) => setTariffType(event.target.value as Vehicle['vehicleType'])}>
+            {Object.entries(vehicleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </div>
+        <div className="tariff-grid">
+          {Object.entries(insurerLabels).map(([id, name]) => {
+            const draft = tariffDrafts[id] || { annualPrice: '', installmentAmount: '', installmentCount: '1' };
+            return <div className="tariff-row" key={id}>
+              <div className="tariff-name"><strong>{name}</strong><small>{id === 'falabella' ? 'Incluida en el catálogo Falabella' : 'Aseguradora afiliada'}</small></div>
+              <label>Precio anual<input type="number" min="1" step="0.01" value={draft.annualPrice} onChange={(event) => setTariffDrafts((current) => ({ ...current, [id]: { ...draft, annualPrice: event.target.value } }))} /></label>
+              <label>Cuota desde<input type="number" min={tariffType === 'MOTO' ? 150 : 1} step="0.01" value={draft.installmentAmount} onChange={(event) => setTariffDrafts((current) => ({ ...current, [id]: { ...draft, installmentAmount: event.target.value } }))} /></label>
+              <label>N.º cuotas<input type="number" min="1" step="1" value={draft.installmentCount} onChange={(event) => setTariffDrafts((current) => ({ ...current, [id]: { ...draft, installmentCount: event.target.value } }))} /></label>
+              <button className="button" type="button" onClick={() => saveTariff(id)} disabled={savingTariff === id}>{savingTariff === id ? 'Guardando…' : 'Guardar'}</button>
+            </div>;
+          })}
+        </div>
+        {tariffType === 'MOTO' && <p className="tariff-note">Para motos, la cuota no puede ser menor a S/ 150. Ajusta el número de cuotas según el precio acordado.</p>}
+      </section>
 
       {showForm && (
         <form className="card quote-form" onSubmit={submit}>
@@ -615,7 +702,7 @@ export default function Quotes() {
                   >
                     {offers.map((offer) => (
                       <option key={offer.id} value={offer.id}>
-                        {offer.name} - {offer.plan}
+                        {offer.name} - {offer.plan}{offer.installmentAmount && offer.installmentCount && offer.installmentCount > 1 ? ` · ${offer.installmentCount} cuotas de S/ ${offer.installmentAmount.toFixed(2)}` : ''}
                       </option>
                     ))}
                   </select>
@@ -624,6 +711,9 @@ export default function Quotes() {
                 <div className="selected-price-result">
                   <span>Precio de la aseguradora seleccionada</span>
                   <strong>S/ {(selectedFinalPrice || 0).toFixed(2)}</strong>
+                  {selectedOffer?.installmentAmount && selectedOffer.installmentCount && selectedOffer.installmentCount > 1 && (
+                    <small>{selectedOffer.installmentCount} cuotas de S/ {selectedOffer.installmentAmount.toFixed(2)}</small>
+                  )}
                 </div>
 
                 <label>
@@ -854,7 +944,8 @@ export default function Quotes() {
                       <th>Aseguradora</th>
                       <th>Plan</th>
                       <th>Beneficio Destacado</th>
-                      <th>Precio Anual</th>
+                        <th>Precio Anual</th>
+                        <th>Cuotas</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -897,6 +988,7 @@ export default function Quotes() {
                         <td>{off.plan}</td>
                         <td>{off.extras[0] || 'Asistencia en ruta'}</td>
                         <td className="price-pill">S/ {off.price.toFixed(2)}</td>
+                        <td>{off.installmentAmount && off.installmentCount && off.installmentCount > 1 ? `${off.installmentCount} × S/ ${off.installmentAmount.toFixed(2)}` : 'Pago único'}</td>
                       </tr>
                     ))}
                   </tbody>

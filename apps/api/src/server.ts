@@ -36,6 +36,8 @@ type OfferDetail = {
   plan: string;
   logo: string;
   price: number;
+  installmentAmount?: number;
+  installmentCount?: number;
   currency: string;
   badge: string;
   available: boolean;
@@ -165,6 +167,7 @@ async function loadStoredQuotes() {
 // Base tariffs by vehicle type in Peru (PEN - S/)
 const tariffsByVehicle: Record<'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO', Record<string, number>> = {
   AUTO: {
+    falabella: 65.0,
     'la-positiva': 65.0,
     mapfre: 68.0,
     interseguro: 32.0,
@@ -172,6 +175,7 @@ const tariffsByVehicle: Record<'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO', R
     protecta: 62.0
   },
   MOTO: {
+    falabella: 630.0,
     'la-positiva': 630.0,
     mapfre: 645.0,
     interseguro: 610.0,
@@ -179,6 +183,7 @@ const tariffsByVehicle: Record<'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO', R
     protecta: 590.0
   },
   MOTOTAXI: {
+    falabella: 120.0,
     'la-positiva': 120.0,
     mapfre: 135.0,
     interseguro: 128.0,
@@ -186,6 +191,7 @@ const tariffsByVehicle: Record<'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO', R
     protecta: 115.0
   },
   VAN: {
+    falabella: 130.0,
     'la-positiva': 130.0,
     mapfre: 145.0,
     interseguro: 138.0,
@@ -193,6 +199,7 @@ const tariffsByVehicle: Record<'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO', R
     protecta: 125.0
   },
   CARGO: {
+    falabella: 210.0,
     'la-positiva': 210.0,
     mapfre: 235.0,
     interseguro: 225.0,
@@ -216,6 +223,8 @@ export type DynamicTariff = {
   vehicleUse: string;
   department: string;
   annualPrice: number;
+  installmentAmount?: number;
+  installmentCount?: number;
   source: string;
   updatedAt: string;
   notes?: string;
@@ -250,6 +259,8 @@ function loadScraperCacheTariffs() {
                 vehicleUse: (use || 'PARTICULAR').toUpperCase(),
                 department: dept || 'Lima',
                 annualPrice: Number(offer.price),
+                installmentAmount: offer.installmentAmount ? Number(offer.installmentAmount) : undefined,
+                installmentCount: offer.installmentCount ? Number(offer.installmentCount) : undefined,
                 source: `SCRAPER:${offer.confidence || 'LIVE'}`,
                 updatedAt: content.updatedAt || new Date().toISOString(),
                 notes: offer.source || 'Caché Playwright'
@@ -281,14 +292,16 @@ export function calculateOffers(
       department.toLowerCase().includes('callao'));
   const fallbackPrices = isMototaxiTaxi ? mototaxiTaxiTariffs : (tariffsByVehicle[vehicleType] || tariffsByVehicle.AUTO);
 
-  const getPrice = (insurerSlug: string): { price: number; verified: boolean } => {
+  const getPrice = (insurerSlug: string): { price: number; verified: boolean; installmentAmount?: number; installmentCount?: number } => {
     const specificKey = tariffKey(insurerSlug, vehicleType, department, use);
     const fallbackKey = tariffKey(insurerSlug, vehicleType, 'Lima', 'PARTICULAR');
     const dynamic = dynamicTariffs.get(specificKey) || dynamicTariffs.get(fallbackKey);
     if (dynamic && dynamic.annualPrice > 0) {
-      return { price: dynamic.annualPrice, verified: true };
+      return { price: dynamic.annualPrice, verified: true, installmentAmount: dynamic.installmentAmount, installmentCount: dynamic.installmentCount };
     }
-    return { price: fallbackPrices[insurerSlug] ?? 65.0, verified: false };
+    const price = fallbackPrices[insurerSlug] ?? 65.0;
+    const installmentCount = vehicleType === 'MOTO' ? 4 : 1;
+    return { price, verified: false, installmentCount, installmentAmount: installmentCount > 1 ? Math.max(150, price / installmentCount) : price };
   };
 
   const posPrice = getPrice('la-positiva');
@@ -296,10 +309,25 @@ export function calculateOffers(
   const intPrice = getPrice('interseguro');
   const pacPrice = getPrice('pacifico');
   const proPrice = getPrice('protecta');
+  const falabellaPrice = getPrice('falabella');
 
   const isMoto = vehicleType === 'MOTO';
 
   return [
+    {
+      id: 'falabella',
+      insurer: 'falabella',
+      name: 'Seguros Falabella',
+      plan: 'SOAT Digital Falabella',
+      logo: 'seguros-falabella.png',
+      price: falabellaPrice.price,
+      installmentAmount: falabellaPrice.installmentAmount,
+      installmentCount: falabellaPrice.installmentCount,
+      currency: 'PEN',
+      badge: falabellaPrice.verified ? 'Tarifa Verificada en Vivo' : 'Gestión Falabella',
+      available: true,
+      extras: ['Asesoría personalizada', 'Emisión digital', 'Atención a través de Seguros Falabella']
+    },
     {
       id: 'la-positiva',
       insurer: 'la-positiva',
@@ -307,6 +335,8 @@ export function calculateOffers(
       plan: 'SOAT Digital Tradicional',
       logo: 'la-positiva.png',
       price: posPrice.price,
+      installmentAmount: posPrice.installmentAmount,
+      installmentCount: posPrice.installmentCount,
       currency: 'PEN',
       badge: isMoto ? 'Tarifa Verificada en Vivo' : (posPrice.verified ? 'Tarifa Verificada en Vivo' : (isMototaxiTaxi ? 'Tarifa Oficial Taxi' : 'Más económico')),
       available: true,
@@ -319,6 +349,8 @@ export function calculateOffers(
       plan: 'SOAT Protecta Flex',
       logo: 'protecta.png',
       price: isMoto ? 0 : proPrice.price,
+      installmentAmount: isMoto ? undefined : proPrice.installmentAmount,
+      installmentCount: isMoto ? undefined : proPrice.installmentCount,
       currency: 'PEN',
       badge: isMoto ? 'No disponible' : (proPrice.verified ? 'Tarifa Verificada en Vivo' : 'Precio preferente'),
       available: !isMoto,
@@ -332,6 +364,8 @@ export function calculateOffers(
       plan: 'SOAT Digital Express',
       logo: 'interseguro.png',
       price: isMoto ? 0 : intPrice.price,
+      installmentAmount: isMoto ? undefined : intPrice.installmentAmount,
+      installmentCount: isMoto ? undefined : intPrice.installmentCount,
       currency: 'PEN',
       badge: isMoto ? 'No disponible en web' : (intPrice.verified ? 'Tarifa Verificada en Vivo' : '100% digital'),
       available: !isMoto,
@@ -345,6 +379,8 @@ export function calculateOffers(
       plan: 'SOAT Conectado MAPFRE',
       logo: 'mapfre.png',
       price: isMoto ? 0 : mapPrice.price,
+      installmentAmount: isMoto ? undefined : mapPrice.installmentAmount,
+      installmentCount: isMoto ? undefined : mapPrice.installmentCount,
       currency: 'PEN',
       badge: isMoto ? 'No disponible en web' : (mapPrice.verified ? 'Tarifa Verificada en Vivo' : 'Más asistencias'),
       available: !isMoto,
@@ -358,6 +394,8 @@ export function calculateOffers(
       plan: 'SOAT Pacífico Digital Plus',
       logo: 'pacifico.png',
       price: isMoto ? 0 : pacPrice.price,
+      installmentAmount: isMoto ? undefined : pacPrice.installmentAmount,
+      installmentCount: isMoto ? undefined : pacPrice.installmentCount,
       currency: 'PEN',
       badge: isMoto ? 'No disponible en web' : (pacPrice.verified ? 'Tarifa Verificada en Vivo' : 'Mejor valor'),
       available: !isMoto,
@@ -409,6 +447,7 @@ app.get('/health', async (_req, reply) => {
 });
 
 const insurers = [
+  { id: 'falabella', name: 'Seguros Falabella', env: 'FALABELLA' },
   { id: 'la-positiva', name: 'La Positiva', env: 'LA_POSITIVA' },
   { id: 'mapfre', name: 'MAPFRE', env: 'MAPFRE' },
   { id: 'interseguro', name: 'Interseguro', env: 'INTERSEGURO' },
@@ -448,19 +487,25 @@ app.post('/v1/admin/tariffs', async (req, reply) => {
   let updated = 0;
 
   for (const item of items as any[]) {
-    if (!item.insurerSlug || !item.annualPrice) continue;
+    if (!item.insurerSlug || !item.annualPrice || Number(item.annualPrice) <= 0) continue;
+    const vehicleType = String(item.vehicleType || 'AUTO').toUpperCase();
+    const installmentCount = Math.max(1, Math.floor(Number(item.installmentCount || (vehicleType === 'MOTO' ? 4 : 1))));
+    const requestedInstallment = Number(item.installmentAmount || Number(item.annualPrice) / installmentCount);
+    const installmentAmount = vehicleType === 'MOTO' ? Math.max(150, requestedInstallment) : Math.max(0, requestedInstallment);
     const key = tariffKey(
       item.insurerSlug,
-      item.vehicleType || 'AUTO',
+      vehicleType,
       item.department || 'Lima',
       item.vehicleUse || 'PARTICULAR'
     );
     dynamicTariffs.set(key, {
       insurerSlug: item.insurerSlug,
-      vehicleType: String(item.vehicleType || 'AUTO').toUpperCase(),
+      vehicleType,
       vehicleUse: String(item.vehicleUse || 'PARTICULAR').toUpperCase(),
       department: String(item.department || 'Lima'),
       annualPrice: Number(item.annualPrice),
+      installmentAmount,
+      installmentCount,
       source: String(item.source || 'SCRAPER'),
       updatedAt: new Date().toISOString(),
       notes: item.notes ? String(item.notes) : undefined
