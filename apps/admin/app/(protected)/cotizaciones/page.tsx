@@ -38,6 +38,9 @@ type Quote = {
   assistedNotes?: string;
   emittedAt?: string;
   policyNumber?: string;
+  paymentMethod?: 'CASH' | 'INSTALLMENTS';
+  installmentCount?: number;
+  installmentAmount?: number;
   vehicle?: {
     brand?: string;
     model?: string;
@@ -157,6 +160,9 @@ export default function Quotes() {
   const [editDepartment, setEditDepartment] = useState('Lima');
   const [editOfferId, setEditOfferId] = useState('la-positiva');
   const [editPrice, setEditPrice] = useState('65.00');
+  const [editPaymentMethod, setEditPaymentMethod] = useState<'CASH' | 'INSTALLMENTS'>('CASH');
+  const [editInstallmentCount, setEditInstallmentCount] = useState('4');
+  const [editInstallmentAmount, setEditInstallmentAmount] = useState('');
   const [editCustomBrand, setEditCustomBrand] = useState(false);
   const [editCustomModel, setEditCustomModel] = useState(false);
 
@@ -175,6 +181,11 @@ export default function Quotes() {
     setEditDepartment(q.vehicle?.department || q.department || 'Lima');
     setEditOfferId(q.selectedOfferId || 'la-positiva');
     setEditPrice(q.selectedPrice ? q.selectedPrice.toFixed(2) : '65.00');
+    const selectedOffer = q.offers?.find((offer) => offer.id === q.selectedOfferId);
+    const hasInstallments = Boolean(selectedOffer?.installmentCount && selectedOffer.installmentCount > 1);
+    setEditPaymentMethod(hasInstallments ? 'INSTALLMENTS' : 'CASH');
+    setEditInstallmentCount(String(selectedOffer?.installmentCount || 4));
+    setEditInstallmentAmount(selectedOffer?.installmentAmount?.toFixed(2) || '');
     setEditCustomBrand(false);
     setEditCustomModel(false);
   }
@@ -193,7 +204,8 @@ export default function Quotes() {
     overridePrice?: number,
     offerId?: string,
     updatedHolderName?: string,
-    updatedVehicle?: Partial<NonNullable<Quote['vehicle']>>
+    updatedVehicle?: Partial<NonNullable<Quote['vehicle']>>,
+    payment?: { method: 'CASH' | 'INSTALLMENTS'; installmentCount?: number; installmentAmount?: number }
   ) {
     if (q.status === 'EMITIDA' || emitting) return;
     const finalOfferId = offerId || q.selectedOfferId || selectedOfferId || 'la-positiva';
@@ -212,7 +224,10 @@ export default function Quotes() {
           realPrice: finalPrice,
           selectedOfferId: finalOfferId,
           holderName: finalHolderName,
-          vehicle: finalVehicle
+          vehicle: finalVehicle,
+          paymentMethod: payment?.method,
+          installmentCount: payment?.installmentCount,
+          installmentAmount: payment?.installmentAmount
         })
       });
       if (res.ok) {
@@ -227,6 +242,9 @@ export default function Quotes() {
         if (!emittedData.selectedOfferId) emittedData.selectedOfferId = finalOfferId;
         if (!emittedData.holderName && finalHolderName) emittedData.holderName = finalHolderName;
         if (!emittedData.vehicle && finalVehicle) emittedData.vehicle = finalVehicle;
+        emittedData.paymentMethod = payment?.method;
+        emittedData.installmentCount = payment?.installmentCount;
+        emittedData.installmentAmount = payment?.installmentAmount;
         setEmissionQuote(emittedData);
         setQuotes((currentQuotes) => currentQuotes.map((currentQuote) =>
           currentQuote.id === emittedData.id ? emittedData : currentQuote
@@ -686,7 +704,7 @@ export default function Quotes() {
               <div>
                 <span className="vehicle-kicker">Vehículo detectado</span>
                 <strong>
-                  {vehicle.brand} {vehicle.model}
+                  {adminBrand || vehicle.brand} {adminModel || vehicle.model}
                 </strong>
               </div>
               <div>
@@ -695,7 +713,7 @@ export default function Quotes() {
               </div>
               <div>
                 <span>Año de fabricación</span>
-                <strong>{vehicle.year || 'No informado'}</strong>
+                <strong>{adminYear || vehicle.year || 'No informado'}</strong>
               </div>
               <div>
                 <span>Color</span>
@@ -703,7 +721,7 @@ export default function Quotes() {
               </div>
               <div>
                 <span>N.º de Chasis</span>
-                <strong>{vehicle.chassisNumber}</strong>
+                <strong>{adminVin || vehicle.vin || vehicle.chassisNumber || 'No informado'}</strong>
               </div>
               <small>
                 {vehicle.source === 'VERIFIK'
@@ -747,7 +765,7 @@ export default function Quotes() {
                   <span>Precio de la aseguradora seleccionada</span>
                   <strong>S/ {(selectedFinalPrice || 0).toFixed(2)}</strong>
                   <label style={{ display: 'block', marginTop: 8, fontSize: 11, fontWeight: 700 }}>
-                    Precio manual final (opcional)
+                    Precio final (opcional)
                     <input
                       type="number"
                       min="1"
@@ -822,7 +840,6 @@ export default function Quotes() {
                   <th>Vehículo</th>
                   <th>Documento</th>
                   <th>Aseguradora / Tarifa</th>
-                  <th>Canal</th>
                   <th>Estado</th>
                   <th>Fecha</th>
                   <th>Acciones</th>
@@ -859,11 +876,6 @@ export default function Quotes() {
                       <small style={{ textTransform: 'capitalize' }}>
                         {q.selectedOfferId ? q.selectedOfferId.replace('-', ' ') : 'Oferta base'}
                       </small>
-                    </td>
-                    <td data-label="Canal">
-                      <span className={`source ${q.source.toLowerCase()}`}>
-                        {q.source === 'WEB' ? 'Web Pública' : 'Gestión Interna'}
-                      </span>
                     </td>
                     <td data-label="Estado">
                       {q.status === 'EMITIDA' ? (
@@ -969,12 +981,6 @@ export default function Quotes() {
                 </strong>
               </div>
               <div className="detail-item">
-                <span>Canal de ingreso:</span>
-                <strong style={{ color: selectedQuote.source === 'WEB' ? '#175cd3' : '#7540aa' }}>
-                  {selectedQuote.source === 'WEB' ? 'Web Pública de Clientes' : 'Asesor Comercial'}
-                </strong>
-              </div>
-              <div className="detail-item">
                 <span>Tarifa seleccionada:</span>
                 <strong style={{ fontSize: 16, color: 'var(--green)' }}>
                   S/ {selectedQuote.selectedPrice ? selectedQuote.selectedPrice.toFixed(2) : '65.00'}
@@ -1006,6 +1012,10 @@ export default function Quotes() {
                         onClick={() => {
                           setEditOfferId(off.id);
                           setEditPrice(off.price.toFixed(2));
+                          const hasInstallments = Boolean(off.installmentCount && off.installmentCount > 1);
+                          setEditPaymentMethod(hasInstallments ? 'INSTALLMENTS' : 'CASH');
+                          setEditInstallmentCount(String(off.installmentCount || 4));
+                          setEditInstallmentAmount(off.installmentAmount?.toFixed(2) || '');
                           setSelectedQuote({ ...selectedQuote, selectedOfferId: off.id, selectedPrice: off.price });
                         }}
                       >
@@ -1317,26 +1327,41 @@ export default function Quotes() {
                     />
                   </div>
 
-                  <div>
-                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
-                      Tarifa final a emitir (S/)
+                </div>
+
+                <div className="payment-config">
+                  <div className="payment-config-heading">
+                    <div>
+                      <strong>Forma de pago</strong>
+                      <span>Confirma cómo pagará el cliente antes de emitir.</span>
+                    </div>
+                    <div className="payment-methods" role="radiogroup" aria-label="Forma de pago">
+                      <button type="button" className={editPaymentMethod === 'CASH' ? 'active' : ''} onClick={() => setEditPaymentMethod('CASH')}>
+                        Al contado
+                      </button>
+                      <button type="button" className={editPaymentMethod === 'INSTALLMENTS' ? 'active' : ''} onClick={() => setEditPaymentMethod('INSTALLMENTS')}>
+                        En cuotas
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="payment-fields">
+                    <label>
+                      Precio total (S/)
+                      <input type="number" min="1" step="0.01" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} />
                     </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={editPrice}
-                      onChange={(e) => setEditPrice(e.target.value)}
-                      style={{
-                        width: '100%',
-                        height: 38,
-                        padding: '0 10px',
-                        borderRadius: 6,
-                        border: '1.5px solid var(--green)',
-                        fontSize: 13,
-                        fontWeight: 800,
-                        color: 'var(--green)'
-                      }}
-                    />
+                    {editPaymentMethod === 'INSTALLMENTS' && (
+                      <>
+                        <label>
+                          N.º de cuotas
+                          <input type="number" min="2" max="24" step="1" value={editInstallmentCount} onChange={(e) => setEditInstallmentCount(e.target.value)} />
+                        </label>
+                        <label>
+                          Monto por cuota (S/)
+                          <input type="number" min="1" step="0.01" value={editInstallmentAmount} onChange={(e) => setEditInstallmentAmount(e.target.value)} />
+                        </label>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1361,6 +1386,12 @@ export default function Quotes() {
                       return;
                     }
                     const finalP = parseFloat(editPrice) || q.selectedPrice || 65;
+                    const installmentCount = Number(editInstallmentCount);
+                    const installmentAmount = Number(editInstallmentAmount);
+                    if (editPaymentMethod === 'INSTALLMENTS' && (!Number.isInteger(installmentCount) || installmentCount < 2 || !installmentAmount || installmentAmount <= 0)) {
+                      alert('Ingresa una cantidad de cuotas y un monto por cuota válidos.');
+                      return;
+                    }
                     const finalBrand = editBrand || q.vehicle?.brand || 'Vehículo';
                     const finalModel = editModel || q.vehicle?.model || 'Estándar';
                     const finalYear = Number(editYear) || q.vehicle?.year || 2023;
@@ -1380,7 +1411,10 @@ export default function Quotes() {
                         vin: finalVin,
                         use: editUse,
                         department: editDepartment
-                      }
+                      },
+                      editPaymentMethod === 'INSTALLMENTS'
+                        ? { method: 'INSTALLMENTS', installmentCount, installmentAmount }
+                        : { method: 'CASH' }
                     );
                   }
                 }}

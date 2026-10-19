@@ -458,7 +458,7 @@ export default function HomePage() {
                               {bName}
                             </option>
                           ))}
-                          <option value="__OTRA__">Otra marca (escribir manualmente)...</option>
+                          <option value="__OTRA__">Otra marca...</option>
                         </select>
 
                         {/* Entrada manual para otra marca */}
@@ -521,7 +521,7 @@ export default function HomePage() {
                                   {mName}
                                 </option>
                               ))}
-                              <option value="__OTRO__">Otro modelo (escribir manualmente)...</option>
+                              <option value="__OTRO__">Otro modelo...</option>
                             </select>
                             {(isCustomModel || (model && !availableModels.includes(model))) && (
                               <input

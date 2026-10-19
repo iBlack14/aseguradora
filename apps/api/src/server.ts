@@ -68,6 +68,9 @@ type Quote = {
   holderName?: string;
   emittedAt?: string;
   policyNumber?: string;
+  paymentMethod?: 'CASH' | 'INSTALLMENTS';
+  installmentCount?: number;
+  installmentAmount?: number;
 };
 
 const app = Fastify({ logger: true, trustProxy: true });
@@ -1003,6 +1006,9 @@ app.post('/v1/quotes/:id/emit', async (req, reply) => {
       use?: string;
       department?: string;
     };
+    paymentMethod?: 'CASH' | 'INSTALLMENTS';
+    installmentCount?: number;
+    installmentAmount?: number;
   };
   const data = await loadStoredQuotes();
   const quote = data.find((q) => q.id === id || q.code === id);
@@ -1030,6 +1036,9 @@ app.post('/v1/quotes/:id/emit', async (req, reply) => {
   if (body.vehicle) {
     quote.vehicle = { ...(quote.vehicle || {}), ...body.vehicle };
   }
+  if (body.paymentMethod) quote.paymentMethod = body.paymentMethod;
+  quote.installmentCount = body.paymentMethod === 'INSTALLMENTS' ? body.installmentCount : undefined;
+  quote.installmentAmount = body.paymentMethod === 'INSTALLMENTS' ? body.installmentAmount : undefined;
 
   if (database) {
     let customerId: string | undefined;

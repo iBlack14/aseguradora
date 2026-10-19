@@ -87,7 +87,6 @@ export default function Dashboard() {
                 <th>Código</th>
                 <th>Vehículo</th>
                 <th>Tarifa SOAT</th>
-                <th>Canal</th>
                 <th>Estado</th>
                 <th>Fecha</th>
               </tr>
@@ -107,11 +106,6 @@ export default function Dashboard() {
                   <td data-label="Tarifa SOAT">
                     <span className="price-pill">
                       S/ {q.selectedPrice ? q.selectedPrice.toFixed(2) : '65.00'}
-                    </span>
-                  </td>
-                  <td data-label="Canal">
-                    <span className={`source ${q.source.toLowerCase()}`}>
-                      {q.source === 'WEB' ? 'Web Pública' : 'Gestión Interna'}
                     </span>
                   </td>
                   <td data-label="Estado">
