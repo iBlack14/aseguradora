@@ -46,8 +46,8 @@ const fallbackCatalog: Record<string, DetectedVehicle> = {
     use: 'TAXI',
     zone: 'callao'
   },
-  '1274-UP': { brand: 'Suzuki', model: 'GSX-R150 ABS', year: 2026, color: 'Negro', vehicleType: 'MOTO', plate: '1274-UP', minPrice: 630.0 },
-  '1274UP': { brand: 'Suzuki', model: 'GSX-R150 ABS', year: 2026, color: 'Negro', vehicleType: 'MOTO', plate: '1274-UP', minPrice: 630.0 },
+  '0000-AA': { brand: 'Suzuki', model: 'GSX-R150 ABS', year: 2020, color: 'Negro', vehicleType: 'MOTO', plate: '0000-AA', minPrice: 630.0 },
+  '0000AA': { brand: 'Suzuki', model: 'GSX-R150 ABS', year: 2020, color: 'Negro', vehicleType: 'MOTO', plate: '0000-AA', minPrice: 630.0 },
   'ABC-123': { brand: 'Toyota', model: 'Corolla 1.8 XEi', year: 2023, color: 'Gris Oscuro', vehicleType: 'AUTO', plate: 'ABC-123', minPrice: 32.0 },
   'ABC123': { brand: 'Toyota', model: 'Corolla 1.8 XEi', year: 2023, color: 'Gris Oscuro', vehicleType: 'AUTO', plate: 'ABC-123', minPrice: 32.0 },
   'AMY-477': { brand: 'BMW', model: '118i', year: 2013, color: 'Blanco', vehicleType: 'AUTO', plate: 'AMY-477', minPrice: 32.0, vin: 'WBA1A3104EJ681960' },
@@ -70,7 +70,7 @@ const popularBrandsByType: Record<VehicleType, string[]> = {
 
 const vehicleTabs: { type: VehicleType; label: string; icon: string; placeholder: string }[] = [
   { type: 'AUTO', label: 'Auto / Camioneta', icon: 'directions_car', placeholder: 'ABC-123' },
-  { type: 'MOTO', label: 'Moto', icon: 'two_wheeler', placeholder: '1274-UP' },
+  { type: 'MOTO', label: 'Moto', icon: 'two_wheeler', placeholder: '0000-AA' },
   { type: 'MOTOTAXI', label: 'Mototaxi', icon: 'electric_rickshaw', placeholder: '6543-2B' },
   { type: 'VAN', label: 'Van', icon: 'airport_shuttle', placeholder: 'F3B-842' },
   { type: 'CARGO', label: 'Carga / Pesado', icon: 'local_shipping', placeholder: 'T8K-912' }
@@ -538,7 +538,7 @@ export default function HomePage() {
                             type="text"
                             value={model}
                             onChange={(e) => setModel(e.target.value)}
-                            placeholder="Ej. ZS, Corolla, Torito RE"
+                            placeholder="Escribe el modelo"
                             className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] bg-white text-xs font-semibold outline-none focus:border-[#486800]"
                           />
                         )}
@@ -549,7 +549,7 @@ export default function HomePage() {
                           type="number"
                           value={year}
                           onChange={(e) => setYear(e.target.value)}
-                          placeholder="Ej. 2017"
+                          placeholder="Año de fabricación"
                           className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] bg-white text-xs font-semibold outline-none focus:border-[#486800]"
                         />
                       </div>
@@ -571,7 +571,7 @@ export default function HomePage() {
                           type="text"
                           value={vin}
                           onChange={(e) => setVin(e.target.value.toUpperCase())}
-                          placeholder="Ej. LZSPCKLF9J1023000"
+                          placeholder="Ingresa el chasis o VIN"
                           className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] bg-white text-xs font-semibold outline-none uppercase font-mono focus:border-[#486800]"
                         />
                       </div>
@@ -646,7 +646,7 @@ export default function HomePage() {
                     name="holderName"
                     type="text"
                     required
-                    placeholder="Ej. Juan Carlos Pérez Gómez"
+                    placeholder="Ingresa nombres y apellidos"
                     value={holderName}
                     onChange={(e) => setHolderName(e.target.value)}
                     className="w-full h-12 pl-10 pr-3.5 rounded-xl border border-[#dde3eb] bg-white text-[#161c22] text-sm font-semibold uppercase outline-none focus:border-[#486800] focus:ring-4 focus:ring-[#8bc500]/25 transition-all"

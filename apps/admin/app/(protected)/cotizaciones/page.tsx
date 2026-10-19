@@ -61,7 +61,7 @@ type Vehicle = {
   color: string;
   vin: string;
   chassisNumber: string;
-  source: 'VERIFIK' | 'PROTOTYPE';
+  source: 'VERIFIK' | 'PADRON' | 'MANUAL_ENTRY';
   vehicleType: 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO';
   use?: string;
   department?: string;
@@ -129,7 +129,7 @@ export default function Quotes() {
   const [emitting, setEmitting] = useState(false);
   const [copiedPlate, setCopiedPlate] = useState(false);
   const [realPriceOverride, setRealPriceOverride] = useState('');
-  const [advisorName, setAdvisorName] = useState('Carlos Mendoza (Asesor SBS Falabella)');
+  const [advisorName, setAdvisorName] = useState('Asesor de operaciones');
   const [assistedNotes, setAssistedNotes] = useState('');
   const [tariffType, setTariffType] = useState<Vehicle['vehicleType']>('MOTO');
   const [tariffUse, setTariffUse] = useState('PARTICULAR');
@@ -456,39 +456,6 @@ export default function Quotes() {
         </button>
       </header>
 
-      <section className="card tariff-card">
-        <div className="topbar">
-          <div>
-            <h2>Precios por aseguradora</h2>
-            <p className="muted">Configura el precio anual y la alternativa de cuotas que verá el asesor.</p>
-          </div>
-          <select value={tariffType} onChange={(event) => setTariffType(event.target.value as Vehicle['vehicleType'])}>
-            {Object.entries(vehicleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-          </select>
-          <select value={tariffUse} onChange={(event) => setTariffUse(event.target.value)}>
-            <option value="PARTICULAR">Particular</option>
-            <option value="PUBLICO">Servicio público / pasajeros</option>
-            <option value="COMERCIAL">Comercial / carga</option>
-          </select>
-          <select value={tariffDepartment} onChange={(event) => setTariffDepartment(event.target.value)}>
-            {departments.map((dep) => <option key={dep} value={dep}>{dep}</option>)}
-          </select>
-        </div>
-        <div className="tariff-grid">
-          {Object.entries(insurerLabels).map(([id, name]) => {
-            const draft = tariffDrafts[id] || { annualPrice: '', installmentAmount: '', installmentCount: '1' };
-            return <div className="tariff-row" key={id}>
-              <div className="tariff-name"><strong>{name}</strong><small>{id === 'falabella' ? 'Incluida en el catálogo Falabella' : 'Aseguradora afiliada'}</small></div>
-              <label>Precio anual<input type="number" min="1" step="0.01" value={draft.annualPrice} onChange={(event) => setTariffDrafts((current) => ({ ...current, [id]: { ...draft, annualPrice: event.target.value } }))} /></label>
-              <label>Cuota desde<input type="number" min={tariffType === 'MOTO' ? 150 : 1} step="0.01" value={draft.installmentAmount} onChange={(event) => setTariffDrafts((current) => ({ ...current, [id]: { ...draft, installmentAmount: event.target.value } }))} /></label>
-              <label>N.º cuotas<input type="number" min="1" step="1" value={draft.installmentCount} onChange={(event) => setTariffDrafts((current) => ({ ...current, [id]: { ...draft, installmentCount: event.target.value } }))} /></label>
-              <button className="button" type="button" onClick={() => saveTariff(id)} disabled={savingTariff === id}>{savingTariff === id ? 'Guardando…' : 'Guardar'}</button>
-            </div>;
-          })}
-        </div>
-        {tariffType === 'MOTO' && <p className="tariff-note">Para motos, la cuota no puede ser menor a S/ 150. Ajusta el número de cuotas según el precio acordado.</p>}
-      </section>
-
       {showForm && (
         <form className="card quote-form" onSubmit={submit}>
           <div className="form-heading">
@@ -509,7 +476,7 @@ export default function Quotes() {
                   name="plate"
                   required
                   maxLength={9}
-                  placeholder="ABC-123 o 1274-UP"
+                  placeholder="Ingresa la placa"
                    onChange={() => {
                      setVehicle(null);
                      setOffers([]);
@@ -573,7 +540,7 @@ export default function Quotes() {
 
             <label>
               Número de documento
-              <input name="documentNumber" required minLength={8} maxLength={11} placeholder="Ej. 70912870" />
+              <input name="documentNumber" required minLength={8} maxLength={11} placeholder="Ingresa el número de documento" />
             </label>
 
             <label>
@@ -581,7 +548,7 @@ export default function Quotes() {
               <input
                 name="holderName"
                 required
-                placeholder="Ej. Juan Carlos Pérez Gómez"
+                placeholder="Ingresa nombres y apellidos"
                 style={{ textTransform: 'uppercase' }}
               />
             </label>
@@ -621,7 +588,7 @@ export default function Quotes() {
                 <input
                   value={adminBrand}
                   onChange={(e) => setAdminBrand(e.target.value)}
-                  placeholder="Ej. Bajaj, Zongshen, Toyota"
+                  placeholder="Escribe la marca"
                 />
               </label>
             )}
@@ -653,7 +620,7 @@ export default function Quotes() {
                 <input
                   value={adminModel}
                   onChange={(e) => setAdminModel(e.target.value)}
-                  placeholder="Ej. Torito RE 205, Corolla"
+                  placeholder="Escribe el modelo"
                 />
               )}
             </label>
@@ -664,7 +631,7 @@ export default function Quotes() {
                 <input
                   value={adminModel}
                   onChange={(e) => setAdminModel(e.target.value)}
-                  placeholder="Ej. Torito RE 205, Corolla"
+                  placeholder="Escribe el modelo"
                 />
               </label>
             )}
@@ -674,7 +641,7 @@ export default function Quotes() {
               <input
                 value={adminYear}
                 onChange={(e) => setAdminYear(e.target.value)}
-                placeholder="Ej. 2023"
+                placeholder="Año de fabricación"
               />
             </label>
 
@@ -683,7 +650,7 @@ export default function Quotes() {
               <input
                 value={adminVin}
                 onChange={(e) => setAdminVin(e.target.value.toUpperCase())}
-                placeholder="Ej. LZSPCKLF9J1023000"
+                placeholder="Ingresa el chasis o VIN"
                 style={{ textTransform: 'uppercase' }}
               />
             </label>
@@ -725,8 +692,10 @@ export default function Quotes() {
               </div>
               <small>
                 {vehicle.source === 'VERIFIK'
-                  ? 'Consulta oficial en línea (Verifik).'
-                  : 'Datos demostrativos vinculados a placa.'}
+                  ? 'Datos consultados en línea.'
+                  : vehicle.source === 'PADRON'
+                    ? 'Datos registrados del vehículo.'
+                    : 'Datos ingresados para esta cotización.'}
               </small>
             </div>
           )}
@@ -931,6 +900,39 @@ export default function Quotes() {
         )}
       </section>
 
+      <section className="card tariff-card">
+        <div className="topbar">
+          <div>
+            <h2>Precios por aseguradora</h2>
+            <p className="muted">Administra las tarifas disponibles para las cotizaciones.</p>
+          </div>
+          <select value={tariffType} onChange={(event) => setTariffType(event.target.value as Vehicle['vehicleType'])}>
+            {Object.entries(vehicleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+          <select value={tariffUse} onChange={(event) => setTariffUse(event.target.value)}>
+            <option value="PARTICULAR">Particular</option>
+            <option value="PUBLICO">Servicio público / pasajeros</option>
+            <option value="COMERCIAL">Comercial / carga</option>
+          </select>
+          <select value={tariffDepartment} onChange={(event) => setTariffDepartment(event.target.value)}>
+            {departments.map((dep) => <option key={dep} value={dep}>{dep}</option>)}
+          </select>
+        </div>
+        <div className="tariff-grid">
+          {Object.entries(insurerLabels).map(([id, name]) => {
+            const draft = tariffDrafts[id] || { annualPrice: '', installmentAmount: '', installmentCount: '1' };
+            return <div className="tariff-row" key={id}>
+              <div className="tariff-name"><strong>{name}</strong><small>{id === 'falabella' ? 'Incluida en el catálogo Falabella' : 'Aseguradora afiliada'}</small></div>
+              <label>Precio anual<input type="number" min="1" step="0.01" value={draft.annualPrice} onChange={(event) => setTariffDrafts((current) => ({ ...current, [id]: { ...draft, annualPrice: event.target.value } }))} /></label>
+              <label>Cuota desde<input type="number" min={tariffType === 'MOTO' ? 150 : 1} step="0.01" value={draft.installmentAmount} onChange={(event) => setTariffDrafts((current) => ({ ...current, [id]: { ...draft, installmentAmount: event.target.value } }))} /></label>
+              <label>N.º cuotas<input type="number" min="1" step="1" value={draft.installmentCount} onChange={(event) => setTariffDrafts((current) => ({ ...current, [id]: { ...draft, installmentCount: event.target.value } }))} /></label>
+              <button className="button" type="button" onClick={() => saveTariff(id)} disabled={savingTariff === id}>{savingTariff === id ? 'Guardando…' : 'Guardar'}</button>
+            </div>;
+          })}
+        </div>
+        {tariffType === 'MOTO' && <p className="tariff-note">Para motos, la cuota no puede ser menor a S/ 150. Ajusta el número de cuotas según el precio acordado.</p>}
+      </section>
+
       {/* Detail Modal */}
       {selectedQuote && (
         <div className="modal-overlay" onClick={() => setSelectedQuote(null)}>
@@ -1130,7 +1132,7 @@ export default function Quotes() {
                     <input
                       value={editHolderName}
                       onChange={(e) => setEditHolderName(e.target.value)}
-                      placeholder="Ej. JUAN CARLOS PÉREZ GÓMEZ"
+                      placeholder="Ingresa nombres y apellidos"
                       style={{
                         width: '100%',
                         height: 38,
@@ -1274,7 +1276,7 @@ export default function Quotes() {
                       <input
                         value={editModel}
                         onChange={(e) => setEditModel(e.target.value)}
-                        placeholder="Ej. Torito RE 205, Corolla"
+                        placeholder="Escribe el modelo"
                         style={{
                           width: '100%',
                           height: 38,
@@ -1294,7 +1296,7 @@ export default function Quotes() {
                     <input
                       value={editVin}
                       onChange={(e) => setEditVin(e.target.value.toUpperCase())}
-                      placeholder="Ej. LZSPCKLF9J1023000"
+                      placeholder="Ingresa el chasis o VIN"
                       style={{
                         width: '100%',
                         height: 38,
@@ -1315,7 +1317,7 @@ export default function Quotes() {
                       type="number"
                       value={editYear}
                       onChange={(e) => setEditYear(e.target.value)}
-                      placeholder="Ej. 2023"
+                      placeholder="Año de fabricación"
                       style={{
                         width: '100%',
                         height: 38,

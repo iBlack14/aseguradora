@@ -570,25 +570,25 @@ const verifiedDemoVehicles: Record<
     department?: string;
   }
 > = {
-  '1274-UP': {
+  '0000-AA': {
     brand: 'Suzuki',
     model: 'GSX-R150 ABS',
-    year: 2026,
+    year: 2020,
     color: 'Negro',
     vehicleType: 'MOTO',
-    vin: '9FSDL23E3TC101115',
-    chassisNumber: '9FSDL23E3TC101115',
+    vin: 'JS1EXAMPLE00000001',
+    chassisNumber: 'JS1EXAMPLE00000001',
     use: 'PARTICULAR',
     department: 'Lima'
   },
-  '1274UP': {
+  '0000AA': {
     brand: 'Suzuki',
     model: 'GSX-R150 ABS',
-    year: 2026,
+    year: 2020,
     color: 'Negro',
     vehicleType: 'MOTO',
-    vin: '9FSDL23E3TC101115',
-    chassisNumber: '9FSDL23E3TC101115',
+    vin: 'JS1EXAMPLE00000001',
+    chassisNumber: 'JS1EXAMPLE00000001',
     use: 'PARTICULAR',
     department: 'Lima'
   },
@@ -720,7 +720,7 @@ app.get('/v1/vehicles/:plate', async (req, reply) => {
     return reply.status(400).send({ error: 'INVALID_PLATE' });
   }
 
-  // Format with hyphen if missing: ABC123 -> ABC-123 or 1274UP -> 1274-UP
+  // Format with hyphen if missing: ABC123 -> ABC-123 or 0000AA -> 0000-AA
   if (!normalized.includes('-')) {
     if (/^\d{4}[A-Z]{2}$/.test(normalized)) {
       normalized = `${normalized.slice(0, 4)}-${normalized.slice(4)}`;

@@ -252,7 +252,7 @@
 <span>PE</span>
 </div>
 </div>
-<input aria-describedby="placa-help" class="w-full h-[52px] pl-16 pr-28 rounded-lg border border-surface-variant bg-surface-container-lowest text-on-surface text-center font-bold tracking-widest text-[18px] uppercase focus:border-primary focus:ring-4 focus:ring-primary-container/25 transition-all" id="placa" maxlength="9" name="placa" placeholder="ABC-123 o 1274-UP" type="text" value=""/>
+<input aria-describedby="placa-help" class="w-full h-[52px] pl-16 pr-28 rounded-lg border border-surface-variant bg-surface-container-lowest text-on-surface text-center font-bold tracking-widest text-[18px] uppercase focus:border-primary focus:ring-4 focus:ring-primary-container/25 transition-all" id="placa" maxlength="9" name="placa" placeholder="ABC-123 o 0000-AA" type="text" value=""/>
 <button type="button" id="btn-buscar-placa" title="Buscar placa" class="absolute inset-y-1.5 right-1.5 px-3.5 bg-[#4e7f00] hover:bg-[#385c00] active:scale-95 text-white rounded-lg flex items-center justify-center gap-1 font-bold text-xs shadow-sm transition-all z-10 cursor-pointer">
 <span class="material-symbols-outlined text-[18px]" id="search-icon">search</span>
 <span class="hidden sm:inline font-semibold">Buscar</span>
@@ -260,7 +260,7 @@
 </div>
 <div id="plate-lookup-info" class="hidden mt-2 p-3 rounded-lg border text-caption font-caption transition-all"></div>
 <p class="mt-1.5 text-caption font-caption text-on-surface-variant" id="placa-help">
-                Ingresa la placa y presiona el botón Buscar. Ejemplo: ABC-123 (autos) o 1274-UP (motos).
+                Ingresa la placa y presiona el botón Buscar. Ejemplo: ABC-123 (autos) o 0000-AA (motos).
               </p>
 </div>
 <!-- Grilla 2 columnas: Departamento y Documento -->
@@ -854,8 +854,8 @@
       const searchIcon = document.getElementById('search-icon');
 
       const fallbackCatalog = {
-        '1274-UP': { brand: 'Suzuki', model: 'GSX-R150 ABS', year: 2026, color: 'Negro', vehicleType: 'MOTO', plate: '1274-UP', minPrice: 159.00 },
-        '1274UP': { brand: 'Suzuki', model: 'GSX-R150 ABS', year: 2026, color: 'Negro', vehicleType: 'MOTO', plate: '1274-UP', minPrice: 159.00 },
+        '0000-AA': { brand: 'Suzuki', model: 'GSX-R150 ABS', year: 2020, color: 'Negro', vehicleType: 'MOTO', plate: '0000-AA', minPrice: 159.00 },
+        '0000AA': { brand: 'Suzuki', model: 'GSX-R150 ABS', year: 2020, color: 'Negro', vehicleType: 'MOTO', plate: '0000-AA', minPrice: 159.00 },
         'ABC-123': { brand: 'Toyota', model: 'Corolla 1.8 XEi', year: 2023, color: 'Gris Oscuro', vehicleType: 'AUTO', plate: 'ABC-123', minPrice: 62.00 },
         'ABC123': { brand: 'Toyota', model: 'Corolla 1.8 XEi', year: 2023, color: 'Gris Oscuro', vehicleType: 'AUTO', plate: 'ABC-123', minPrice: 62.00 },
         'F3B-842': { brand: 'Hyundai', model: 'H-1 Minibus', year: 2022, color: 'Blanco', vehicleType: 'VAN', plate: 'F3B-842', minPrice: 125.00 },
@@ -891,7 +891,7 @@
       function detectAndMoveVehicleTab(plateValue) {
         const clean = plateValue.replace(/[^A-Z0-9]/g, '').toUpperCase();
         if (/^\d{2,4}/.test(clean)) {
-          // Placa que empieza con números: formato típico de moto o mototaxi en Perú (ej. 1274-UP)
+          // Placa que empieza con números: formato típico de moto o mototaxi en Perú (ej. 0000-AA)
           const activeText = document.querySelector('[role="tablist"] button.bg-surface-container-lowest')?.textContent?.toUpperCase() || '';
           if (!activeText.includes('MOTOTAXI')) {
             selectTabByType('MOTO');
@@ -910,7 +910,7 @@
         if (clean.length < 5) {
           if (lookupInfo) {
             lookupInfo.className = 'mt-2 p-2.5 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 text-caption font-caption flex items-center gap-2';
-            lookupInfo.innerHTML = '<span class="material-symbols-outlined text-[18px] text-amber-700">info</span><span>Por favor ingresa una placa completa (ej. ABC-123 o 1274-UP) y presiona Buscar.</span>';
+            lookupInfo.innerHTML = '<span class="material-symbols-outlined text-[18px] text-amber-700">info</span><span>Por favor ingresa una placa completa (ej. ABC-123 o 0000-AA) y presiona Buscar.</span>';
             lookupInfo.classList.remove('hidden');
           }
           detectedVehicle = null;
@@ -944,7 +944,7 @@
             }
           } catch {}
 
-          // Intento 2: Catálogo verificado de contingencia (Suzuki GSX-R150 para 1274-UP, Corolla para ABC-123)
+          // Intento 2: Catálogo de contingencia con datos genéricos
           if (!v) {
             const normalized = clean.replace(/\s+/g, '');
             const fallback = fallbackCatalog[normalized] || fallbackCatalog[normalized.replace('-', '')];
@@ -1031,7 +1031,7 @@
           const text = btn.textContent.toUpperCase();
           if (placaInput) {
             if (text.includes('MOTO') && !text.includes('MOTOTAXI')) {
-              placaInput.placeholder = '1274-UP';
+              placaInput.placeholder = '0000-AA';
             } else if (text.includes('MOTOTAXI')) {
               placaInput.placeholder = '6543-2B';
             } else if (text.includes('VAN')) {
@@ -1106,4 +1106,3 @@
     });
   </script>
 </body></html>
-

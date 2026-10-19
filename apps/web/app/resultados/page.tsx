@@ -504,7 +504,7 @@ export default function ResultsPage() {
                       type="text"
                       value={editModel}
                       onChange={(e) => setEditModel(e.target.value)}
-                      placeholder="Ej. ZS, Torito, Corolla"
+                      placeholder="Escribe el modelo"
                       className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] text-xs font-semibold outline-none focus:border-[#486800]"
                     />
                   )}
@@ -517,7 +517,7 @@ export default function ResultsPage() {
                     type="text"
                     value={editHolderName}
                     onChange={(e) => setEditHolderName(e.target.value)}
-                    placeholder="Ej. Juan Carlos Pérez Gómez"
+                    placeholder="Ingresa nombres y apellidos"
                     className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] text-xs font-semibold uppercase outline-none focus:border-[#486800]"
                   />
                 </div>
@@ -564,7 +564,7 @@ export default function ResultsPage() {
                     type="text"
                     value={editVin}
                     onChange={(e) => setEditVin(e.target.value.toUpperCase())}
-                    placeholder="Ej. LZSPCKLF9J1023000"
+                    placeholder="Ingresa el chasis o VIN"
                     className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] text-xs font-semibold outline-none uppercase font-mono focus:border-[#486800]"
                   />
                 </div>

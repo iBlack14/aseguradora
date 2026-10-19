@@ -353,7 +353,7 @@ export default function PaymentPage() {
                   value={names}
                   onChange={(e) => setNames(e.target.value)}
                   className="mt-1.5 w-full h-11 px-3.5 rounded-xl border border-[#dde3eb] focus:border-[#486800] focus:ring-2 focus:ring-[#8bc500]/20 text-xs font-semibold outline-none"
-                  placeholder="Ej. Juan Carlos"
+                  placeholder="Ingresa tus nombres"
                 />
               </label>
               <label className="text-xs font-bold text-[#161c22]">
@@ -363,7 +363,7 @@ export default function PaymentPage() {
                   value={surnames}
                   onChange={(e) => setSurnames(e.target.value)}
                   className="mt-1.5 w-full h-11 px-3.5 rounded-xl border border-[#dde3eb] focus:border-[#486800] focus:ring-2 focus:ring-[#8bc500]/20 text-xs font-semibold outline-none"
-                  placeholder="Ej. Pérez Mendoza"
+                  placeholder="Ingresa tus apellidos"
                 />
               </label>
               <div>
@@ -388,7 +388,7 @@ export default function PaymentPage() {
                   onChange={(e) => setDocumentNumber(e.target.value)}
                   maxLength={11}
                   className="mt-1.5 w-full h-11 px-3.5 rounded-xl border border-[#dde3eb] focus:border-[#486800] focus:ring-2 focus:ring-[#8bc500]/20 text-xs font-semibold outline-none"
-                  placeholder="Ej. 70912870"
+                  placeholder="Ingresa tu documento"
                 />
               </label>
               <label className="text-xs font-bold text-[#161c22]">
@@ -400,7 +400,7 @@ export default function PaymentPage() {
                   onChange={(e) => setPhone(e.target.value)}
                   maxLength={9}
                   className="mt-1.5 w-full h-11 px-3.5 rounded-xl border border-[#dde3eb] focus:border-[#486800] focus:ring-2 focus:ring-[#8bc500]/20 text-xs font-semibold outline-none"
-                  placeholder="Ej. 987654321"
+                  placeholder="Ingresa tu celular"
                 />
               </label>
               <label className="text-xs font-bold text-[#161c22]">
@@ -411,7 +411,7 @@ export default function PaymentPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="mt-1.5 w-full h-11 px-3.5 rounded-xl border border-[#dde3eb] focus:border-[#486800] focus:ring-2 focus:ring-[#8bc500]/20 text-xs font-semibold outline-none"
-                  placeholder="Ej. tu@correo.com"
+                  placeholder="Ingresa tu correo"
                 />
               </label>
             </div>
