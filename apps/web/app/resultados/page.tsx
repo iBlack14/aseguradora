@@ -10,16 +10,16 @@ const tariffsByVehicle: Record<VehicleType, Record<string, number>> = {
   AUTO: {
     'la-positiva': 65.0,
     mapfre: 68.0,
-    interseguro: 69.9,
+    interseguro: 32.0,
     pacifico: 72.0,
     protecta: 62.0
   },
   MOTO: {
-    'la-positiva': 165.0,
-    mapfre: 180.0,
-    interseguro: 175.0,
-    pacifico: 195.0,
-    protecta: 159.0
+    'la-positiva': 630.0,
+    mapfre: 645.0,
+    interseguro: 610.0,
+    pacifico: 650.0,
+    protecta: 590.0
   },
   MOTOTAXI: {
     'la-positiva': 120.0,
@@ -97,7 +97,7 @@ const baseOffers = [
 ];
 
 export default function ResultsPage() {
-  const [selected, setSelected] = useState<string[]>(['la-positiva', 'pacifico']);
+  const [selected, setSelected] = useState<string[]>(['la-positiva']);
   const [plate, setPlate] = useState('ABC-123');
   const [vehicleType, setVehicleType] = useState<VehicleType>('AUTO');
   const [department, setDepartment] = useState('Lima');
@@ -157,16 +157,26 @@ export default function ResultsPage() {
     const s = params.get('serie');
     if (s) setVin(s);
 
-    // Caso específico para la placa 7463-BS del padrón
-    if (p === '7463-BS' || p === '7463BS') {
-      setPlate('7463-BS');
-      setVehicleType('MOTOTAXI');
-      setBrand('Zongshen');
-      setModel('ZS');
-      setYear(2017);
-      setVehicleUse('TAXI');
-      setDepartment('Callao');
-      setVin('LZSPCKLF9J1023000');
+    if (b) setBrand(b);
+    if (m) setModel(m);
+
+    // Si no vinieron datos de marca o modelo en la URL, consultar dinámicamente al backend
+    if (!b || !m) {
+      const targetPlate = p || 'ABC-123';
+      fetch(`/api/backend/v1/vehicles/${encodeURIComponent(targetPlate)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          if (json?.data) {
+            if (json.data.brand) setBrand(json.data.brand);
+            if (json.data.model) setModel(json.data.model);
+            if (json.data.year) setYear(json.data.year);
+            if (json.data.vehicleType) setVehicleType(json.data.vehicleType);
+            if (json.data.vin) setVin(json.data.vin);
+            if (json.data.use === 'TAXI') setVehicleUse('TAXI');
+            if (json.data.department) setDepartment(json.data.department);
+          }
+        })
+        .catch(() => {});
     }
   }, []);
 
@@ -199,24 +209,85 @@ export default function ResultsPage() {
     vehicleType === 'MOTOTAXI' &&
     (vehicleUse === 'TAXI' || department.toLowerCase().includes('callao'));
 
+  const isMoto = vehicleType === 'MOTO';
+
   const offersWithPricing = useMemo(() => {
     const prices = isMototaxiTaxi ? mototaxiTaxiTariffs : (tariffsByVehicle[vehicleType] || tariffsByVehicle.AUTO);
-    return baseOffers.map((o) => ({
-      ...o,
-      price: prices[o.id] || 65.0,
-      badge: isMototaxiTaxi && o.id === 'la-positiva' ? 'Tarifa Oficial Taxi' : o.badge
-    }));
-  }, [vehicleType, isMototaxiTaxi]);
+    return baseOffers.map((o) => {
+      if (isMoto) {
+        if (o.id === 'la-positiva') {
+          return {
+            ...o,
+            price: 630.0,
+            available: true,
+            badge: 'Tarifa Verificada en Vivo',
+            unavailableReason: undefined
+          };
+        }
+        if (o.id === 'protecta') {
+          return {
+            ...o,
+            price: 0,
+            available: false,
+            badge: 'No disponible',
+            unavailableReason: 'Protecta Security no cuenta con SOAT para motos lineales.'
+          };
+        }
+        if (o.id === 'interseguro') {
+          return {
+            ...o,
+            price: 0,
+            available: false,
+            badge: 'No disponible en web',
+            unavailableReason: 'Interseguro no comercializa SOAT digital para motos lineales.'
+          };
+        }
+        if (o.id === 'mapfre') {
+          return {
+            ...o,
+            price: 0,
+            available: false,
+            badge: 'No disponible en web',
+            unavailableReason: 'MAPFRE no dispone de venta web directa para motocicletas.'
+          };
+        }
+        if (o.id === 'pacifico') {
+          return {
+            ...o,
+            price: 0,
+            available: false,
+            badge: 'No disponible en web',
+            unavailableReason: 'Pacífico no cuenta con emisión web directa para motos lineales.'
+          };
+        }
+      }
+
+      return {
+        ...o,
+        price: prices[o.id] || 65.0,
+        available: true,
+        unavailableReason: undefined,
+        badge: isMototaxiTaxi && o.id === 'la-positiva' ? 'Tarifa Oficial Taxi' : o.badge
+      };
+    });
+  }, [vehicleType, isMototaxiTaxi, isMoto]);
 
   const filteredAndSortedOffers = useMemo(() => {
     const list = offersWithPricing.filter((o) => selectedInsurers.includes(o.id));
-    if (sortBy === 'price') {
-      return [...list].sort((a, b) => a.price - b.price);
-    }
-    return list;
+    return [...list].sort((a, b) => {
+      // Ofertas con cobertura real siempre van arriba
+      if (a.available && !b.available) return -1;
+      if (!a.available && b.available) return 1;
+      if (sortBy === 'price') {
+        return a.price - b.price;
+      }
+      return 0;
+    });
   }, [offersWithPricing, selectedInsurers, sortBy]);
 
   function toggleCompare(id: string) {
+    const target = offersWithPricing.find((o) => o.id === id);
+    if (!target?.available) return;
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < 3 ? [...prev, id] : prev
     );
@@ -483,12 +554,13 @@ export default function ResultsPage() {
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                   <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#434935]">
+                    <label className={`flex items-center gap-2 text-xs font-bold ${offer.available ? 'cursor-pointer text-[#434935]' : 'cursor-not-allowed text-slate-300'}`}>
                       <input
                         type="checkbox"
-                        checked={isCompared}
-                        onChange={() => toggleCompare(offer.id)}
-                        className="rounded text-[#486800] focus:ring-[#8bc500] h-4 w-4"
+                        checked={isCompared && offer.available}
+                        disabled={!offer.available}
+                        onChange={() => offer.available && toggleCompare(offer.id)}
+                        className="rounded text-[#486800] focus:ring-[#8bc500] h-4 w-4 disabled:opacity-30"
                       />
                       <span>Comparar</span>
                     </label>
@@ -506,17 +578,32 @@ export default function ResultsPage() {
 
                   <div className="flex items-center justify-between sm:justify-end gap-6">
                     <div>
-                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#486800] bg-[#f4f9ea] px-2.5 py-0.5 rounded-full border border-[#486800]/20 block w-fit">
+                      <span className={`text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border block w-fit ${
+                        offer.available
+                          ? 'text-[#486800] bg-[#f4f9ea] border-[#486800]/20'
+                          : 'text-[#ba1a1a] bg-[#ffdad6]/40 border-[#ba1a1a]/20'
+                      }`}>
                         {offer.badge}
                       </span>
                       <h2 className="font-extrabold text-[16px] text-[#161c22] mt-0.5">{offer.plan}</h2>
                     </div>
 
                     <div className="text-right">
-                      <span className="text-[26px] font-extrabold text-[#161c22] leading-none block">
-                        S/ {offer.price.toFixed(2)}
-                      </span>
-                      <small className="text-[11px] text-[#434935]">Pago anual referencial</small>
+                      {offer.available ? (
+                        <>
+                          <span className="text-[26px] font-extrabold text-[#161c22] leading-none block text-[#486800]">
+                            S/ {offer.price.toFixed(2)}
+                          </span>
+                          <small className="text-[11px] text-[#434935]">Pago anual referencial</small>
+                        </>
+                      ) : (
+                        <div>
+                          <span className="text-[12px] font-extrabold text-[#ba1a1a] bg-[#ffdad6]/60 border border-[#ba1a1a]/30 px-3 py-1.5 rounded-xl inline-block">
+                            No contamos con SOAT para motos
+                          </span>
+                          <small className="text-[11px] text-[#434935]/70 block mt-1">Excluido por la aseguradora</small>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -534,22 +621,46 @@ export default function ResultsPage() {
                     <ul className="space-y-1 text-[#434935] text-[11.5px]">
                       {offer.extras.map((ex, i) => (
                         <li key={i} className="flex items-center gap-1.5">
-                          <span className="text-[#486800] font-bold">✓</span>
-                          <span>{ex}</span>
+                          <span className={offer.available ? 'text-[#486800] font-bold' : 'text-slate-400'}>
+                            {offer.available ? '✓' : '—'}
+                          </span>
+                          <span className={offer.available ? '' : 'text-slate-400'}>{ex}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 </div>
 
-                <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
-                  <Link
-                    href={targetUrl}
-                    className="inline-flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl bg-[#8bc500] hover:bg-[#7ab000] text-[#344d00] font-extrabold text-xs shadow-xs transition-all active:scale-[0.98]"
-                  >
-                    <span>Elegir esta oferta</span>
-                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                  </Link>
+                <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  {offer.available ? (
+                    <>
+                      <div className="flex items-center gap-1.5 text-[11px] text-[#486800] font-semibold">
+                        <span className="material-symbols-outlined text-[16px]">verified</span>
+                        <span>Emisión electrónica oficial inmediata</span>
+                      </div>
+                      <Link
+                        href={targetUrl}
+                        className="inline-flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl bg-[#8bc500] hover:bg-[#7ab000] text-[#344d00] font-extrabold text-xs shadow-xs transition-all active:scale-[0.98]"
+                      >
+                        <span>Elegir esta oferta</span>
+                        <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 text-xs text-[#524342] bg-[#fcf2f2] border border-[#ffdad6] px-3.5 py-2 rounded-xl">
+                        <span className="material-symbols-outlined text-[18px] text-[#ba1a1a] shrink-0">block</span>
+                        <span>{offer.unavailableReason}</span>
+                      </div>
+                      <button
+                        type="button"
+                        disabled
+                        className="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed shrink-0"
+                      >
+                        No disponible
+                      </button>
+                    </>
+                  )}
                 </div>
               </article>
             );

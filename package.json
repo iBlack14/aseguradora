@@ -8,13 +8,19 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @falabella/web",
+    "dev:all": "node tools/dev-all.mjs",
     "dev:web": "npm run dev -w @falabella/web",
     "dev:admin": "npm run dev -w @falabella/admin",
     "dev:api": "npm run dev -w @falabella/api",
     "build": "npm run build -ws --if-present",
     "typecheck": "npm run typecheck -ws --if-present",
     "db:generate": "npm run generate -w @falabella/database",
-    "db:migrate": "npm run migrate -w @falabella/database"
+    "db:migrate": "npm run migrate -w @falabella/database",
+    "scrape": "npx tsx tools/scraper/run-scraper.ts",
+    "scrape:auto": "npx tsx tools/scraper/run-scraper.ts --type AUTO --dept Lima",
+    "scrape:moto": "npx tsx tools/scraper/run-scraper.ts --type MOTO --dept Lima",
+    "scrape:debug": "cross-env HEADLESS=false npx tsx tools/scraper/run-scraper.ts --no-cache",
+    "scrape:one": "npx tsx tools/scraper/run-scraper.ts --insurer interseguro --no-cache"
   },
   "overrides": {
     "postcss": "$postcss"
@@ -23,6 +29,11 @@
     "node": ">=20"
   },
   "devDependencies": {
-    "postcss": "^8.5.30"
+    "@playwright/test": "^1.64.1",
+    "cross-env": "^10.1.0",
+    "playwright-extra": "^4.3.6",
+    "playwright-extra-plugin-stealth": "^0.0.1",
+    "postcss": "^8.5.30",
+    "tsx": "^4.23.15"
   }
 }

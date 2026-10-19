@@ -61,11 +61,11 @@ const tariffsByVehicle: Record<VehicleType, Record<string, number>> = {
     protecta: 62.0
   },
   MOTO: {
-    'la-positiva': 165.0,
-    mapfre: 180.0,
-    interseguro: 175.0,
-    pacifico: 195.0,
-    protecta: 159.0
+    'la-positiva': 630.0,
+    mapfre: 645.0,
+    interseguro: 610.0,
+    pacifico: 650.0,
+    protecta: 590.0
   },
   MOTOTAXI: {
     'la-positiva': 120.0,

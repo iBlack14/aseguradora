@@ -1,0 +1,30 @@
+{
+  "input": {
+    "plate": "ABC-123",
+    "vehicleType": "AUTO",
+    "department": "Lima",
+    "use": "PARTICULAR",
+    "documentType": "DNI",
+    "documentNumber": "12345678",
+    "startsAt": "2026-10-19"
+  },
+  "offers": [
+    {
+      "insurerSlug": "interseguro",
+      "insurerName": "Interseguro",
+      "price": 32,
+      "currency": "PEN",
+      "planName": "SOAT Digital Express",
+      "extras": [
+        "Emisión y entrega instantánea por correo",
+        "Orientación médica telefónica",
+        "Sincronización MTC inmediata"
+      ],
+      "scrapedAt": "2026-10-18T04:54:20.447Z",
+      "source": "https://www.interseguro.pe/soat-digital/cotizacion/planes",
+      "confidence": "HIGH"
+    }
+  ],
+  "errors": [],
+  "durationMs": 86038
+}

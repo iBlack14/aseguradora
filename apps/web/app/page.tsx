@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useRef } from 'react';
 
 type VehicleType = 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO';
 
@@ -44,16 +44,26 @@ const fallbackCatalog: Record<string, DetectedVehicle> = {
     use: 'TAXI',
     zone: 'callao'
   },
-  '1274-UP': { brand: 'Suzuki', model: 'GSX-R150 ABS', year: 2026, color: 'Negro', vehicleType: 'MOTO', plate: '1274-UP', minPrice: 159.0 },
-  '1274UP': { brand: 'Suzuki', model: 'GSX-R150 ABS', year: 2026, color: 'Negro', vehicleType: 'MOTO', plate: '1274-UP', minPrice: 159.0 },
-  'ABC-123': { brand: 'Toyota', model: 'Corolla 1.8 XEi', year: 2023, color: 'Gris Oscuro', vehicleType: 'AUTO', plate: 'ABC-123', minPrice: 62.0 },
-  'ABC123': { brand: 'Toyota', model: 'Corolla 1.8 XEi', year: 2023, color: 'Gris Oscuro', vehicleType: 'AUTO', plate: 'ABC-123', minPrice: 62.0 },
+  '1274-UP': { brand: 'Suzuki', model: 'GSX-R150 ABS', year: 2026, color: 'Negro', vehicleType: 'MOTO', plate: '1274-UP', minPrice: 630.0 },
+  '1274UP': { brand: 'Suzuki', model: 'GSX-R150 ABS', year: 2026, color: 'Negro', vehicleType: 'MOTO', plate: '1274-UP', minPrice: 630.0 },
+  'ABC-123': { brand: 'Toyota', model: 'Corolla 1.8 XEi', year: 2023, color: 'Gris Oscuro', vehicleType: 'AUTO', plate: 'ABC-123', minPrice: 32.0 },
+  'ABC123': { brand: 'Toyota', model: 'Corolla 1.8 XEi', year: 2023, color: 'Gris Oscuro', vehicleType: 'AUTO', plate: 'ABC-123', minPrice: 32.0 },
+  'AMY-477': { brand: 'BMW', model: '118i', year: 2013, color: 'Blanco', vehicleType: 'AUTO', plate: 'AMY-477', minPrice: 32.0, vin: 'WBA1A3104EJ681960' },
+  'AMY477': { brand: 'BMW', model: '118i', year: 2013, color: 'Blanco', vehicleType: 'AUTO', plate: 'AMY-477', minPrice: 32.0, vin: 'WBA1A3104EJ681960' },
   'F3B-842': { brand: 'Hyundai', model: 'H-1 Minibus', year: 2022, color: 'Blanco', vehicleType: 'VAN', plate: 'F3B-842', minPrice: 125.0 },
   'F3B842': { brand: 'Hyundai', model: 'H-1 Minibus', year: 2022, color: 'Blanco', vehicleType: 'VAN', plate: 'F3B-842', minPrice: 125.0 },
   'T8K-912': { brand: 'Volvo', model: 'FH 460 6x4', year: 2021, color: 'Rojo', vehicleType: 'CARGO', plate: 'T8K-912', minPrice: 195.0 },
   'T8K912': { brand: 'Volvo', model: 'FH 460 6x4', year: 2021, color: 'Rojo', vehicleType: 'CARGO', plate: 'T8K-912', minPrice: 195.0 },
   '6543-2B': { brand: 'Bajaj', model: 'Torito RE 4S', year: 2024, color: 'Azul', vehicleType: 'MOTOTAXI', plate: '6543-2B', minPrice: 115.0 },
   '65432B': { brand: 'Bajaj', model: 'Torito RE 4S', year: 2024, color: 'Azul', vehicleType: 'MOTOTAXI', plate: '6543-2B', minPrice: 115.0 }
+};
+
+const popularBrandsByType: Record<VehicleType, string[]> = {
+  AUTO: ['Toyota', 'Hyundai', 'Kia', 'Nissan', 'Suzuki', 'BMW', 'Chevrolet', 'Volkswagen', 'Honda', 'Mazda'],
+  MOTO: ['Honda', 'Yamaha', 'Bajaj', 'Wanxin', 'Zongshen', 'Ronco', 'Suzuki', 'Italika'],
+  MOTOTAXI: ['Bajaj', 'Zongshen', 'Wanxin', 'TVS', 'Motokar'],
+  VAN: ['Hyundai', 'Toyota', 'Kia', 'Foton', 'JAC', 'Chevrolet'],
+  CARGO: ['Volvo', 'Scania', 'Mercedes-Benz', 'Hino', 'Isuzu', 'Freightliner']
 };
 
 const vehicleTabs: { type: VehicleType; label: string; icon: string; placeholder: string }[] = [
@@ -119,44 +129,12 @@ export default function HomePage() {
   const [termsAccepted, setTermsAccepted] = useState(true);
 
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const lookupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Mueve dinámicamente la pestaña según la placa que el usuario escribe
-  function handlePlateInput(raw: string) {
-    let value = raw.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
-    if (/^\d{4}/.test(value) && value.length > 4) {
-      value = value.slice(0, 4) + '-' + value.slice(4, 7);
-    } else if (value.length > 3) {
-      value = value.slice(0, 3) + '-' + value.slice(3, 7);
-    }
-    setPlate(value);
-
-    // Ocultar mensajes de búsqueda mientras escribe
-    setLookupMessage(null);
-
-    // Detección dinámica de pestaña según patrón
-    const clean = value.replace(/[^A-Z0-9]/g, '');
-    if (/^\d{2,4}/.test(clean)) {
-      if (vehicleType !== 'MOTOTAXI') {
-        setVehicleType('MOTO');
-      }
-    } else if (/^[A-Z]{2,3}/.test(clean)) {
-      if (vehicleType !== 'VAN' && vehicleType !== 'CARGO') {
-        setVehicleType('AUTO');
-      }
-    }
-  }
-
-  // Búsqueda bajo demanda (al dar clic en la lupa o presionar Enter)
-  async function handleSearchPlate() {
-    const clean = plate.trim().toUpperCase();
-    if (clean.length < 5) {
-      setLookupMessage({
-        text: 'Por favor ingresa una placa completa (ej. ABC-123 o 1274-UP) y presiona Buscar.',
-        type: 'info'
-      });
-      setDetectedVehicle(null);
-      return;
-    }
+  // Consulta al padrón vehicular (backend o catálogo contingencia)
+  async function lookupVehicle(plateToLookup: string): Promise<DetectedVehicle | null> {
+    const clean = plateToLookup.trim().toUpperCase();
+    if (clean.length < 5) return null;
 
     setLookingUp(true);
     setLookupMessage(null);
@@ -170,24 +148,33 @@ export default function HomePage() {
         if (res.ok) {
           const json = await res.json();
           if (json?.data) {
-            const minPrice = json.offers?.[0]?.price || (json.data.vehicleType === 'MOTO' ? 159.0 : 62.0);
-            v = {
-              brand: json.data.brand,
-              model: json.data.model,
-              year: json.data.year || 2026,
-              color: json.data.color || 'Registrado',
-              plate: json.data.plate,
-              vehicleType: json.data.vehicleType,
-              minPrice,
-              vin: json.data.vin || json.data.chassisNumber,
-              use: json.data.use,
-              zone: json.data.department
-            };
+            const availableOffers = Array.isArray(json.offers)
+              ? json.offers.filter((o: { available?: boolean; price?: number }) => o.available && (o.price || 0) > 0)
+              : [];
+            const minPrice = availableOffers.length > 0
+              ? Math.min(...availableOffers.map((o: { price: number }) => o.price))
+              : (json.data.vehicleType === 'MOTO' ? 630.0 : 32.0);
+            if (json.data.brand && json.data.model) {
+              v = {
+                brand: json.data.brand,
+                model: json.data.model,
+                year: json.data.year || 2026,
+                color: json.data.color || 'Registrado',
+                plate: json.data.plate,
+                vehicleType: json.data.vehicleType,
+                minPrice,
+                vin: json.data.vin || json.data.chassisNumber,
+                use: json.data.use,
+                zone: json.data.department
+              };
+            } else if (json.data.vehicleType) {
+              setVehicleType(json.data.vehicleType);
+            }
           }
         }
       } catch {}
 
-      // 2. Catálogo verificado de contingencia (7463-BS Zongshen, 1274-UP Suzuki, ABC-123 Toyota, etc.)
+      // 2. Catálogo verificado de contingencia
       if (!v) {
         const normalized = clean.replace(/\s+/g, '');
         const fallback = fallbackCatalog[normalized] || fallbackCatalog[normalized.replace('-', '')];
@@ -204,13 +191,15 @@ export default function HomePage() {
         if (v.use === 'TAXI') setVehicleUse('TAXI');
         if (v.zone) setDepartment(v.zone.toLowerCase().includes('callao') ? 'callao' : v.zone);
         setShowTechDetails(true);
+        return v;
       } else {
         setDetectedVehicle(null);
         setLookupMessage({
-          text: 'Placa no encontrada en el padrón automático. Puedes completar los datos técnicos de tu vehículo abajo.',
+          text: `Placa ${clean} detectada. No figura en el padrón automático: confirma la marca y modelo abajo para cotizar con precisión.`,
           type: 'info'
         });
         setShowTechDetails(true);
+        return null;
       }
     } catch {
       setDetectedVehicle(null);
@@ -219,24 +208,72 @@ export default function HomePage() {
         type: 'info'
       });
       setShowTechDetails(true);
+      return null;
     } finally {
       setLookingUp(false);
     }
   }
 
-  function handleSubmit(e: FormEvent) {
+  // Mueve dinámicamente la pestaña según la placa y consulta automáticamente al completar formato
+  function handlePlateInput(raw: string) {
+    let value = raw.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+    if (/^\d{4}/.test(value) && value.length > 4) {
+      value = value.slice(0, 4) + '-' + value.slice(4, 7);
+    } else if (value.length > 3) {
+      value = value.slice(0, 3) + '-' + value.slice(3, 7);
+    }
+    setPlate(value);
+    setLookupMessage(null);
+
+    // Detección dinámica de pestaña según patrón
+    const clean = value.replace(/[^A-Z0-9]/g, '');
+    if (/^\d{2,4}/.test(clean)) {
+      if (vehicleType !== 'MOTOTAXI') {
+        setVehicleType('MOTO');
+      }
+    } else if (/^[A-Z]{2,3}/.test(clean)) {
+      if (vehicleType !== 'VAN' && vehicleType !== 'CARGO') {
+        setVehicleType('AUTO');
+      }
+    }
+
+    // Al tener una placa completa (6 caracteres), consulta automáticamente sin requerir botón secundario
+    if (lookupTimeoutRef.current) clearTimeout(lookupTimeoutRef.current);
+    if (clean.length >= 6) {
+      lookupTimeoutRef.current = setTimeout(() => {
+        lookupVehicle(value);
+      }, 400);
+    } else if (detectedVehicle) {
+      setDetectedVehicle(null);
+    }
+  }
+
+  // Envío del formulario: única acción que valida, consulta si falta y cotiza
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const finalPlate = plate.trim().toUpperCase() || 'ABC-123';
+
+    let v = detectedVehicle;
+    if (!v) {
+      v = await lookupVehicle(finalPlate);
+    }
+
     const params = new URLSearchParams({
       placa: finalPlate,
-      tipo: vehicleType,
+      tipo: v?.vehicleType || vehicleType,
       dep: department
     });
-    if (brand || detectedVehicle?.brand) params.set('marca', brand || detectedVehicle?.brand || '');
-    if (model || detectedVehicle?.model) params.set('modelo', model || detectedVehicle?.model || '');
-    if (year || detectedVehicle?.year) params.set('ano', String(year || detectedVehicle?.year || ''));
-    if (vehicleUse || detectedVehicle?.use) params.set('uso', vehicleUse || detectedVehicle?.use || 'PARTICULAR');
-    if (vin || detectedVehicle?.vin) params.set('serie', vin || detectedVehicle?.vin || '');
+    const finalBrand = brand || v?.brand || '';
+    const finalModel = model || v?.model || '';
+    const finalYear = year || v?.year || '';
+    const finalUse = vehicleUse || v?.use || 'PARTICULAR';
+    const finalVin = vin || v?.vin || '';
+
+    if (finalBrand) params.set('marca', finalBrand);
+    if (finalModel) params.set('modelo', finalModel);
+    if (finalYear) params.set('ano', String(finalYear));
+    if (finalUse) params.set('uso', finalUse);
+    if (finalVin) params.set('serie', finalVin);
 
     router.push(`/resultados?${params.toString()}`);
   }
@@ -313,27 +350,18 @@ export default function HomePage() {
                     required
                     value={plate}
                     onChange={(e) => handlePlateInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleSearchPlate();
-                      }
-                    }}
                     placeholder={`Ej. ${currentTab.placeholder}`}
-                    className="w-full h-[54px] pl-16 pr-28 rounded-xl border border-[#dde3eb] bg-white text-[#161c22] text-center font-bold tracking-widest text-[19px] uppercase focus:border-[#486800] focus:ring-4 focus:ring-[#8bc500]/25 transition-all outline-none"
+                    className="w-full h-[54px] pl-16 pr-12 rounded-xl border border-[#dde3eb] bg-white text-[#161c22] text-center font-bold tracking-widest text-[19px] uppercase focus:border-[#486800] focus:ring-4 focus:ring-[#8bc500]/25 transition-all outline-none"
                   />
-                  <button
-                    type="button"
-                    onClick={handleSearchPlate}
-                    disabled={lookingUp}
-                    title="Buscar placa en padrón oficial"
-                    className="absolute inset-y-1.5 right-1.5 px-3.5 bg-[#486800] hover:bg-[#385c00] active:scale-95 text-white rounded-lg flex items-center justify-center gap-1 font-bold text-xs shadow-sm transition-all z-10 cursor-pointer disabled:opacity-70"
-                  >
-                    <span className={`material-symbols-outlined text-[18px] ${lookingUp ? 'animate-spin' : ''}`}>
-                      {lookingUp ? 'sync' : 'search'}
-                    </span>
-                    <span className="hidden sm:inline font-semibold">Buscar</span>
-                  </button>
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                    {lookingUp ? (
+                      <span className="material-symbols-outlined text-[20px] text-[#486800] animate-spin">sync</span>
+                    ) : detectedVehicle ? (
+                      <span className="material-symbols-outlined text-[20px] text-[#4e7f00]">verified</span>
+                    ) : (
+                      <span className="material-symbols-outlined text-[20px] text-[#a0a6b5]">directions_car</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Tarjeta de Vehículo Identificado */}
@@ -361,7 +389,7 @@ export default function HomePage() {
                 )}
 
                 <p className="mt-1.5 text-[11px] text-[#434935]/80">
-                  Ingresa tu placa y haz clic en <strong>Buscar</strong> para consultar el padrón. Ej: ABC-123 (autos), 1274-UP (motos) o 7463-BS (mototaxis).
+                  Validación automática según el padrón vehicular oficial.
                 </p>
 
                 {/* Acordeón de Datos Técnicos Completables */}
@@ -384,11 +412,27 @@ export default function HomePage() {
                     <div className="mt-2.5 p-3.5 bg-[#f8faf4] border border-[#d8e7bd] rounded-xl grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs animate-fade-in">
                       <div>
                         <label className="font-bold text-[#161c22] block mb-1">Marca del vehículo</label>
+                        <div className="flex flex-wrap gap-1 mb-1.5">
+                          {(popularBrandsByType[vehicleType] || popularBrandsByType.AUTO).slice(0, 6).map((bName) => (
+                            <button
+                              key={bName}
+                              type="button"
+                              onClick={() => setBrand(bName)}
+                              className={`px-2 py-0.5 rounded text-[11px] font-bold border transition-all cursor-pointer ${
+                                brand.toLowerCase() === bName.toLowerCase()
+                                  ? 'bg-[#486800] text-white border-[#486800]'
+                                  : 'bg-white text-[#434935] border-slate-200 hover:border-[#486800]'
+                              }`}
+                            >
+                              {bName}
+                            </button>
+                          ))}
+                        </div>
                         <input
                           type="text"
                           value={brand}
                           onChange={(e) => setBrand(e.target.value)}
-                          placeholder="Ej. Zongshen, Toyota, Bajaj, Honda"
+                          placeholder="Ej. Toyota, Hyundai, BMW, Suzuki"
                           className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] bg-white text-xs font-semibold outline-none focus:border-[#486800]"
                         />
                       </div>
@@ -525,13 +569,23 @@ export default function HomePage() {
                 </span>
               </label>
 
-              {/* CTA Submit Button */}
+              {/* CTA Submit Button (Único botón de acción) */}
               <button
                 type="submit"
-                className="w-full h-14 bg-[#8bc500] hover:bg-[#7ab000] text-[#344d00] font-extrabold text-[16px] rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#8bc500]/25 transition-all active:scale-[0.99] cursor-pointer"
+                disabled={lookingUp}
+                className="w-full h-14 bg-[#8bc500] hover:bg-[#7ab000] text-[#344d00] font-extrabold text-[16px] rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#8bc500]/25 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-75"
               >
-                <span>Ver ofertas y comparar (5 Aseguradoras)</span>
-                <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                {lookingUp ? (
+                  <>
+                    <span className="material-symbols-outlined text-[20px] animate-spin">sync</span>
+                    <span>Consultando padrón y cotizando...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Cotizar y comparar ofertas (5 Aseguradoras)</span>
+                    <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                  </>
+                )}
               </button>
             </form>
           </div>

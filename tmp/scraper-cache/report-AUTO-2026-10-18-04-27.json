@@ -1,0 +1,16 @@
+{
+  "input": {
+    "plate": "ABC-123",
+    "vehicleType": "AUTO",
+    "department": "Lima",
+    "use": "PARTICULAR",
+    "documentType": "DNI",
+    "documentNumber": "12345678",
+    "startsAt": "2026-10-19"
+  },
+  "offers": [],
+  "errors": [
+    "Interseguro: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[placeholder*=\"placa\"], input[placeholder*=\"Placa\"], input[name*=\"placa\"], input[id*=\"placa\"]') to be visible\u001b[22m\n"
+  ],
+  "durationMs": 88465
+}

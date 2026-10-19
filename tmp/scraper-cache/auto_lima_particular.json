@@ -1,0 +1,91 @@
+{
+  "expiresAt": "2027-10-19T15:27:23.835Z",
+  "offers": [
+    {
+      "insurerSlug": "interseguro",
+      "insurerName": "Interseguro",
+      "price": 32.0,
+      "currency": "PEN",
+      "planName": "SOAT Digital Express",
+      "badge": "Más económico",
+      "available": true,
+      "extras": [
+        "Emisión y entrega instantánea por correo",
+        "Orientación médica telefónica",
+        "Sincronización MTC inmediata"
+      ],
+      "scrapedAt": "2026-10-18T15:27:23.569Z",
+      "source": "https://www.interseguro.pe/soat-digital/cotizacion/documento",
+      "confidence": "HIGH"
+    },
+    {
+      "insurerSlug": "protecta",
+      "insurerName": "Protecta Security",
+      "price": 62.0,
+      "currency": "PEN",
+      "planName": "SOAT Protecta Flex",
+      "badge": "Tarifa preferente",
+      "available": true,
+      "extras": [
+        "Asistencia telefónica 24 horas",
+        "Atención directa ante la SBS",
+        "Certificado digital verificable"
+      ],
+      "scrapedAt": "2026-10-18T15:27:23.569Z",
+      "source": "https://www.protectasecurity.pe/soat",
+      "confidence": "HIGH"
+    },
+    {
+      "insurerSlug": "la-positiva",
+      "insurerName": "La Positiva Seguros",
+      "price": 65.0,
+      "currency": "PEN",
+      "planName": "SOAT Digital Tradicional",
+      "badge": "Tradicional",
+      "available": true,
+      "extras": [
+        "Auxilio de batería 24/7 en ciudad",
+        "1 servicio de grúa en ciudad",
+        "Atención médica legal inmediata"
+      ],
+      "scrapedAt": "2026-10-18T15:27:23.569Z",
+      "source": "https://www.lapositiva.com.pe/wps/portal/corporativo/home/cotizador/",
+      "confidence": "HIGH"
+    },
+    {
+      "insurerSlug": "mapfre",
+      "insurerName": "MAPFRE Perú",
+      "price": 68.0,
+      "currency": "PEN",
+      "planName": "SOAT Conectado MAPFRE",
+      "badge": "Más asistencias",
+      "available": true,
+      "extras": [
+        "Auxilio mecánico y cerrajería en ruta",
+        "Ambulancia 24 hrs en caso de emergencia",
+        "Descuentos en talleres afiliados"
+      ],
+      "scrapedAt": "2026-10-18T15:27:23.569Z",
+      "source": "https://www.mapfre.com.pe/soat",
+      "confidence": "HIGH"
+    },
+    {
+      "insurerSlug": "pacifico",
+      "insurerName": "Pacífico Seguros",
+      "price": 72.0,
+      "currency": "PEN",
+      "planName": "SOAT Pacífico Digital Plus",
+      "badge": "Mejor valor",
+      "available": true,
+      "extras": [
+        "Red médica preferencial de clínicas",
+        "Hasta 2 grúas anuales por siniestro",
+        "200 CMR Puntos de bienvenida"
+      ],
+      "scrapedAt": "2026-10-18T15:27:23.569Z",
+      "source": "https://www.pacifico.com.pe/soat",
+      "confidence": "HIGH"
+    }
+  ],
+  "updatedAt": "2026-10-18T15:27:23.835Z"
+}

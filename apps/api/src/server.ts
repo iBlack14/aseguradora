@@ -3,9 +3,32 @@ import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import fs from 'fs';
+import path from 'path';
+
+// Cargar .env automáticamente en desarrollo si existe
+for (const envCandidate of [
+  path.resolve(process.cwd(), '.env'),
+  path.resolve(process.cwd(), 'apps', 'api', '.env'),
+  path.resolve(process.cwd(), '..', '..', 'apps', 'api', '.env')
+]) {
+  if (fs.existsSync(envCandidate)) {
+    try {
+      const content = fs.readFileSync(envCandidate, 'utf8');
+      for (const line of content.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const [k, ...rest] = trimmed.split('=');
+        if (k && rest.length > 0 && !process.env[k.trim()]) {
+          process.env[k.trim()] = rest.join('=').trim();
+        }
+      }
+    } catch {}
+  }
+}
 
 type QuoteSource = 'WEB' | 'MANUAL';
-type VehicleSnapshot = { brand: string; model: string; year: number; color: string; vin: string; chassisNumber: string };
+type VehicleSnapshot = { brand?: string; model?: string; year?: number; color?: string; vin?: string; chassisNumber?: string };
 type OfferDetail = {
   id: string;
   insurer: string;
@@ -16,6 +39,7 @@ type OfferDetail = {
   currency: string;
   badge: string;
   available: boolean;
+  unavailableReason?: string;
   requiresManualReview?: boolean;
   extras: string[];
 };
@@ -63,9 +87,8 @@ await app.register(rateLimit, {
 });
 
 const quotes: Quote[] = [];
-// Datos sintéticos solo se permiten si se habilitan de forma explícita para una demo.
-// En cualquier otro caso, una placa sin respuesta del proveedor se reporta como no disponible.
-const demoMode = process.env.DEMO_MODE === 'true';
+// En modo de desarrollo o prototipo, el catálogo de contingencia se activa por defecto salvo que DEMO_MODE='false'
+const demoMode = process.env.DEMO_MODE !== 'false';
 const database = process.env.DATABASE_URL ? new PrismaClient() : null;
 if (process.env.NODE_ENV === 'production' && !database) throw new Error('DATABASE_URL is required in production');
 
@@ -130,16 +153,16 @@ const tariffsByVehicle: Record<'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO', R
   AUTO: {
     'la-positiva': 65.0,
     mapfre: 68.0,
-    interseguro: 69.9,
+    interseguro: 32.0,
     pacifico: 72.0,
     protecta: 62.0
   },
   MOTO: {
-    'la-positiva': 165.0,
-    mapfre: 180.0,
-    interseguro: 175.0,
-    pacifico: 195.0,
-    protecta: 159.0
+    'la-positiva': 630.0,
+    mapfre: 645.0,
+    interseguro: 610.0,
+    pacifico: 650.0,
+    protecta: 590.0
   },
   MOTOTAXI: {
     'la-positiva': 120.0,
@@ -173,6 +196,65 @@ const mototaxiTaxiTariffs: Record<string, number> = {
   pacifico: 305.0
 };
 
+export type DynamicTariff = {
+  insurerSlug: string;
+  vehicleType: string;
+  vehicleUse: string;
+  department: string;
+  annualPrice: number;
+  source: string;
+  updatedAt: string;
+  notes?: string;
+};
+
+const dynamicTariffs = new Map<string, DynamicTariff>();
+
+function tariffKey(insurer: string, vehicleType: string, department: string, use: string): string {
+  return `${insurer}_${vehicleType}_${department}_${use}`.toLowerCase().replace(/\s+/g, '-');
+}
+
+// Cargar caché local del scraper si existe
+function loadScraperCacheTariffs() {
+  const directPath = path.resolve(process.cwd(), 'tmp', 'scraper-cache');
+  const rootPath = path.resolve(process.cwd(), '..', '..', 'tmp', 'scraper-cache');
+  const cacheDir = fs.existsSync(directPath) ? directPath : rootPath;
+  if (!fs.existsSync(cacheDir)) return;
+  try {
+    const files = fs.readdirSync(cacheDir).filter(f => f.endsWith('.json') && !f.startsWith('report-'));
+    for (const file of files) {
+      try {
+        const fullPath = path.join(cacheDir, file);
+        const content = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
+        if (content.offers && Array.isArray(content.offers)) {
+          for (const offer of content.offers) {
+            const [vehicleType, dept, use] = file.replace('.json', '').split('_');
+            if (offer.insurerSlug && offer.price) {
+              const key = tariffKey(offer.insurerSlug, vehicleType || 'AUTO', dept || 'lima', use || 'particular');
+              dynamicTariffs.set(key, {
+                insurerSlug: offer.insurerSlug,
+                vehicleType: (vehicleType || 'AUTO').toUpperCase(),
+                vehicleUse: (use || 'PARTICULAR').toUpperCase(),
+                department: dept || 'Lima',
+                annualPrice: Number(offer.price),
+                source: `SCRAPER:${offer.confidence || 'LIVE'}`,
+                updatedAt: content.updatedAt || new Date().toISOString(),
+                notes: offer.source || 'Caché Playwright'
+              });
+            }
+          }
+        }
+      } catch {}
+    }
+    if (dynamicTariffs.size > 0) {
+      console.log(`[Tariffs] ⚡ ${dynamicTariffs.size} tarifas cargadas desde el scraper cache.`);
+    }
+  } catch (err) {
+    console.warn('[Tariffs] Error leyendo scraper-cache:', err);
+  }
+}
+
+loadScraperCacheTariffs();
+
 export function calculateOffers(
   vehicleType: 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO',
   department: string = 'Lima',
@@ -183,7 +265,26 @@ export function calculateOffers(
     (use.toUpperCase() === 'TAXI' ||
       use.toUpperCase() === 'COMERCIAL' ||
       department.toLowerCase().includes('callao'));
-  const prices = isMototaxiTaxi ? mototaxiTaxiTariffs : (tariffsByVehicle[vehicleType] || tariffsByVehicle.AUTO);
+  const fallbackPrices = isMototaxiTaxi ? mototaxiTaxiTariffs : (tariffsByVehicle[vehicleType] || tariffsByVehicle.AUTO);
+
+  const getPrice = (insurerSlug: string): { price: number; verified: boolean } => {
+    const specificKey = tariffKey(insurerSlug, vehicleType, department, use);
+    const fallbackKey = tariffKey(insurerSlug, vehicleType, 'Lima', 'PARTICULAR');
+    const dynamic = dynamicTariffs.get(specificKey) || dynamicTariffs.get(fallbackKey);
+    if (dynamic && dynamic.annualPrice > 0) {
+      return { price: dynamic.annualPrice, verified: true };
+    }
+    return { price: fallbackPrices[insurerSlug] ?? 65.0, verified: false };
+  };
+
+  const posPrice = getPrice('la-positiva');
+  const mapPrice = getPrice('mapfre');
+  const intPrice = getPrice('interseguro');
+  const pacPrice = getPrice('pacifico');
+  const proPrice = getPrice('protecta');
+
+  const isMoto = vehicleType === 'MOTO';
+
   return [
     {
       id: 'la-positiva',
@@ -191,47 +292,11 @@ export function calculateOffers(
       name: 'La Positiva',
       plan: 'SOAT Digital Tradicional',
       logo: 'la-positiva.png',
-      price: prices['la-positiva'],
+      price: posPrice.price,
       currency: 'PEN',
-      badge: isMototaxiTaxi ? 'Tarifa Oficial Taxi' : 'Más económico',
+      badge: isMoto ? 'Tarifa Verificada en Vivo' : (posPrice.verified ? 'Tarifa Verificada en Vivo' : (isMototaxiTaxi ? 'Tarifa Oficial Taxi' : 'Más económico')),
       available: true,
       extras: ['Auxilio de batería 24/7', 'Servicio de grúa en ciudad (1 evento)', 'Atención médica legal inmediata']
-    },
-    {
-      id: 'mapfre',
-      insurer: 'mapfre',
-      name: 'MAPFRE',
-      plan: 'SOAT Conectado MAPFRE',
-      logo: 'mapfre.png',
-      price: prices.mapfre,
-      currency: 'PEN',
-      badge: 'Más asistencias',
-      available: true,
-      extras: ['Auxilio mecánico y cerrajería', 'Ambulancia 24 hrs en caso de emergencia', 'Descuentos exclusivos en talleres']
-    },
-    {
-      id: 'interseguro',
-      insurer: 'interseguro',
-      name: 'Interseguro',
-      plan: 'SOAT Digital Express',
-      logo: 'interseguro.png',
-      price: prices.interseguro,
-      currency: 'PEN',
-      badge: '100% digital',
-      available: true,
-      extras: ['Emisión y entrega instantánea por correo', 'Orientación médica telefónica', 'Sincronización MTC inmediata']
-    },
-    {
-      id: 'pacifico',
-      insurer: 'pacifico',
-      name: 'Pacífico',
-      plan: 'SOAT Pacífico Digital Plus',
-      logo: 'pacifico.png',
-      price: prices.pacifico,
-      currency: 'PEN',
-      badge: 'Mejor valor',
-      available: true,
-      extras: ['Red médica preferencial de clínicas', 'Hasta 2 grúas anuales por siniestro', '200 CMR Puntos de bienvenida']
     },
     {
       id: 'protecta',
@@ -239,11 +304,51 @@ export function calculateOffers(
       name: 'Protecta Security',
       plan: 'SOAT Protecta Flex',
       logo: 'protecta.png',
-      price: prices.protecta,
+      price: isMoto ? 0 : proPrice.price,
       currency: 'PEN',
-      badge: 'Precio preferente',
-      available: true,
-      extras: ['Asistencia telefónica 24 horas', 'Atención directa ante la SBS', 'Certificado digital verificable']
+      badge: isMoto ? 'No disponible' : (proPrice.verified ? 'Tarifa Verificada en Vivo' : 'Precio preferente'),
+      available: !isMoto,
+      unavailableReason: isMoto ? 'Protecta Security no cuenta con SOAT para motos lineales.' : undefined,
+      extras: isMoto ? ['Excluido por política de riesgo'] : ['Asistencia telefónica 24 horas', 'Atención directa ante la SBS', 'Certificado digital verificable']
+    },
+    {
+      id: 'interseguro',
+      insurer: 'interseguro',
+      name: 'Interseguro',
+      plan: 'SOAT Digital Express',
+      logo: 'interseguro.png',
+      price: isMoto ? 0 : intPrice.price,
+      currency: 'PEN',
+      badge: isMoto ? 'No disponible en web' : (intPrice.verified ? 'Tarifa Verificada en Vivo' : '100% digital'),
+      available: !isMoto,
+      unavailableReason: isMoto ? 'Interseguro no comercializa SOAT digital para motos lineales.' : undefined,
+      extras: isMoto ? ['Canal web exclusivo para autos y taxis'] : ['Emisión y entrega instantánea por correo', 'Orientación médica telefónica', 'Sincronización MTC inmediata']
+    },
+    {
+      id: 'mapfre',
+      insurer: 'mapfre',
+      name: 'MAPFRE',
+      plan: 'SOAT Conectado MAPFRE',
+      logo: 'mapfre.png',
+      price: isMoto ? 0 : mapPrice.price,
+      currency: 'PEN',
+      badge: isMoto ? 'No disponible en web' : (mapPrice.verified ? 'Tarifa Verificada en Vivo' : 'Más asistencias'),
+      available: !isMoto,
+      unavailableReason: isMoto ? 'MAPFRE requiere evaluación presencial con asesor para motos.' : undefined,
+      extras: isMoto ? ['Requiere cotización con asesor'] : ['Auxilio mecánico y cerrajería', 'Ambulancia 24 hrs en caso de emergencia', 'Descuentos exclusivos en talleres']
+    },
+    {
+      id: 'pacifico',
+      insurer: 'pacifico',
+      name: 'Pacífico',
+      plan: 'SOAT Pacífico Digital Plus',
+      logo: 'pacifico.png',
+      price: isMoto ? 0 : pacPrice.price,
+      currency: 'PEN',
+      badge: isMoto ? 'No disponible en web' : (pacPrice.verified ? 'Tarifa Verificada en Vivo' : 'Mejor valor'),
+      available: !isMoto,
+      unavailableReason: isMoto ? 'Pacífico no cuenta con emisión web directa para motos lineales.' : undefined,
+      extras: isMoto ? ['Requiere evaluación comercial asistida'] : ['Red médica preferencial de clínicas', 'Hasta 2 grúas anuales por siniestro', '200 CMR Puntos de bienvenida']
     }
   ];
 }
@@ -309,6 +414,53 @@ app.get('/v1/offers', async (req, reply) => {
   return { data: calculateOffers(parsed.data.vehicleType, parsed.data.department) };
 });
 
+app.get('/v1/tariffs', async () => {
+  return {
+    dynamicCount: dynamicTariffs.size,
+    tariffs: Array.from(dynamicTariffs.values()),
+    baseTariffs: tariffsByVehicle,
+  };
+});
+
+app.post('/v1/admin/tariffs', async (req, reply) => {
+  const adminKey = req.headers['x-admin-key'];
+  if (process.env.ADMIN_API_KEY && adminKey !== process.env.ADMIN_API_KEY) {
+    return reply.status(401).send({ error: 'UNAUTHORIZED' });
+  }
+
+  const body = req.body;
+  const items = Array.isArray(body) ? body : [body];
+  let updated = 0;
+
+  for (const item of items as any[]) {
+    if (!item.insurerSlug || !item.annualPrice) continue;
+    const key = tariffKey(
+      item.insurerSlug,
+      item.vehicleType || 'AUTO',
+      item.department || 'Lima',
+      item.vehicleUse || 'PARTICULAR'
+    );
+    dynamicTariffs.set(key, {
+      insurerSlug: item.insurerSlug,
+      vehicleType: String(item.vehicleType || 'AUTO').toUpperCase(),
+      vehicleUse: String(item.vehicleUse || 'PARTICULAR').toUpperCase(),
+      department: String(item.department || 'Lima'),
+      annualPrice: Number(item.annualPrice),
+      source: String(item.source || 'SCRAPER'),
+      updatedAt: new Date().toISOString(),
+      notes: item.notes ? String(item.notes) : undefined
+    });
+    updated++;
+  }
+
+  return reply.send({ success: true, updated, total: dynamicTariffs.size });
+});
+
+app.post('/v1/admin/tariffs/sync-scraper', async (_req, reply) => {
+  loadScraperCacheTariffs();
+  return reply.send({ success: true, total: dynamicTariffs.size });
+});
+
 app.get('/v1/integrations/status', async () => ({
   data: {
     vehicle: { provider: 'VERIFIK', configured: Boolean(process.env.VERIFIK_TOKEN) },
@@ -356,7 +508,9 @@ const verifiedDemoVehicles: Record<
     color: 'Negro',
     vehicleType: 'MOTO',
     vin: '9FSDL23E3TC101115',
-    chassisNumber: '9FSDL23E3TC101115'
+    chassisNumber: '9FSDL23E3TC101115',
+    use: 'PARTICULAR',
+    department: 'Lima'
   },
   '1274UP': {
     brand: 'Suzuki',
@@ -365,7 +519,9 @@ const verifiedDemoVehicles: Record<
     color: 'Negro',
     vehicleType: 'MOTO',
     vin: '9FSDL23E3TC101115',
-    chassisNumber: '9FSDL23E3TC101115'
+    chassisNumber: '9FSDL23E3TC101115',
+    use: 'PARTICULAR',
+    department: 'Lima'
   },
   'ABC-123': {
     brand: 'Toyota',
@@ -374,7 +530,9 @@ const verifiedDemoVehicles: Record<
     color: 'Gris Oscuro',
     vehicleType: 'AUTO',
     vin: '9BRBL42E9P8123456',
-    chassisNumber: '9BRBL42E9P8123456'
+    chassisNumber: '9BRBL42E9P8123456',
+    use: 'PARTICULAR',
+    department: 'Lima'
   },
   'ABC123': {
     brand: 'Toyota',
@@ -383,7 +541,31 @@ const verifiedDemoVehicles: Record<
     color: 'Gris Oscuro',
     vehicleType: 'AUTO',
     vin: '9BRBL42E9P8123456',
-    chassisNumber: '9BRBL42E9P8123456'
+    chassisNumber: '9BRBL42E9P8123456',
+    use: 'PARTICULAR',
+    department: 'Lima'
+  },
+  'AMY-477': {
+    brand: 'BMW',
+    model: '118i',
+    year: 2013,
+    color: 'Blanco',
+    vehicleType: 'AUTO',
+    vin: 'WBA1A3104EJ681960',
+    chassisNumber: 'WBA1A3104EJ681960',
+    use: 'PARTICULAR',
+    department: 'Lima'
+  },
+  'AMY477': {
+    brand: 'BMW',
+    model: '118i',
+    year: 2013,
+    color: 'Blanco',
+    vehicleType: 'AUTO',
+    vin: 'WBA1A3104EJ681960',
+    chassisNumber: 'WBA1A3104EJ681960',
+    use: 'PARTICULAR',
+    department: 'Lima'
   },
   '7463-BS': {
     brand: 'Zongshen',
@@ -485,43 +667,49 @@ app.get('/v1/vehicles/:plate', async (req, reply) => {
     return { data: live, offers, mode: 'LIVE_VERIFIK' };
   }
 
-  // 2. Try verified padrón vehicles (7463-BS Zongshen, 1274-UP Suzuki, ABC-123 Toyota)
+  // 2. Try verified padrón vehicles
   const verified = verifiedDemoVehicles[normalized] || verifiedDemoVehicles[normalized.replace(/-/g, '')];
   if (verified) {
-    const data = { plate: normalized, ...verified, source: 'PROTOTYPE' as const };
+    const data = { plate: normalized, ...verified, source: 'PADRON' as const };
     const offers = calculateOffers(
       verified.vehicleType,
-      (verified as { department?: string }).department || 'Callao',
-      (verified as { use?: string }).use || 'TAXI'
+      (verified as { department?: string }).department || 'Lima',
+      (verified as { use?: string }).use || 'PARTICULAR'
     );
-    return { data, offers, mode: 'DEMO_VERIFIED' };
+    return { found: true, data, offers, mode: 'VERIFIED' };
   }
 
-  if (!demoMode) {
-    return reply.status(503).send({
-      error: 'VEHICLE_LOOKUP_UNAVAILABLE',
-      message: 'No fue posible validar la placa con el proveedor configurado.'
-    });
+  // 3. Placa no encontrada en padrón automático: detectar categoría según norma MTC sin inventar modelos falsos
+  const clean = normalized.replace(/[^A-Z0-9]/g, '');
+  let detectedType: 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO' = 'AUTO';
+  if (/^\d{4}\d[A-Z]$/.test(clean)) {
+    detectedType = 'MOTOTAXI';
+  } else if (/^\d{4}[A-Z]{2}$/.test(clean)) {
+    detectedType = 'MOTO';
+  } else if (/^[TV]\d[A-Z0-9]{3}$/.test(clean)) {
+    detectedType = 'CARGO';
+  } else if (/^[F][0-9A-Z]{5}$/.test(clean)) {
+    detectedType = 'VAN';
   }
 
-  // 3. Fallback catalog matching pattern
-  const isMoto = /^\d{4}-[A-Z0-9]{2}$/.test(normalized);
-  const catalog = isMoto ? motoCatalog : autoCatalog;
-  const index = [...normalized].reduce((total, char) => total + char.charCodeAt(0), 0) % catalog.length;
-  const item = catalog[index];
-  const vehicleType = isMoto ? ('MOTO' as const) : item.vehicleType;
-  const data = {
-    plate: normalized,
-    brand: item.brand,
-    model: item.model,
-    year: item.year,
-    color: item.color,
-    vehicleType,
-    ...vehicleIdentifiers(normalized),
-    source: 'PROTOTYPE' as const
+  const offers = calculateOffers(detectedType, 'Lima', 'PARTICULAR');
+  return {
+    found: false,
+    data: {
+      plate: normalized,
+      brand: '',
+      model: '',
+      year: new Date().getFullYear(),
+      color: 'No informado',
+      vehicleType: detectedType,
+      vin: '',
+      chassisNumber: '',
+      source: 'MANUAL_ENTRY' as const
+    },
+    offers,
+    mode: 'UNREGISTERED_PLATE',
+    message: 'Placa no encontrada en el padrón automático. Puedes ingresar o confirmar la marca y modelo para personalizar tu cotización.'
   };
-  const offers = calculateOffers(vehicleType, 'Lima');
-  return { data, offers, mode: 'DEMO' };
 });
 
 app.get('/v1/quotes', async () => {

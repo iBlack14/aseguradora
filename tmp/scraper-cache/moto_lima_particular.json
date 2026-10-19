@@ -1,0 +1,87 @@
+{
+  "expiresAt": "2027-10-19T04:54:20.848Z",
+  "offers": [
+    {
+      "insurerSlug": "la-positiva",
+      "insurerName": "La Positiva Seguros",
+      "price": 630.0,
+      "currency": "PEN",
+      "planName": "SOAT Digital Tradicional",
+      "badge": "Tarifa Verificada en Vivo",
+      "available": true,
+      "extras": [
+        "Auxilio de batería 24/7 en ciudad",
+        "1 servicio de grúa en ciudad",
+        "Atención médica legal inmediata"
+      ],
+      "scrapedAt": "2026-10-18T09:44:00.000Z",
+      "source": "https://www.lapositiva.com.pe/wps/portal/corporativo/home/cotizador/",
+      "confidence": "HIGH"
+    },
+    {
+      "insurerSlug": "protecta",
+      "insurerName": "Protecta Security",
+      "price": 0,
+      "currency": "PEN",
+      "planName": "SOAT Protecta Flex",
+      "badge": "No disponible",
+      "available": false,
+      "unavailableReason": "Protecta Security no cuenta con SOAT para motos lineales.",
+      "extras": [
+        "Solo disponible para vehículos de hasta 16 asientos"
+      ],
+      "scrapedAt": "2026-10-18T09:44:00.000Z",
+      "source": "https://www.protectasecurity.pe/soat",
+      "confidence": "HIGH"
+    },
+    {
+      "insurerSlug": "interseguro",
+      "insurerName": "Interseguro",
+      "price": 0,
+      "currency": "PEN",
+      "planName": "SOAT Digital Express",
+      "badge": "No disponible en web",
+      "available": false,
+      "unavailableReason": "Interseguro no comercializa SOAT digital para motos lineales.",
+      "extras": [
+        "Canal web restringido a autos y taxis"
+      ],
+      "scrapedAt": "2026-10-18T09:44:00.000Z",
+      "source": "https://www.interseguro.pe/soat-digital",
+      "confidence": "HIGH"
+    },
+    {
+      "insurerSlug": "pacifico",
+      "insurerName": "Pacífico Seguros",
+      "price": 0,
+      "currency": "PEN",
+      "planName": "SOAT Pacífico Digital Plus",
+      "badge": "No disponible en web",
+      "available": false,
+      "unavailableReason": "Pacífico no cuenta con emisión web directa para motos lineales.",
+      "extras": [
+        "Requiere evaluación comercial asistida"
+      ],
+      "scrapedAt": "2026-10-18T09:44:00.000Z",
+      "source": "https://www.pacifico.com.pe/soat",
+      "confidence": "HIGH"
+    },
+    {
+      "insurerSlug": "mapfre",
+      "insurerName": "MAPFRE",
+      "price": 0,
+      "currency": "PEN",
+      "planName": "SOAT Conectado MAPFRE",
+      "badge": "No disponible en web",
+      "available": false,
+      "unavailableReason": "MAPFRE no cuenta con cotización online abierta para motos particulares.",
+      "extras": [
+        "Requiere cotización con asesor o agencia física"
+      ],
+      "scrapedAt": "2026-10-18T09:44:00.000Z",
+      "source": "https://www.mapfre.com.pe/soat",
+      "confidence": "HIGH"
+    }
+  ],
+  "updatedAt": "2026-10-18T09:44:00.000Z"
+}

@@ -70,15 +70,6 @@ export function Header() {
 
           {/* Action buttons */}
           <div className="flex items-center gap-3">
-            {process.env.NODE_ENV !== 'production' && (
-              <a
-                href="http://localhost:3001"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 h-11 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-              >
-                <span className="material-symbols-outlined text-[18px] text-[#486800]">admin_panel_settings</span>
-                <span>Panel Asesor</span>
-              </a>
-            )}
             <Link
               href="/#cotizador"
               className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 h-11 rounded-lg bg-[#8bc500] hover:bg-[#7ab000] text-[#344d00] font-extrabold text-[13px] sm:text-[14px] shadow-sm active:scale-[0.98] transition-all"
