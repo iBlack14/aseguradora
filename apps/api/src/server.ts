@@ -317,8 +317,6 @@ export function calculateOffers(
   const proPrice = getPrice('protecta');
   const falabellaPrice = getPrice('falabella');
 
-  const isMoto = vehicleType === 'MOTO';
-
   return [
     {
       id: 'falabella',
@@ -344,7 +342,7 @@ export function calculateOffers(
       installmentAmount: posPrice.installmentAmount,
       installmentCount: posPrice.installmentCount,
       currency: 'PEN',
-      badge: isMoto ? 'Precio actualizado' : (posPrice.verified ? 'Precio actualizado' : (isMototaxiTaxi ? 'Tarifa Oficial Taxi' : 'Más económico')),
+      badge: posPrice.verified ? 'Precio actualizado' : (isMototaxiTaxi ? 'Tarifa Oficial Taxi' : 'Más económico'),
       available: true,
       extras: ['Auxilio de batería 24/7', 'Servicio de grúa en ciudad (1 evento)', 'Atención médica legal inmediata']
     },
@@ -354,14 +352,13 @@ export function calculateOffers(
       name: 'Protecta Security',
       plan: 'SOAT Protecta Flex',
       logo: 'protecta.png',
-      price: isMoto ? 0 : proPrice.price,
-      installmentAmount: isMoto ? undefined : proPrice.installmentAmount,
-      installmentCount: isMoto ? undefined : proPrice.installmentCount,
+      price: proPrice.price,
+      installmentAmount: proPrice.installmentAmount,
+      installmentCount: proPrice.installmentCount,
       currency: 'PEN',
-      badge: isMoto ? 'No disponible' : (proPrice.verified ? 'Precio actualizado' : 'Precio preferente'),
-      available: !isMoto,
-      unavailableReason: isMoto ? 'Protecta Security no cuenta con SOAT para motos lineales.' : undefined,
-      extras: isMoto ? ['Excluido por política de riesgo'] : ['Asistencia telefónica 24 horas', 'Atención directa ante la SBS', 'Certificado digital verificable']
+      badge: proPrice.verified ? 'Precio actualizado' : 'Precio preferente',
+      available: true,
+      extras: ['Asistencia telefónica 24 horas', 'Atención directa ante la SBS', 'Certificado digital verificable']
     },
     {
       id: 'interseguro',
@@ -369,14 +366,13 @@ export function calculateOffers(
       name: 'Interseguro',
       plan: 'SOAT Digital Express',
       logo: 'interseguro.png',
-      price: isMoto ? 0 : intPrice.price,
-      installmentAmount: isMoto ? undefined : intPrice.installmentAmount,
-      installmentCount: isMoto ? undefined : intPrice.installmentCount,
+      price: intPrice.price,
+      installmentAmount: intPrice.installmentAmount,
+      installmentCount: intPrice.installmentCount,
       currency: 'PEN',
-      badge: isMoto ? 'No disponible en web' : (intPrice.verified ? 'Precio actualizado' : '100% digital'),
-      available: !isMoto,
-      unavailableReason: isMoto ? 'Interseguro no comercializa SOAT digital para motos lineales.' : undefined,
-      extras: isMoto ? ['Canal web exclusivo para autos y taxis'] : ['Emisión y entrega instantánea por correo', 'Orientación médica telefónica', 'Sincronización MTC inmediata']
+      badge: intPrice.verified ? 'Precio actualizado' : '100% digital',
+      available: true,
+      extras: ['Emisión y entrega instantánea por correo', 'Orientación médica telefónica', 'Sincronización MTC inmediata']
     },
     {
       id: 'mapfre',
@@ -384,14 +380,13 @@ export function calculateOffers(
       name: 'MAPFRE',
       plan: 'SOAT Conectado MAPFRE',
       logo: 'mapfre.png',
-      price: isMoto ? 0 : mapPrice.price,
-      installmentAmount: isMoto ? undefined : mapPrice.installmentAmount,
-      installmentCount: isMoto ? undefined : mapPrice.installmentCount,
+      price: mapPrice.price,
+      installmentAmount: mapPrice.installmentAmount,
+      installmentCount: mapPrice.installmentCount,
       currency: 'PEN',
-      badge: isMoto ? 'No disponible en web' : (mapPrice.verified ? 'Precio actualizado' : 'Más asistencias'),
-      available: !isMoto,
-      unavailableReason: isMoto ? 'MAPFRE requiere evaluación presencial con asesor para motos.' : undefined,
-      extras: isMoto ? ['Requiere cotización con asesor'] : ['Auxilio mecánico y cerrajería', 'Ambulancia 24 hrs en caso de emergencia', 'Descuentos exclusivos en talleres']
+      badge: mapPrice.verified ? 'Precio actualizado' : 'Más asistencias',
+      available: true,
+      extras: ['Auxilio mecánico y cerrajería', 'Ambulancia 24 hrs en caso de emergencia', 'Descuentos exclusivos en talleres']
     },
     {
       id: 'pacifico',
@@ -399,14 +394,13 @@ export function calculateOffers(
       name: 'Pacífico',
       plan: 'SOAT Pacífico Digital Plus',
       logo: 'pacifico.png',
-      price: isMoto ? 0 : pacPrice.price,
-      installmentAmount: isMoto ? undefined : pacPrice.installmentAmount,
-      installmentCount: isMoto ? undefined : pacPrice.installmentCount,
+      price: pacPrice.price,
+      installmentAmount: pacPrice.installmentAmount,
+      installmentCount: pacPrice.installmentCount,
       currency: 'PEN',
-      badge: isMoto ? 'No disponible en web' : (pacPrice.verified ? 'Precio actualizado' : 'Mejor valor'),
-      available: !isMoto,
-      unavailableReason: isMoto ? 'Pacífico no cuenta con emisión web directa para motos lineales.' : undefined,
-      extras: isMoto ? ['Requiere evaluación comercial asistida'] : ['Red médica preferencial de clínicas', 'Hasta 2 grúas anuales por siniestro', '200 CMR Puntos de bienvenida']
+      badge: pacPrice.verified ? 'Precio actualizado' : 'Mejor valor',
+      available: true,
+      extras: ['Red médica preferencial de clínicas', 'Hasta 2 grúas anuales por siniestro', '200 CMR Puntos de bienvenida']
     }
   ];
 }
@@ -843,6 +837,29 @@ app.get('/v1/quotes/:id', async (req, reply) => {
   const found = data.find((quote) => quote.id === id || quote.code === id);
   if (!found) return reply.status(404).send({ error: 'QUOTE_NOT_FOUND' });
   return { data: found };
+});
+
+app.delete('/v1/quotes/:id', async (req, reply) => {
+  const { id } = req.params as { id: string };
+
+  if (database) {
+    const stored = await database.quote.findFirst({
+      where: { OR: [{ id }, { code: id }] },
+      select: { id: true }
+    });
+    if (stored) {
+      await database.$transaction(async (transaction) => {
+        await transaction.order.deleteMany({ where: { quoteId: stored.id } });
+        await transaction.quote.delete({ where: { id: stored.id } });
+      });
+      return reply.status(204).send();
+    }
+  }
+
+  const index = quotes.findIndex((quote) => quote.id === id || quote.code === id);
+  if (index === -1) return reply.status(404).send({ error: 'QUOTE_NOT_FOUND' });
+  quotes.splice(index, 1);
+  return reply.status(204).send();
 });
 
 // For development testing

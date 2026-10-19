@@ -86,6 +86,7 @@ export default function ComparePage() {
   const [selectedOfferIds, setSelectedOfferIds] = useState<string[]>(['la-positiva', 'pacifico']);
   const [plate, setPlate] = useState('ABC-123');
   const [vehicleType, setVehicleType] = useState<VehicleType>('AUTO');
+  const [apiPrices, setApiPrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -106,15 +107,27 @@ export default function ComparePage() {
     }
   }, []);
 
+  useEffect(() => {
+    const query = new URLSearchParams({ vehicleType, department: 'Lima', use: 'PARTICULAR' });
+    fetch(`/api/backend/v1/offers?${query.toString()}`)
+      .then((response) => response.ok ? response.json() : null)
+      .then((json) => {
+        if (Array.isArray(json?.data)) {
+          setApiPrices(Object.fromEntries(json.data.map((offer: { id: string; price: number }) => [offer.id, offer.price])));
+        }
+      })
+      .catch(() => {});
+  }, [vehicleType]);
+
   const comparedOffers = useMemo(() => {
     const tariffs = tariffsByVehicle[vehicleType] || tariffsByVehicle.AUTO;
     return allOffers
       .filter((o) => selectedOfferIds.includes(o.id))
       .map((o) => ({
         ...o,
-        price: tariffs[o.id] || 65.0
+        price: apiPrices[o.id] || tariffs[o.id] || 65.0
       }));
-  }, [selectedOfferIds, vehicleType]);
+  }, [selectedOfferIds, vehicleType, apiPrices]);
 
   return (
     <main className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">

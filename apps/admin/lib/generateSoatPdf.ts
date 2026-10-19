@@ -45,6 +45,13 @@ interface InsurerMeta {
 }
 
 const INSURERS: Record<string, InsurerMeta> = {
+  falabella: {
+    logoPath: '/assets/logos/seguros-falabella.png',
+    name: 'SEGUROS FALABELLA CORREDORES DE SEGUROS',
+    emergencyPhone: '01 615 4300 LIMA Y PROVINCIAS',
+    width: 27.0,
+    height: 8.5
+  },
   'la-positiva': {
     logoPath: '/assets/logos/la-positiva.png',
     name: 'LA POSITIVA SEGUROS Y REASEGUROS',
@@ -90,6 +97,7 @@ function normalizeInsurerKey(raw?: string): string {
   if (clean.includes('mapfre')) return 'mapfre';
   if (clean.includes('interseguro')) return 'interseguro';
   if (clean.includes('protecta')) return 'protecta';
+  if (clean.includes('falabella')) return 'falabella';
   return clean.replace(/[^a-z0-9-]/g, '-');
 }
 

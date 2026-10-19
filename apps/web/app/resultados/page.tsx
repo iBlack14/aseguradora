@@ -107,6 +107,7 @@ export default function ResultsPage() {
   const [year, setYear] = useState<number | string>(2023);
   const [vehicleUse, setVehicleUse] = useState<'PARTICULAR' | 'PUBLICO' | 'COMERCIAL'>('PARTICULAR');
   const [vin, setVin] = useState('');
+  const [apiOffers, setApiOffers] = useState<Array<{ id: string; price: number; available: boolean; badge?: string; unavailableReason?: string }>>([]);
   const [holderName, setHolderName] = useState('');
   const [docType, setDocType] = useState('DNI');
   const [docNum, setDocNum] = useState('');
@@ -200,6 +201,16 @@ export default function ResultsPage() {
     }
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    const query = new URLSearchParams({ vehicleType, department, use: vehicleUse });
+    fetch(`/api/backend/v1/offers?${query.toString()}`, { signal: controller.signal })
+      .then((response) => response.ok ? response.json() : null)
+      .then((json) => setApiOffers(Array.isArray(json?.data) ? json.data : []))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [vehicleType, department, vehicleUse]);
+
   function handleOpenEdit() {
     setEditPlate(plate);
     setEditType(vehicleType);
@@ -238,6 +249,16 @@ export default function ResultsPage() {
   const offersWithPricing = useMemo(() => {
     const prices = isMototaxiTaxi ? mototaxiTaxiTariffs : (tariffsByVehicle[vehicleType] || tariffsByVehicle.AUTO);
     return baseOffers.map((o) => {
+      const apiOffer = apiOffers.find((item) => item.id === o.id);
+      if (apiOffer) {
+        return {
+          ...o,
+          price: apiOffer.price,
+          available: apiOffer.available && apiOffer.price > 0,
+          badge: apiOffer.badge || o.badge,
+          unavailableReason: apiOffer.unavailableReason
+        };
+      }
       if (isMoto) {
         if (o.id === 'la-positiva') {
           return {
@@ -294,7 +315,7 @@ export default function ResultsPage() {
         badge: isMototaxiTaxi && o.id === 'la-positiva' ? 'Tarifa Oficial Taxi' : o.badge
       };
     });
-  }, [vehicleType, isMototaxiTaxi, isMoto]);
+  }, [vehicleType, isMototaxiTaxi, isMoto, apiOffers]);
 
   const filteredAndSortedOffers = useMemo(() => {
     const list = offersWithPricing.filter((o) => selectedInsurers.includes(o.id));

@@ -136,6 +136,7 @@ export default function Quotes() {
   const [tariffDepartment, setTariffDepartment] = useState('Lima');
   const [tariffDrafts, setTariffDrafts] = useState<Record<string, TariffEditor>>({});
   const [savingTariff, setSavingTariff] = useState<string | null>(null);
+  const [deletingQuoteId, setDeletingQuoteId] = useState<string | null>(null);
 
   // States for + Nueva cotización Brand & Model selectors
   const [adminBrand, setAdminBrand] = useState('');
@@ -198,6 +199,22 @@ export default function Quotes() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  async function deleteQuote(q: Quote) {
+    if (deletingQuoteId) return;
+    if (!window.confirm(`¿Eliminar la cotización ${q.code}? Esta acción no se puede deshacer.`)) return;
+    setDeletingQuoteId(q.id);
+    try {
+      const response = await fetch(`/api/backend/v1/quotes/${encodeURIComponent(q.id)}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error();
+      setQuotes((current) => current.filter((item) => item.id !== q.id));
+      if (selectedQuote?.id === q.id) setSelectedQuote(null);
+    } catch {
+      alert('No fue posible eliminar la cotización.');
+    } finally {
+      setDeletingQuoteId(null);
+    }
+  }
 
   async function handleEmit(
     q: Quote,
@@ -861,6 +878,14 @@ export default function Quotes() {
                           onClick={() => (q.status === 'EMITIDA' ? generateAndDownloadSoatPdf(q) : openQuoteDetail(q))}
                         >
                           {q.status === 'EMITIDA' ? 'Descargar póliza' : 'Emitir Póliza'}
+                        </button>
+                        <button
+                          className="button ghost"
+                          style={{ padding: '6px 10px', fontSize: 12, color: '#b42318', borderColor: '#f2c5c0' }}
+                          disabled={deletingQuoteId === q.id}
+                          onClick={() => deleteQuote(q)}
+                        >
+                          {deletingQuoteId === q.id ? 'Eliminando…' : 'Eliminar'}
                         </button>
                       </div>
                     </td>

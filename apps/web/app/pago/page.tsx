@@ -120,6 +120,7 @@ export default function PaymentPage() {
   const [vehicleUse, setVehicleUse] = useState<'PARTICULAR' | 'PUBLICO' | 'COMERCIAL'>('PARTICULAR');
   const [vin, setVin] = useState('');
   const [customPrice, setCustomPrice] = useState<number | null>(null);
+  const [apiPrice, setApiPrice] = useState<number | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -198,12 +199,24 @@ export default function PaymentPage() {
     }
   }, []);
 
+  useEffect(() => {
+    const query = new URLSearchParams({ vehicleType, department, use: vehicleUse });
+    fetch(`/api/backend/v1/offers?${query.toString()}`)
+      .then((response) => response.ok ? response.json() : null)
+      .then((json) => {
+        const offer = Array.isArray(json?.data) ? json.data.find((item: { id: string; price?: number }) => item.id === selectedOfferId) : null;
+        setApiPrice(offer?.price > 0 ? offer.price : null);
+      })
+      .catch(() => {});
+  }, [vehicleType, department, vehicleUse, selectedOfferId]);
+
   const selectedPlan = useMemo(() => {
     return basePlans[selectedOfferId] || basePlans.pacifico;
   }, [selectedOfferId]);
 
   const price = useMemo(() => {
     if (customPrice && customPrice > 0) return customPrice;
+    if (apiPrice && apiPrice > 0) return apiPrice;
     const isMototaxiTaxi =
       vehicleType === 'MOTOTAXI' &&
       (vehicleUse === 'PUBLICO' || department.toLowerCase().includes('callao'));
@@ -219,7 +232,7 @@ export default function PaymentPage() {
     }
     const table = tariffsByVehicle[vehicleType] || tariffsByVehicle.AUTO;
     return table[selectedOfferId] || 72.0;
-  }, [customPrice, vehicleType, vehicleUse, department, selectedOfferId]);
+  }, [customPrice, apiPrice, vehicleType, vehicleUse, department, selectedOfferId]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
