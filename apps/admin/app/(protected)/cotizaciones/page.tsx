@@ -704,9 +704,7 @@ export default function Quotes() {
             <section className="internal-quote-result" aria-live="polite">
               <div className="internal-quote-heading">
                 <div>
-                  <span className="vehicle-kicker">Cotización interna completada</span>
                   <h3>Selecciona la aseguradora</h3>
-                  <p>El sistema conservará únicamente la aseguradora elegida y su precio final.</p>
                 </div>
               </div>
 
@@ -731,38 +729,12 @@ export default function Quotes() {
                 </label>
 
                 <div className="selected-price-result">
-                  <span>Precio de la aseguradora seleccionada</span>
+                  <span>Precio cotizado</span>
                   <strong>S/ {(selectedFinalPrice || 0).toFixed(2)}</strong>
-                  <label style={{ display: 'block', marginTop: 8, fontSize: 11, fontWeight: 700 }}>
-                    Precio final (opcional)
-                    <input
-                      type="number"
-                      min="1"
-                      step="0.01"
-                      value={realPriceOverride}
-                      onChange={(event) => setRealPriceOverride(event.target.value)}
-                      placeholder="Usar precio de la aseguradora"
-                      style={{ width: '100%', marginTop: 4 }}
-                    />
-                  </label>
                   {selectedOffer?.installmentAmount && selectedOffer.installmentCount && selectedOffer.installmentCount > 1 && (
                     <small>{selectedOffer.installmentCount} cuotas de S/ {selectedOffer.installmentAmount.toFixed(2)}</small>
                   )}
                 </div>
-
-                <label>
-                  Asesor responsable
-                  <input value={advisorName} onChange={(event) => setAdvisorName(event.target.value)} />
-                </label>
-
-                <label>
-                  Observaciones
-                  <input
-                    value={assistedNotes}
-                    onChange={(event) => setAssistedNotes(event.target.value)}
-                    placeholder="Opcional"
-                  />
-                </label>
               </div>
             </section>
           )}

@@ -23,7 +23,7 @@
 .internal-quote-result{margin-top:20px;padding:18px;border:1px solid #d8e7bd;border-radius:14px;background:#f8fbf2}
 .internal-quote-heading h3{margin:4px 0;font-size:18px}
 .internal-quote-heading p{margin:0;color:var(--muted);font-size:13px}
-.internal-quote-grid{display:grid;grid-template-columns:1.2fr .8fr 1fr 1fr;gap:14px;align-items:end;margin-top:16px}
+.internal-quote-grid{display:grid;grid-template-columns:minmax(280px,1.5fr) minmax(180px,.5fr);gap:14px;align-items:end;margin-top:16px}
 .internal-quote-grid label{display:grid;gap:7px;font-size:12px;font-weight:800}
 .internal-quote-grid select,.internal-quote-grid input{width:100%;height:44px;border:1px solid #cfd8c5;border-radius:9px;background:#fff;padding:0 11px;outline:none}
 .internal-quote-grid select:focus,.internal-quote-grid input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(139,197,0,.16)}
