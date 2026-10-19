@@ -105,6 +105,7 @@ export default function Quotes() {
   const [selectedOfferId, setSelectedOfferId] = useState<string>('la-positiva');
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [emissionQuote, setEmissionQuote] = useState<Quote | null>(null);
+  const [emitting, setEmitting] = useState(false);
   const [copiedPlate, setCopiedPlate] = useState(false);
   const [realPriceOverride, setRealPriceOverride] = useState('');
   const [advisorName, setAdvisorName] = useState('Carlos Mendoza (Asesor SBS Falabella)');
@@ -165,11 +166,13 @@ export default function Quotes() {
     updatedHolderName?: string,
     updatedVehicle?: Partial<NonNullable<Quote['vehicle']>>
   ) {
+    if (q.status === 'EMITIDA' || emitting) return;
     const finalOfferId = offerId || q.selectedOfferId || selectedOfferId || 'la-positiva';
     const finalPrice = overridePrice || (realPriceOverride ? parseFloat(realPriceOverride) : q.selectedPrice);
     const finalHolderName = updatedHolderName !== undefined ? updatedHolderName : q.holderName;
     const finalVehicle = updatedVehicle ? { ...(q.vehicle || {}), ...updatedVehicle } : q.vehicle;
 
+    setEmitting(true);
     try {
       const res = await fetch(`/api/backend/v1/quotes/${q.id}/emit`, {
         method: 'POST',
@@ -196,29 +199,17 @@ export default function Quotes() {
         if (!emittedData.holderName && finalHolderName) emittedData.holderName = finalHolderName;
         if (!emittedData.vehicle && finalVehicle) emittedData.vehicle = finalVehicle;
         setEmissionQuote(emittedData);
+        setQuotes((currentQuotes) => currentQuotes.map((currentQuote) =>
+          currentQuote.id === emittedData.id ? emittedData : currentQuote
+        ));
       } else {
-        setEmissionQuote({
-          ...q,
-          status: 'EMITIDA',
-          selectedOfferId: finalOfferId,
-          selectedPrice: finalPrice,
-          holderName: finalHolderName,
-          vehicle: finalVehicle,
-          policyNumber: q.policyNumber || `SOAT-2026-FALA-${Math.floor(100000 + Math.random() * 900000)}`,
-          emittedAt: new Date().toISOString()
-        });
+        const failure = await res.json().catch(() => null) as { message?: string } | null;
+        alert(failure?.message || 'No fue posible emitir la póliza. Inténtalo nuevamente.');
       }
     } catch {
-      setEmissionQuote({
-        ...q,
-        status: 'EMITIDA',
-        selectedOfferId: finalOfferId,
-        selectedPrice: finalPrice,
-        holderName: finalHolderName,
-        vehicle: finalVehicle,
-        policyNumber: q.policyNumber || `SOAT-2026-FALA-${Math.floor(100000 + Math.random() * 900000)}`,
-        emittedAt: new Date().toISOString()
-      });
+      alert('No fue posible conectar con la API para emitir la póliza.');
+    } finally {
+      setEmitting(false);
     }
     load();
   }
@@ -761,13 +752,15 @@ export default function Quotes() {
                     <td data-label="Fecha">{new Date(q.createdAt).toLocaleString('es-PE')}</td>
                     <td data-label="Acciones">
                       <div className="quote-actions">
-                        <button
-                          className="button ghost"
-                          style={{ padding: '6px 10px', fontSize: 12 }}
-                          onClick={() => openQuoteDetail(q)}
-                        >
-                          Ver detalle
-                        </button>
+                        {q.status !== 'EMITIDA' && (
+                          <button
+                            className="button ghost"
+                            style={{ padding: '6px 10px', fontSize: 12 }}
+                            onClick={() => openQuoteDetail(q)}
+                          >
+                            Ver detalle
+                          </button>
+                        )}
                         <button
                           className="button"
                           style={{
@@ -775,9 +768,9 @@ export default function Quotes() {
                             fontSize: 12,
                             background: q.status === 'EMITIDA' ? '#0f766e' : '#16a34a'
                           }}
-                          onClick={() => (q.status === 'EMITIDA' ? setEmissionQuote(q) : openQuoteDetail(q))}
+                          onClick={() => (q.status === 'EMITIDA' ? generateAndDownloadSoatPdf(q) : openQuoteDetail(q))}
                         >
-                          {q.status === 'EMITIDA' ? 'Ver Certificado' : 'Emitir Póliza'}
+                          {q.status === 'EMITIDA' ? 'Descargar póliza' : 'Emitir Póliza'}
                         </button>
                       </div>
                     </td>
@@ -1196,6 +1189,7 @@ export default function Quotes() {
               </button>
               <button
                 className="button"
+                disabled={emitting}
                 style={{ background: selectedQuote.status === 'EMITIDA' ? '#0f766e' : '#16a34a' }}
                 onClick={() => {
                   const q = selectedQuote;
@@ -1230,7 +1224,9 @@ export default function Quotes() {
                   }
                 }}
               >
-                {selectedQuote.status === 'EMITIDA' ? 'Ver Certificado Oficial (PDF)' : 'Emitir Póliza SOAT (PDF)'}
+                {selectedQuote.status === 'EMITIDA'
+                  ? 'Descargar Certificado Oficial (PDF)'
+                  : (emitting ? 'Emitiendo póliza…' : 'Emitir Póliza SOAT (PDF)')}
               </button>
             </div>
           </div>

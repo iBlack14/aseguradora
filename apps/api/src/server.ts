@@ -93,7 +93,9 @@ const demoMode = process.env.DEMO_MODE !== 'false';
 const database = process.env.DATABASE_URL ? new PrismaClient() : null;
 if (process.env.NODE_ENV === 'production' && !database) throw new Error('DATABASE_URL is required in production');
 
-type StoredQuote = Prisma.QuoteGetPayload<{ include: { customer: true; vehicle: true; offers: { include: { insurer: true } } } }>;
+type StoredQuote = Prisma.QuoteGetPayload<{
+  include: { customer: true; vehicle: true; offers: { include: { insurer: true } }; order: true };
+}>;
 
 function storedQuoteToApi(record: StoredQuote): Quote {
   const offers = record.offers.map((storedOffer) => {
@@ -134,13 +136,15 @@ function storedQuoteToApi(record: StoredQuote): Quote {
     documentNumber: record.documentNumber,
     startsAt: record.startsAt.toISOString(),
     source: record.source as QuoteSource,
-    status: 'NUEVA',
+    status: record.status === 'ISSUED' ? 'EMITIDA' : 'NUEVA',
     createdAt: record.createdAt.toISOString(),
     vehicle,
     holderName,
     selectedOfferId: record.selectedOfferId || undefined,
     selectedPrice: record.selectedPrice ? Number(record.selectedPrice) : undefined,
-    offers
+    offers,
+    emittedAt: record.order?.updatedAt.toISOString(),
+    policyNumber: record.order?.policyNumber || undefined
   };
 }
 
@@ -148,7 +152,7 @@ async function loadStoredQuotes() {
   if (!database) return quotes;
   try {
     const records = await database.quote.findMany({
-      include: { customer: true, vehicle: true, offers: { include: { insurer: true } } },
+      include: { customer: true, vehicle: true, offers: { include: { insurer: true } }, order: true },
       orderBy: { createdAt: 'desc' }
     });
     return records.map(storedQuoteToApi);
@@ -905,6 +909,17 @@ app.post('/v1/quotes/:id/emit', async (req, reply) => {
   const quote = data.find((q) => q.id === id || q.code === id);
   if (!quote) return reply.status(404).send({ error: 'QUOTE_NOT_FOUND' });
 
+  if (quote.status === 'EMITIDA') {
+    return reply.send({ data: quote });
+  }
+
+  if (!body.holderName?.trim() && !quote.holderName?.trim()) {
+    return reply.status(400).send({
+      error: 'HOLDER_NAME_REQUIRED',
+      message: 'Los nombres y apellidos del contratante son obligatorios para emitir la póliza.'
+    });
+  }
+
   quote.status = 'EMITIDA';
   quote.emittedAt = new Date().toISOString();
   quote.policyNumber = quote.policyNumber || `SOAT-2026-FALA-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -942,16 +957,41 @@ app.post('/v1/quotes/:id/emit', async (req, reply) => {
       if (cust) customerId = cust.id;
     }
 
-    await database.quote
+    const storedQuote = await database.quote
       .update({
         where: { id: quote.id },
         data: {
+          status: 'ISSUED',
           selectedPrice: quote.selectedPrice,
           selectedOfferId: quote.selectedOfferId,
           ...(customerId ? { customerId } : {})
-        }
+        },
+        include: { offers: { include: { insurer: true } }, order: true }
       })
-      .catch(() => {});
+      .catch(() => null);
+
+    if (storedQuote) {
+      const selectedOffer = storedQuote.offers.find((offer) => offer.insurer.slug === quote.selectedOfferId);
+      if (selectedOffer) {
+        const order = await database.order.upsert({
+          where: { quoteId: quote.id },
+          update: {
+            status: 'ISSUED',
+            amount: quote.selectedPrice ?? Number(selectedOffer.annualPrice || 0),
+            policyNumber: quote.policyNumber
+          },
+          create: {
+            code: `ORD-${quote.code}`,
+            status: 'ISSUED',
+            quoteId: quote.id,
+            offerId: selectedOffer.id,
+            amount: quote.selectedPrice ?? Number(selectedOffer.annualPrice || 0),
+            policyNumber: quote.policyNumber
+          }
+        }).catch(() => null);
+        if (order) quote.emittedAt = order.updatedAt.toISOString();
+      }
+    }
 
     if (quote.vehicle && (quote.vehicle.brand || quote.vehicle.model)) {
       await database.vehicle
