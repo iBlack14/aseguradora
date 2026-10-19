@@ -785,6 +785,49 @@ app.get('/v1/quotes', async () => {
   };
 });
 
+app.get('/v1/soat/consulta', async (req, reply) => {
+  const query = req.query as { plate?: string; documentNumber?: string };
+  const plate = String(query.plate || '').trim().toUpperCase().replace(/\s+/g, '');
+  const documentNumber = String(query.documentNumber || '').trim().toUpperCase();
+  if (!plate || !/^[A-Z0-9]{5,8}-?[A-Z0-9]{1,3}$/.test(plate)) {
+    return reply.status(400).send({ error: 'INVALID_PLATE', message: 'Ingresa una placa válida.' });
+  }
+
+  const normalizedPlate = plate.replace(/-/g, '');
+  const data = await loadStoredQuotes();
+  const matches = data
+    .filter((quote) => quote.plate.replace(/-/g, '') === normalizedPlate)
+    .filter((quote) => !documentNumber || quote.documentNumber === documentNumber)
+    .filter((quote) => quote.status === 'EMITIDA')
+    .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+  const quote = matches[0];
+
+  if (!quote) {
+    return reply.send({ data: { found: false, status: 'NO_ENCONTRADO', plate } });
+  }
+
+  const startsAt = new Date(quote.startsAt);
+  const expiresAt = new Date(startsAt);
+  expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+  const now = new Date();
+  const status = expiresAt >= now && startsAt <= now ? 'VIGENTE' : expiresAt < now ? 'VENCIDO' : 'AÚN_NO_VIGENTE';
+  const selectedOffer = quote.offers?.find((offer) => offer.id === quote.selectedOfferId);
+
+  return reply.send({
+    data: {
+      found: true,
+      status,
+      plate: quote.plate,
+      policyNumber: quote.policyNumber || 'Pendiente de asignación',
+      insurer: selectedOffer?.name || quote.selectedOfferId || 'Aseguradora registrada',
+      vehicle: quote.vehicle ? { brand: quote.vehicle.brand, model: quote.vehicle.model, year: quote.vehicle.year } : undefined,
+      startsAt: startsAt.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+      consultedAt: now.toISOString()
+    }
+  });
+});
+
 app.get('/v1/quotes/:id', async (req, reply) => {
   const { id } = req.params as { id: string };
   const data = await loadStoredQuotes();

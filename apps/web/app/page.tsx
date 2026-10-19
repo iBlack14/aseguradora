@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState, useRef, useMemo } from 'react';
 import { getBrandsForType, getModelsForBrand } from '@/lib/vehicleCatalog';
@@ -308,6 +309,13 @@ export default function HomePage() {
               <p className="mt-2 text-[17px] text-[#434935] leading-relaxed">
                 Encuentra la compañía ideal para tu auto o moto y recibe tu póliza digital respaldada por las 5 aseguradoras autorizadas.
               </p>
+              <Link
+                href="/consultar-soat"
+                className="mt-2 inline-flex w-fit items-center gap-2 text-sm font-extrabold text-[#486800] underline decoration-[#8bc500] decoration-2 underline-offset-4 hover:text-[#344d00]"
+              >
+                ¿Ya tienes SOAT? Consulta su vigencia
+                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+              </Link>
             </div>
 
             {/* Selector de pestañas dinámico */}

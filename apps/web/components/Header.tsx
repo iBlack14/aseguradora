@@ -63,6 +63,9 @@ export function Header() {
             <Link className="text-[#434935] hover:text-[#161c22] transition-colors duration-150 py-2" href="/#faq">
               Centro de ayuda
             </Link>
+            <Link className="text-[#434935] hover:text-[#161c22] transition-colors duration-150 py-2" href="/consultar-soat">
+              Consultar SOAT
+            </Link>
             <Link className="text-[#486800] font-bold border-b-2 border-[#486800] pb-0.5" href="/">
               SOAT Digital
             </Link>
@@ -70,6 +73,12 @@ export function Header() {
 
           {/* Action buttons */}
           <div className="flex items-center gap-3">
+            <Link
+              href="/consultar-soat"
+              className="hidden sm:inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 h-11 rounded-lg border border-[#8bc500] text-[#486800] font-extrabold text-[13px] sm:text-[14px] hover:bg-[#f4f9ea] transition-colors"
+            >
+              <span>Consultar SOAT</span>
+            </Link>
             <Link
               href="/#cotizador"
               className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 h-11 rounded-lg bg-[#8bc500] hover:bg-[#7ab000] text-[#344d00] font-extrabold text-[13px] sm:text-[14px] shadow-sm active:scale-[0.98] transition-all"
