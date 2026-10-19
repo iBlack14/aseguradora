@@ -1618,8 +1618,16 @@ export default function Quotes() {
                           <strong>S/ {igv.toFixed(2)}</strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #cbd5e1', paddingTop: 4, marginTop: 4, fontSize: 14, color: 'var(--green)' }}>
-                          <span>PRIMA TOTAL CANCELADA:</span>
+                          <span>PRIMA TOTAL:</span>
                           <strong>S/ {price.toFixed(2)}</strong>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
+                          <span>Forma de pago:</span>
+                          <strong>
+                            {emissionQuote.paymentMethod === 'INSTALLMENTS'
+                              ? `${emissionQuote.installmentCount} cuotas de S/ ${(emissionQuote.installmentAmount || 0).toFixed(2)}`
+                              : 'Al contado'}
+                          </strong>
                         </div>
                       </>
                     );
