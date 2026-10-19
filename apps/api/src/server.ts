@@ -62,6 +62,7 @@ type Quote = {
   offers?: OfferDetail[];
   advisorName?: string;
   assistedNotes?: string;
+  holderName?: string;
   emittedAt?: string;
   policyNumber?: string;
 };
@@ -92,7 +93,7 @@ const demoMode = process.env.DEMO_MODE !== 'false';
 const database = process.env.DATABASE_URL ? new PrismaClient() : null;
 if (process.env.NODE_ENV === 'production' && !database) throw new Error('DATABASE_URL is required in production');
 
-type StoredQuote = Prisma.QuoteGetPayload<{ include: { vehicle: true; offers: { include: { insurer: true } } } }>;
+type StoredQuote = Prisma.QuoteGetPayload<{ include: { customer: true; vehicle: true; offers: { include: { insurer: true } } } }>;
 
 function storedQuoteToApi(record: StoredQuote): Quote {
   const offers = record.offers.map((storedOffer) => {
@@ -120,6 +121,9 @@ function storedQuoteToApi(record: StoredQuote): Quote {
         chassisNumber: record.vehicle.chassisNumber || 'No informado'
       }
     : undefined;
+  const holderName = record.customer
+    ? `${record.customer.firstName} ${record.customer.lastName}`.trim()
+    : undefined;
   return {
     id: record.id,
     code: record.code,
@@ -133,6 +137,7 @@ function storedQuoteToApi(record: StoredQuote): Quote {
     status: 'NUEVA',
     createdAt: record.createdAt.toISOString(),
     vehicle,
+    holderName,
     selectedOfferId: record.selectedOfferId || undefined,
     selectedPrice: record.selectedPrice ? Number(record.selectedPrice) : undefined,
     offers
@@ -143,7 +148,7 @@ async function loadStoredQuotes() {
   if (!database) return quotes;
   try {
     const records = await database.quote.findMany({
-      include: { vehicle: true, offers: { include: { insurer: true } } },
+      include: { customer: true, vehicle: true, offers: { include: { insurer: true } } },
       orderBy: { createdAt: 'desc' }
     });
     return records.map(storedQuoteToApi);
@@ -379,7 +384,8 @@ const quoteInput = z.object({
   selectedPrice: z.number().optional(),
   source: z.enum(['WEB', 'MANUAL']).default('WEB'),
   advisorName: z.string().optional(),
-  assistedNotes: z.string().optional()
+  assistedNotes: z.string().optional(),
+  holderName: z.string().optional()
 }).superRefine((input, context) => {
   if (input.documentType === 'DNI' && input.documentNumber && !/^\d{8}$/.test(input.documentNumber)) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ['documentNumber'], message: 'El DNI debe tener 8 dígitos.' });
@@ -771,6 +777,7 @@ app.post('/v1/quotes', async (req, reply) => {
     documentNumber: parsed.data.documentNumber,
     startsAt: parsed.data.startsAt.toISOString(),
     vehicle: parsed.data.vehicle,
+    holderName: parsed.data.holderName,
     selectedOfferId: selectedOffer.id,
     selectedPrice: parsed.data.selectedPrice ?? selectedOffer.price,
     advisorName: parsed.data.advisorName,
@@ -784,6 +791,30 @@ app.post('/v1/quotes', async (req, reply) => {
   if (database) {
     try {
       await database.$transaction(async (transaction) => {
+        let customerId: string | undefined;
+        if (quote.holderName) {
+          const parts = quote.holderName.trim().split(/\s+/);
+          const firstName = parts[0] || 'Cliente';
+          const lastName = parts.slice(1).join(' ') || 'Titular';
+          const customer = await transaction.customer.upsert({
+            where: {
+              documentType_documentNumber: {
+                documentType: quote.documentType,
+                documentNumber: quote.documentNumber
+              }
+            },
+            update: { firstName, lastName },
+            create: {
+              documentType: quote.documentType,
+              documentNumber: quote.documentNumber,
+              firstName,
+              lastName,
+              email: `${quote.documentNumber.toLowerCase()}@segurosfalabella.pe`
+            }
+          });
+          customerId = customer.id;
+        }
+
         const vehicle = await transaction.vehicle.upsert({
           where: { plate: quote.plate },
           update: {
@@ -820,6 +851,7 @@ app.post('/v1/quotes', async (req, reply) => {
             department: quote.department,
             selectedOfferId: quote.selectedOfferId,
             selectedPrice: quote.selectedPrice,
+            customerId,
             vehicleId: vehicle.id
           }
         });
@@ -859,6 +891,15 @@ app.post('/v1/quotes/:id/emit', async (req, reply) => {
     realPrice?: number;
     assistedNotes?: string;
     selectedOfferId?: string;
+    holderName?: string;
+    vehicle?: {
+      brand?: string;
+      model?: string;
+      year?: number;
+      color?: string;
+      vin?: string;
+      chassisNumber?: string;
+    };
   };
   const data = await loadStoredQuotes();
   const quote = data.find((q) => q.id === id || q.code === id);
@@ -871,17 +912,60 @@ app.post('/v1/quotes/:id/emit', async (req, reply) => {
   if (body.realPrice) quote.selectedPrice = body.realPrice;
   if (body.assistedNotes) quote.assistedNotes = body.assistedNotes;
   if (body.selectedOfferId) quote.selectedOfferId = body.selectedOfferId;
+  if (body.holderName) quote.holderName = body.holderName;
+  if (body.vehicle) {
+    quote.vehicle = { ...(quote.vehicle || {}), ...body.vehicle };
+  }
 
   if (database) {
+    let customerId: string | undefined;
+    if (quote.holderName) {
+      const parts = quote.holderName.trim().split(/\s+/);
+      const firstName = parts[0] || 'Cliente';
+      const lastName = parts.slice(1).join(' ') || 'Titular';
+      const cust = await database.customer.upsert({
+        where: {
+          documentType_documentNumber: {
+            documentType: quote.documentType,
+            documentNumber: quote.documentNumber
+          }
+        },
+        update: { firstName, lastName },
+        create: {
+          documentType: quote.documentType,
+          documentNumber: quote.documentNumber,
+          firstName,
+          lastName,
+          email: `${quote.documentNumber.toLowerCase()}@segurosfalabella.pe`
+        }
+      }).catch(() => null);
+      if (cust) customerId = cust.id;
+    }
+
     await database.quote
       .update({
         where: { id: quote.id },
         data: {
           selectedPrice: quote.selectedPrice,
-          selectedOfferId: quote.selectedOfferId
+          selectedOfferId: quote.selectedOfferId,
+          ...(customerId ? { customerId } : {})
         }
       })
       .catch(() => {});
+
+    if (quote.vehicle && (quote.vehicle.brand || quote.vehicle.model)) {
+      await database.vehicle
+        .update({
+          where: { plate: quote.plate },
+          data: {
+            brand: quote.vehicle.brand,
+            model: quote.vehicle.model,
+            year: quote.vehicle.year ? Number(quote.vehicle.year) : undefined,
+            chassisNumber: quote.vehicle.chassisNumber || quote.vehicle.vin
+          }
+        })
+        .catch(() => {});
+    }
   }
   return reply.send({ data: quote });
 });

@@ -7,6 +7,7 @@ type Quote = {
   code: string;
   plate: string;
   vehicleType: string;
+  holderName?: string;
   source: 'WEB' | 'MANUAL';
   status: string;
   createdAt: string;

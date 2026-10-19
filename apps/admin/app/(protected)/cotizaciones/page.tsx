@@ -1,6 +1,7 @@
 'use client';
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState, useMemo } from 'react';
 import { generateAndDownloadSoatPdf } from '@/lib/generateSoatPdf';
+import { getBrandsForType, getModelsForBrand } from '@/lib/vehicleCatalog';
 
 type OfferDetail = {
   id: string;
@@ -23,6 +24,7 @@ type Quote = {
   department: string;
   documentType: string;
   documentNumber: string;
+  holderName?: string;
   source: 'WEB' | 'MANUAL';
   status: string;
   createdAt: string;
@@ -35,12 +37,12 @@ type Quote = {
   emittedAt?: string;
   policyNumber?: string;
   vehicle?: {
-    brand: string;
-    model: string;
-    year: number;
-    color: string;
-    vin: string;
-    chassisNumber: string;
+    brand?: string;
+    model?: string;
+    year?: number;
+    color?: string;
+    vin?: string;
+    chassisNumber?: string;
   };
 };
 
@@ -108,6 +110,45 @@ export default function Quotes() {
   const [advisorName, setAdvisorName] = useState('Carlos Mendoza (Asesor SBS Falabella)');
   const [assistedNotes, setAssistedNotes] = useState('');
 
+  // States for + Nueva cotización Brand & Model selectors
+  const [adminBrand, setAdminBrand] = useState('');
+  const [adminModel, setAdminModel] = useState('');
+  const [adminYear, setAdminYear] = useState('2023');
+  const [adminVin, setAdminVin] = useState('');
+  const [adminCustomBrand, setAdminCustomBrand] = useState(false);
+  const [adminCustomModel, setAdminCustomModel] = useState(false);
+
+  const adminAvailableBrands = useMemo(() => getBrandsForType(vehicleType), [vehicleType]);
+  const adminAvailableModels = useMemo(() => getModelsForBrand(vehicleType, adminBrand), [vehicleType, adminBrand]);
+
+  // States for Detail & Pre-Emission Modal Edit
+  const [editHolderName, setEditHolderName] = useState('');
+  const [editBrand, setEditBrand] = useState('');
+  const [editModel, setEditModel] = useState('');
+  const [editYear, setEditYear] = useState('2023');
+  const [editVin, setEditVin] = useState('');
+  const [editOfferId, setEditOfferId] = useState('la-positiva');
+  const [editPrice, setEditPrice] = useState('65.00');
+  const [editCustomBrand, setEditCustomBrand] = useState(false);
+  const [editCustomModel, setEditCustomModel] = useState(false);
+
+  const modalVehicleType = selectedQuote ? selectedQuote.vehicleType : 'AUTO';
+  const modalAvailableBrands = useMemo(() => getBrandsForType(modalVehicleType), [modalVehicleType]);
+  const modalAvailableModels = useMemo(() => getModelsForBrand(modalVehicleType, editBrand), [modalVehicleType, editBrand]);
+
+  function openQuoteDetail(q: Quote) {
+    setSelectedQuote(q);
+    setEditHolderName(q.holderName || '');
+    setEditBrand(q.vehicle?.brand || '');
+    setEditModel(q.vehicle?.model || '');
+    setEditYear(String(q.vehicle?.year || 2023));
+    setEditVin(q.vehicle?.chassisNumber || q.vehicle?.vin || '');
+    setEditOfferId(q.selectedOfferId || 'la-positiva');
+    setEditPrice(q.selectedPrice ? q.selectedPrice.toFixed(2) : '65.00');
+    setEditCustomBrand(false);
+    setEditCustomModel(false);
+  }
+
   const load = useCallback(() => {
     setLoading(true);
     fetch('/api/backend/v1/quotes')
@@ -117,9 +158,18 @@ export default function Quotes() {
       .finally(() => setLoading(false));
   }, []);
 
-  async function handleEmit(q: Quote, overridePrice?: number, offerId?: string) {
+  async function handleEmit(
+    q: Quote,
+    overridePrice?: number,
+    offerId?: string,
+    updatedHolderName?: string,
+    updatedVehicle?: Partial<NonNullable<Quote['vehicle']>>
+  ) {
     const finalOfferId = offerId || q.selectedOfferId || selectedOfferId || 'la-positiva';
     const finalPrice = overridePrice || (realPriceOverride ? parseFloat(realPriceOverride) : q.selectedPrice);
+    const finalHolderName = updatedHolderName !== undefined ? updatedHolderName : q.holderName;
+    const finalVehicle = updatedVehicle ? { ...(q.vehicle || {}), ...updatedVehicle } : q.vehicle;
+
     try {
       const res = await fetch(`/api/backend/v1/quotes/${q.id}/emit`, {
         method: 'POST',
@@ -128,13 +178,23 @@ export default function Quotes() {
           advisorName,
           assistedNotes,
           realPrice: finalPrice,
-          selectedOfferId: finalOfferId
+          selectedOfferId: finalOfferId,
+          holderName: finalHolderName,
+          vehicle: finalVehicle
         })
       });
       if (res.ok) {
         const result = await res.json();
-        const emittedData = result.data || { ...q, selectedOfferId: finalOfferId, selectedPrice: finalPrice };
+        const emittedData = result.data || {
+          ...q,
+          selectedOfferId: finalOfferId,
+          selectedPrice: finalPrice,
+          holderName: finalHolderName,
+          vehicle: finalVehicle
+        };
         if (!emittedData.selectedOfferId) emittedData.selectedOfferId = finalOfferId;
+        if (!emittedData.holderName && finalHolderName) emittedData.holderName = finalHolderName;
+        if (!emittedData.vehicle && finalVehicle) emittedData.vehicle = finalVehicle;
         setEmissionQuote(emittedData);
       } else {
         setEmissionQuote({
@@ -142,6 +202,8 @@ export default function Quotes() {
           status: 'EMITIDA',
           selectedOfferId: finalOfferId,
           selectedPrice: finalPrice,
+          holderName: finalHolderName,
+          vehicle: finalVehicle,
           policyNumber: q.policyNumber || `SOAT-2026-FALA-${Math.floor(100000 + Math.random() * 900000)}`,
           emittedAt: new Date().toISOString()
         });
@@ -152,6 +214,8 @@ export default function Quotes() {
         status: 'EMITIDA',
         selectedOfferId: finalOfferId,
         selectedPrice: finalPrice,
+        holderName: finalHolderName,
+        vehicle: finalVehicle,
         policyNumber: q.policyNumber || `SOAT-2026-FALA-${Math.floor(100000 + Math.random() * 900000)}`,
         emittedAt: new Date().toISOString()
       });
@@ -183,6 +247,16 @@ export default function Quotes() {
       const result = (await response.json()) as { data: Vehicle; offers: OfferDetail[] };
       setVehicle(result.data);
       setVehicleType(result.data.vehicleType);
+      if (result.data.brand) {
+        setAdminBrand(result.data.brand);
+        setAdminCustomBrand(false);
+      }
+      if (result.data.model) {
+        setAdminModel(result.data.model);
+        setAdminCustomModel(false);
+      }
+      if (result.data.year) setAdminYear(String(result.data.year));
+      if (result.data.vin || result.data.chassisNumber) setAdminVin(result.data.vin || result.data.chassisNumber);
       if (result.offers && result.offers.length > 0) {
         setOffers(result.offers);
         setSelectedOfferId(result.offers[0].id);
@@ -219,14 +293,15 @@ export default function Quotes() {
     const chosenOffer = offers.find((o) => o.id === selectedOfferId) || offers[0];
     const finalPrice = realPriceOverride ? parseFloat(realPriceOverride) : (chosenOffer ? chosenOffer.price : undefined);
 
-    if (!vehicle) {
-      alert('Primero consulta la placa para obtener los datos del vehículo.');
-      return;
-    }
     if (!chosenOffer || !finalPrice || !Number.isFinite(finalPrice)) {
       alert('Selecciona una aseguradora con un precio válido.');
       return;
     }
+
+    const brandToUse = adminBrand || vehicle?.brand || 'Vehículo';
+    const modelToUse = adminModel || vehicle?.model || 'Estándar';
+    const yearToUse = Number(adminYear) || vehicle?.year || 2023;
+    const vinToUse = adminVin || vehicle?.vin || vehicle?.chassisNumber || undefined;
 
     const body = {
       ...Object.fromEntries(form),
@@ -235,16 +310,14 @@ export default function Quotes() {
       selectedPrice: finalPrice,
       advisorName,
       assistedNotes,
-      vehicle: vehicle
-        ? {
-            brand: vehicle.brand,
-            model: vehicle.model,
-            year: vehicle.year,
-            color: vehicle.color,
-            vin: vehicle.vin,
-            chassisNumber: vehicle.chassisNumber
-          }
-        : undefined,
+      vehicle: {
+        brand: brandToUse,
+        model: modelToUse,
+        year: yearToUse,
+        color: vehicle?.color || 'Plateado',
+        vin: vinToUse,
+        chassisNumber: vinToUse
+      },
       source: 'MANUAL'
     };
 
@@ -263,6 +336,12 @@ export default function Quotes() {
       setOffers([]);
       setRealPriceOverride('');
       setAssistedNotes('');
+      setAdminBrand('');
+      setAdminModel('');
+      setAdminYear('2023');
+      setAdminVin('');
+      setAdminCustomBrand(false);
+      setAdminCustomModel(false);
       setVehicleType('AUTO');
       setShowForm(false);
       load();
@@ -364,6 +443,118 @@ export default function Quotes() {
             <label>
               Número de documento
               <input name="documentNumber" required minLength={8} maxLength={11} placeholder="Ej. 70912870" />
+            </label>
+
+            <label>
+              Nombres y Apellidos del Contratante / Titular
+              <input
+                name="holderName"
+                required
+                placeholder="Ej. Juan Carlos Pérez Gómez"
+                style={{ textTransform: 'uppercase' }}
+              />
+            </label>
+
+            <label>
+              Marca del vehículo
+              <select
+                value={adminCustomBrand ? '__OTRA__' : (adminAvailableBrands.includes(adminBrand) ? adminBrand : (adminBrand ? '__OTRA__' : ''))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '__OTRA__') {
+                    setAdminCustomBrand(true);
+                  } else {
+                    setAdminCustomBrand(false);
+                    setAdminBrand(val);
+                    const models = getModelsForBrand(vehicleType, val);
+                    if (models.length > 0) {
+                      setAdminModel(models[0]);
+                      setAdminCustomModel(false);
+                    }
+                  }
+                }}
+              >
+                <option value="">-- Selecciona una marca --</option>
+                {adminAvailableBrands.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+                <option value="__OTRA__">Otra marca (escribir)...</option>
+              </select>
+            </label>
+
+            {(adminCustomBrand || (adminBrand && !adminAvailableBrands.includes(adminBrand))) && (
+              <label>
+                Escribe la marca
+                <input
+                  value={adminBrand}
+                  onChange={(e) => setAdminBrand(e.target.value)}
+                  placeholder="Ej. Bajaj, Zongshen, Toyota"
+                />
+              </label>
+            )}
+
+            <label>
+              Modelo del vehículo
+              {adminAvailableModels.length > 0 ? (
+                <select
+                  value={adminCustomModel ? '__OTRO__' : (adminAvailableModels.includes(adminModel) ? adminModel : (adminModel ? '__OTRO__' : ''))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '__OTRO__') {
+                      setAdminCustomModel(true);
+                    } else {
+                      setAdminCustomModel(false);
+                      setAdminModel(val);
+                    }
+                  }}
+                >
+                  <option value="">-- Selecciona el modelo --</option>
+                  {adminAvailableModels.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                  <option value="__OTRO__">Otro modelo (escribir)...</option>
+                </select>
+              ) : (
+                <input
+                  value={adminModel}
+                  onChange={(e) => setAdminModel(e.target.value)}
+                  placeholder="Ej. Torito RE 205, Corolla"
+                />
+              )}
+            </label>
+
+            {(adminCustomModel || (adminModel && !adminAvailableModels.includes(adminModel) && adminAvailableModels.length > 0)) && (
+              <label>
+                Escribe el modelo
+                <input
+                  value={adminModel}
+                  onChange={(e) => setAdminModel(e.target.value)}
+                  placeholder="Ej. Torito RE 205, Corolla"
+                />
+              </label>
+            )}
+
+            <label>
+              Año de fabricación
+              <input
+                value={adminYear}
+                onChange={(e) => setAdminYear(e.target.value)}
+                placeholder="Ej. 2023"
+              />
+            </label>
+
+            <label>
+              N° de Chasis / Serie / VIN
+              <input
+                value={adminVin}
+                onChange={(e) => setAdminVin(e.target.value.toUpperCase())}
+                placeholder="Ej. LZSPCKLF9J1023000"
+                style={{ textTransform: 'uppercase' }}
+              />
             </label>
 
             <label>
@@ -524,7 +715,14 @@ export default function Quotes() {
                       </small>
                     </td>
                     <td data-label="Documento">
-                      {q.documentType} {q.documentNumber.replace(/.(?=.{3})/g, '•')}
+                      {q.holderName && (
+                        <strong style={{ display: 'block', fontSize: 13, color: '#0f172a', marginBottom: 2 }}>
+                          {q.holderName}
+                        </strong>
+                      )}
+                      <span style={{ fontSize: 12, color: '#64748b' }}>
+                        {q.documentType} {q.documentNumber.replace(/.(?=.{3})/g, '•')}
+                      </span>
                     </td>
                     <td data-label="Aseguradora / Tarifa">
                       <span className="price-pill">
@@ -566,7 +764,7 @@ export default function Quotes() {
                         <button
                           className="button ghost"
                           style={{ padding: '6px 10px', fontSize: 12 }}
-                          onClick={() => setSelectedQuote(q)}
+                          onClick={() => openQuoteDetail(q)}
                         >
                           Ver detalle
                         </button>
@@ -577,7 +775,7 @@ export default function Quotes() {
                             fontSize: 12,
                             background: q.status === 'EMITIDA' ? '#0f766e' : '#16a34a'
                           }}
-                          onClick={() => (q.status === 'EMITIDA' ? setEmissionQuote(q) : handleEmit(q))}
+                          onClick={() => (q.status === 'EMITIDA' ? setEmissionQuote(q) : openQuoteDetail(q))}
                         >
                           {q.status === 'EMITIDA' ? 'Ver Certificado' : 'Emitir Póliza'}
                         </button>
@@ -675,6 +873,8 @@ export default function Quotes() {
                           cursor: 'pointer'
                         }}
                         onClick={() => {
+                          setEditOfferId(off.id);
+                          setEditPrice(off.price.toFixed(2));
                           setSelectedQuote({ ...selectedQuote, selectedOfferId: off.id, selectedPrice: off.price });
                         }}
                       >
@@ -686,7 +886,7 @@ export default function Quotes() {
                             onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
                           />
                           <strong>{off.name}</strong>
-                          {off.id === selectedQuote.selectedOfferId && (
+                          {off.id === (editOfferId || selectedQuote.selectedOfferId) && (
                             <span
                               style={{
                                 marginLeft: 6,
@@ -770,6 +970,226 @@ export default function Quotes() {
               </div>
             </div>
 
+            {/* Formulario de Verificación y Relleno de Datos Oficiales Antes de Emitir */}
+            {selectedQuote.status !== 'EMITIDA' && (
+              <div style={{ marginTop: 16, padding: 16, background: '#f8fafc', border: '1.5px solid #cbd5e1', borderRadius: 10 }}>
+                <strong style={{ display: 'block', fontSize: 13, color: '#0f172a', marginBottom: 4 }}>
+                  📋 Datos Oficiales para la Emisión (Verificar o rellenar antes de emitir)
+                </strong>
+                <p style={{ margin: '0 0 12px', fontSize: 11, color: '#64748b' }}>
+                  El nombre del contratante y las especificaciones vehiculares quedarán grabadas en el certificado electrónico SOAT oficial.
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                      Nombres y Apellidos del Contratante / Titular <span style={{ color: '#dc2626' }}>*</span>
+                    </label>
+                    <input
+                      value={editHolderName}
+                      onChange={(e) => setEditHolderName(e.target.value)}
+                      placeholder="Ej. JUAN CARLOS PÉREZ GÓMEZ"
+                      style={{
+                        width: '100%',
+                        height: 38,
+                        padding: '0 10px',
+                        borderRadius: 6,
+                        border: '1.5px solid #94a3b8',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        textTransform: 'uppercase'
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                      Marca del vehículo (Selector) <span style={{ color: '#dc2626' }}>*</span>
+                    </label>
+                    <select
+                      value={editCustomBrand ? '__OTRA__' : (modalAvailableBrands.includes(editBrand) ? editBrand : (editBrand ? '__OTRA__' : ''))}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '__OTRA__') {
+                          setEditCustomBrand(true);
+                        } else {
+                          setEditCustomBrand(false);
+                          setEditBrand(val);
+                          const models = getModelsForBrand(modalVehicleType, val);
+                          if (models.length > 0) {
+                            setEditModel(models[0]);
+                            setEditCustomModel(false);
+                          }
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        height: 38,
+                        padding: '0 10px',
+                        borderRadius: 6,
+                        border: '1.5px solid #94a3b8',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        background: '#fff'
+                      }}
+                    >
+                      <option value="">-- Selecciona una marca --</option>
+                      {modalAvailableBrands.map((b) => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                      <option value="__OTRA__">Otra marca (escribir)...</option>
+                    </select>
+                    {(editCustomBrand || (editBrand && !modalAvailableBrands.includes(editBrand))) && (
+                      <input
+                        value={editBrand}
+                        onChange={(e) => setEditBrand(e.target.value)}
+                        placeholder="Escribe la marca"
+                        style={{
+                          marginTop: 6,
+                          width: '100%',
+                          height: 34,
+                          padding: '0 8px',
+                          borderRadius: 6,
+                          border: '1px solid #cbd5e1',
+                          fontSize: 12
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                      Modelo del vehículo (Selector)
+                    </label>
+                    {modalAvailableModels.length > 0 ? (
+                      <>
+                        <select
+                          value={editCustomModel ? '__OTRO__' : (modalAvailableModels.includes(editModel) ? editModel : (editModel ? '__OTRO__' : ''))}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '__OTRO__') {
+                              setEditCustomModel(true);
+                            } else {
+                              setEditCustomModel(false);
+                              setEditModel(val);
+                            }
+                          }}
+                          style={{
+                            width: '100%',
+                            height: 38,
+                            padding: '0 10px',
+                            borderRadius: 6,
+                            border: '1.5px solid #94a3b8',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            background: '#fff'
+                          }}
+                        >
+                          <option value="">-- Selecciona el modelo --</option>
+                          {modalAvailableModels.map((m) => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                          <option value="__OTRO__">Otro modelo (escribir)...</option>
+                        </select>
+                        {(editCustomModel || (editModel && !modalAvailableModels.includes(editModel))) && (
+                          <input
+                            value={editModel}
+                            onChange={(e) => setEditModel(e.target.value)}
+                            placeholder="Escribe el modelo"
+                            style={{
+                              marginTop: 6,
+                              width: '100%',
+                              height: 34,
+                              padding: '0 8px',
+                              borderRadius: 6,
+                              border: '1px solid #cbd5e1',
+                              fontSize: 12
+                            }}
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <input
+                        value={editModel}
+                        onChange={(e) => setEditModel(e.target.value)}
+                        placeholder="Ej. Torito RE 205, Corolla"
+                        style={{
+                          width: '100%',
+                          height: 38,
+                          padding: '0 10px',
+                          borderRadius: 6,
+                          border: '1.5px solid #94a3b8',
+                          fontSize: 12
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                      N° de Chasis / Serie / VIN
+                    </label>
+                    <input
+                      value={editVin}
+                      onChange={(e) => setEditVin(e.target.value.toUpperCase())}
+                      placeholder="Ej. LZSPCKLF9J1023000"
+                      style={{
+                        width: '100%',
+                        height: 38,
+                        padding: '0 10px',
+                        borderRadius: 6,
+                        border: '1.5px solid #94a3b8',
+                        fontSize: 12,
+                        textTransform: 'uppercase'
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                      Año de fabricación
+                    </label>
+                    <input
+                      type="number"
+                      value={editYear}
+                      onChange={(e) => setEditYear(e.target.value)}
+                      placeholder="Ej. 2023"
+                      style={{
+                        width: '100%',
+                        height: 38,
+                        padding: '0 10px',
+                        borderRadius: 6,
+                        border: '1.5px solid #94a3b8',
+                        fontSize: 12
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                      Tarifa final a emitir (S/)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editPrice}
+                      onChange={(e) => setEditPrice(e.target.value)}
+                      style={{
+                        width: '100%',
+                        height: 38,
+                        padding: '0 10px',
+                        borderRadius: 6,
+                        border: '1.5px solid var(--green)',
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: 'var(--green)'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div style={{ marginTop: 22, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
               <button className="button ghost" onClick={() => setSelectedQuote(null)}>
                 Cerrar detalle
@@ -779,11 +1199,34 @@ export default function Quotes() {
                 style={{ background: selectedQuote.status === 'EMITIDA' ? '#0f766e' : '#16a34a' }}
                 onClick={() => {
                   const q = selectedQuote;
-                  setSelectedQuote(null);
                   if (q.status === 'EMITIDA') {
+                    setSelectedQuote(null);
                     setEmissionQuote(q);
                   } else {
-                    handleEmit(q);
+                    if (!editHolderName.trim()) {
+                      alert('Por favor ingresa los Nombres y Apellidos del Contratante / Titular antes de emitir.');
+                      return;
+                    }
+                    const finalP = parseFloat(editPrice) || q.selectedPrice || 65;
+                    const finalBrand = editBrand || q.vehicle?.brand || 'Vehículo';
+                    const finalModel = editModel || q.vehicle?.model || 'Estándar';
+                    const finalYear = Number(editYear) || q.vehicle?.year || 2023;
+                    const finalVin = editVin || q.vehicle?.chassisNumber || q.vehicle?.vin || '';
+
+                    setSelectedQuote(null);
+                    handleEmit(
+                      q,
+                      finalP,
+                      editOfferId,
+                      editHolderName.trim(),
+                      {
+                        brand: finalBrand,
+                        model: finalModel,
+                        year: finalYear,
+                        chassisNumber: finalVin,
+                        vin: finalVin
+                      }
+                    );
                   }
                 }}
               >
@@ -890,6 +1333,12 @@ export default function Quotes() {
                   <strong style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', marginBottom: 6, color: '#334155' }}>
                     1. Datos del Contratante / Titular
                   </strong>
+                  <div>
+                    <strong>Contratante / Titular:</strong>{' '}
+                    <span style={{ color: 'var(--green)', fontWeight: 800 }}>
+                      {emissionQuote.holderName || `TITULAR ${emissionQuote.documentType} ${emissionQuote.documentNumber}`}
+                    </span>
+                  </div>
                   <div><strong>Documento:</strong> {emissionQuote.documentType} {emissionQuote.documentNumber}</div>
                   <div><strong>Departamento:</strong> {emissionQuote.department}</div>
                   <div><strong>Canal de Emisión:</strong> {emissionQuote.source === 'WEB' ? 'Web Pública' : 'Gestión Comercial Interna'}</div>

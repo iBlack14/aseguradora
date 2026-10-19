@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState, useEffect } from 'react';
+import { getBrandsForType, getModelsForBrand } from '@/lib/vehicleCatalog';
 
 type VehicleType = 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO';
 
@@ -106,6 +107,9 @@ export default function ResultsPage() {
   const [year, setYear] = useState<number | string>(2023);
   const [vehicleUse, setVehicleUse] = useState<'PARTICULAR' | 'TAXI'>('PARTICULAR');
   const [vin, setVin] = useState('');
+  const [holderName, setHolderName] = useState('');
+  const [docType, setDocType] = useState('DNI');
+  const [docNum, setDocNum] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
 
   // Modal edit temporary state
@@ -117,6 +121,12 @@ export default function ResultsPage() {
   const [editUse, setEditUse] = useState<'PARTICULAR' | 'TAXI'>('PARTICULAR');
   const [editDep, setEditDep] = useState('Lima');
   const [editVin, setEditVin] = useState('');
+  const [editHolderName, setEditHolderName] = useState('');
+  const [isCustomBrand, setIsCustomBrand] = useState(false);
+  const [isCustomModel, setIsCustomModel] = useState(false);
+
+  const modalAvailableBrands = useMemo(() => getBrandsForType(editType), [editType]);
+  const modalAvailableModels = useMemo(() => getModelsForBrand(editType, editBrand), [editType, editBrand]);
 
   const [sortBy, setSortBy] = useState<'price' | 'value'>('price');
   const [selectedInsurers, setSelectedInsurers] = useState<string[]>([
@@ -157,6 +167,15 @@ export default function ResultsPage() {
     const s = params.get('serie');
     if (s) setVin(s);
 
+    const tit = params.get('titular') || params.get('holderName');
+    if (tit) setHolderName(tit);
+
+    const dt = params.get('docType');
+    if (dt) setDocType(dt);
+
+    const dn = params.get('docNum');
+    if (dn) setDocNum(dn);
+
     if (b) setBrand(b);
     if (m) setModel(m);
 
@@ -189,6 +208,9 @@ export default function ResultsPage() {
     setEditUse(vehicleUse);
     setEditDep(department);
     setEditVin(vin);
+    setEditHolderName(holderName);
+    setIsCustomBrand(false);
+    setIsCustomModel(false);
     setShowEditModal(true);
   }
 
@@ -202,6 +224,7 @@ export default function ResultsPage() {
     setVehicleUse(editUse);
     setDepartment(editDep);
     setVin(editVin.toUpperCase());
+    if (editHolderName) setHolderName(editHolderName);
     setShowEditModal(false);
   }
 
@@ -404,22 +427,97 @@ export default function ResultsPage() {
                 </div>
                 <div>
                   <label className="font-bold text-[#161c22] block mb-1">Marca del vehículo</label>
-                  <input
-                    type="text"
-                    value={editBrand}
-                    onChange={(e) => setEditBrand(e.target.value)}
-                    placeholder="Ej. Zongshen, Bajaj, Toyota"
-                    className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] text-xs font-semibold outline-none focus:border-[#486800]"
-                  />
+                  <select
+                    value={isCustomBrand ? '__OTRA__' : (modalAvailableBrands.includes(editBrand) ? editBrand : (editBrand ? '__OTRA__' : ''))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '__OTRA__') {
+                        setIsCustomBrand(true);
+                      } else {
+                        setIsCustomBrand(false);
+                        setEditBrand(val);
+                        const models = getModelsForBrand(editType, val);
+                        if (models.length > 0) {
+                          setEditModel(models[0]);
+                          setIsCustomModel(false);
+                        }
+                      }
+                    }}
+                    className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] text-xs font-semibold outline-none focus:border-[#486800] bg-white"
+                  >
+                    <option value="">-- Selecciona una marca --</option>
+                    {modalAvailableBrands.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                    <option value="__OTRA__">Otra marca (escribir)...</option>
+                  </select>
+                  {(isCustomBrand || (editBrand && !modalAvailableBrands.includes(editBrand))) && (
+                    <input
+                      type="text"
+                      value={editBrand}
+                      onChange={(e) => setEditBrand(e.target.value)}
+                      placeholder="Escribe la marca"
+                      className="mt-1 w-full h-9 px-3 rounded-lg border border-[#dde3eb] text-xs font-semibold outline-none focus:border-[#486800]"
+                    />
+                  )}
                 </div>
                 <div>
                   <label className="font-bold text-[#161c22] block mb-1">Modelo</label>
+                  {modalAvailableModels.length > 0 ? (
+                    <>
+                      <select
+                        value={isCustomModel ? '__OTRO__' : (modalAvailableModels.includes(editModel) ? editModel : (editModel ? '__OTRO__' : ''))}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '__OTRO__') {
+                            setIsCustomModel(true);
+                          } else {
+                            setIsCustomModel(false);
+                            setEditModel(val);
+                          }
+                        }}
+                        className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] text-xs font-semibold outline-none focus:border-[#486800] bg-white"
+                      >
+                        <option value="">-- Selecciona el modelo --</option>
+                        {modalAvailableModels.map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
+                        <option value="__OTRO__">Otro modelo (escribir)...</option>
+                      </select>
+                      {(isCustomModel || (editModel && !modalAvailableModels.includes(editModel))) && (
+                        <input
+                          type="text"
+                          value={editModel}
+                          onChange={(e) => setEditModel(e.target.value)}
+                          placeholder="Escribe el modelo"
+                          className="mt-1 w-full h-9 px-3 rounded-lg border border-[#dde3eb] text-xs font-semibold outline-none focus:border-[#486800]"
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <input
+                      type="text"
+                      value={editModel}
+                      onChange={(e) => setEditModel(e.target.value)}
+                      placeholder="Ej. ZS, Torito, Corolla"
+                      className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] text-xs font-semibold outline-none focus:border-[#486800]"
+                    />
+                  )}
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="font-bold text-[#161c22] block mb-1">
+                    Nombres y Apellidos del Contratante / Titular
+                  </label>
                   <input
                     type="text"
-                    value={editModel}
-                    onChange={(e) => setEditModel(e.target.value)}
-                    placeholder="Ej. ZS, Torito, Corolla"
-                    className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] text-xs font-semibold outline-none focus:border-[#486800]"
+                    value={editHolderName}
+                    onChange={(e) => setEditHolderName(e.target.value)}
+                    placeholder="Ej. Juan Carlos Pérez Gómez"
+                    className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] text-xs font-semibold uppercase outline-none focus:border-[#486800]"
                   />
                 </div>
                 <div>
@@ -545,7 +643,7 @@ export default function ResultsPage() {
         <section className="lg:col-span-8 space-y-4">
           {filteredAndSortedOffers.map((offer) => {
             const isCompared = selected.includes(offer.id);
-            const targetUrl = `/pago?oferta=${offer.id}&placa=${encodeURIComponent(plate)}&tipo=${vehicleType}&dep=${encodeURIComponent(department)}&marca=${encodeURIComponent(brand)}&modelo=${encodeURIComponent(model)}&ano=${year}&uso=${vehicleUse}&serie=${encodeURIComponent(vin)}&precio=${offer.price}`;
+            const targetUrl = `/pago?oferta=${offer.id}&placa=${encodeURIComponent(plate)}&tipo=${vehicleType}&dep=${encodeURIComponent(department)}&marca=${encodeURIComponent(brand)}&modelo=${encodeURIComponent(model)}&ano=${year}&uso=${vehicleUse}&serie=${encodeURIComponent(vin)}&precio=${offer.price}&titular=${encodeURIComponent(holderName)}&docType=${encodeURIComponent(docType)}&docNum=${encodeURIComponent(docNum)}`;
 
             return (
               <article

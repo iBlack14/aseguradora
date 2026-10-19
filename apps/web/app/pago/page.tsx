@@ -160,6 +160,29 @@ export default function PaymentPage() {
     const pr = params.get('precio');
     if (pr && !isNaN(Number(pr))) setCustomPrice(Number(pr));
 
+    const tit = params.get('titular') || params.get('holderName');
+    if (tit) {
+      const parts = tit.trim().split(/\s+/);
+      if (parts.length === 1) {
+        setNames(parts[0]);
+      } else if (parts.length === 2) {
+        setNames(parts[0]);
+        setSurnames(parts[1]);
+      } else if (parts.length === 3) {
+        setNames(parts[0]);
+        setSurnames(`${parts[1]} ${parts[2]}`);
+      } else {
+        setNames(parts.slice(0, 2).join(' '));
+        setSurnames(parts.slice(2).join(' '));
+      }
+    }
+
+    const dt = params.get('docType');
+    if (dt) setDocumentType(dt);
+
+    const dn = params.get('docNum');
+    if (dn) setDocumentNumber(dn);
+
     // Caso específico para la placa 7463-BS del padrón
     if (p === '7463-BS' || p === '7463BS') {
       setPlate('7463-BS');
@@ -209,18 +232,20 @@ export default function PaymentPage() {
           : cleanDoc.padStart(8, '7').slice(0, 8)
         : cleanDoc;
 
+    const fullName = `${names} ${surnames}`.trim();
     const payload = {
       plate,
       vehicleType,
       department,
       documentType,
       documentNumber: validDocNumber,
+      holderName: fullName || undefined,
       startsAt: new Date(Date.now() + 86400000).toISOString(),
       selectedOfferId,
       selectedPrice: price,
       source: 'WEB' as const,
       advisorName: 'Asesor Web Asistido',
-      assistedNotes: `Solicitado en línea por ${names || 'Cliente'} ${surnames || 'Web'} (${email || 'contacto@falabella.pe'}, Cel: ${phone || '999999999'}). Uso: ${vehicleUse}`,
+      assistedNotes: `Solicitado en línea por ${fullName || 'Cliente Web'} (${email || 'contacto@falabella.pe'}, Cel: ${phone || '999999999'}). Uso: ${vehicleUse}`,
       vehicle: {
         brand: brand || (vehicleType === 'MOTO' ? 'Motocicleta' : 'Vehículo'),
         model: model || 'Estándar',

@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { FormEvent, useState, useRef } from 'react';
+import { FormEvent, useState, useRef, useMemo } from 'react';
+import { getBrandsForType, getModelsForBrand } from '@/lib/vehicleCatalog';
 
 type VehicleType = 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO';
 
@@ -117,16 +118,22 @@ export default function HomePage() {
   const [vehicleUse, setVehicleUse] = useState<'PARTICULAR' | 'TAXI'>('PARTICULAR');
   const [vin, setVin] = useState('');
   const [showTechDetails, setShowTechDetails] = useState(false);
+  const [isCustomBrand, setIsCustomBrand] = useState(false);
+  const [isCustomModel, setIsCustomModel] = useState(false);
 
   const [department, setDepartment] = useState('lima');
   const [documentType, setDocumentType] = useState('DNI');
   const [documentNumber, setDocumentNumber] = useState('');
+  const [holderName, setHolderName] = useState('');
   const [startsAt, setStartsAt] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
     return d.toISOString().split('T')[0];
   });
   const [termsAccepted, setTermsAccepted] = useState(true);
+
+  const availableBrands = useMemo(() => getBrandsForType(vehicleType), [vehicleType]);
+  const availableModels = useMemo(() => getModelsForBrand(vehicleType, brand), [vehicleType, brand]);
 
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const lookupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -274,6 +281,9 @@ export default function HomePage() {
     if (finalYear) params.set('ano', String(finalYear));
     if (finalUse) params.set('uso', finalUse);
     if (finalVin) params.set('serie', finalVin);
+    if (holderName.trim()) params.set('titular', holderName.trim());
+    if (documentType) params.set('docType', documentType);
+    if (documentNumber.trim()) params.set('docNum', documentNumber.trim());
 
     router.push(`/resultados?${params.toString()}`);
   }
@@ -411,15 +421,65 @@ export default function HomePage() {
                   {showTechDetails && (
                     <div className="mt-2.5 p-3.5 bg-[#f8faf4] border border-[#d8e7bd] rounded-xl grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs animate-fade-in">
                       <div>
-                        <label className="font-bold text-[#161c22] block mb-1">Marca del vehículo</label>
-                        <div className="flex flex-wrap gap-1 mb-1.5">
-                          {(popularBrandsByType[vehicleType] || popularBrandsByType.AUTO).slice(0, 6).map((bName) => (
+                        <label className="font-bold text-[#161c22] block mb-1">
+                          Marca del vehículo <span className="text-[#ba1a1a]">*</span>
+                        </label>
+                        {/* Selector desplegable de Marca */}
+                        <select
+                          value={isCustomBrand ? '__OTRA__' : (availableBrands.includes(brand) ? brand : (brand ? '__OTRA__' : ''))}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '__OTRA__') {
+                              setIsCustomBrand(true);
+                            } else {
+                              setIsCustomBrand(false);
+                              setBrand(val);
+                              const models = getModelsForBrand(vehicleType, val);
+                              if (models.length > 0 && !models.includes(model)) {
+                                setModel(models[0]);
+                                setIsCustomModel(false);
+                              }
+                            }
+                          }}
+                          className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] bg-white text-xs font-semibold outline-none focus:border-[#486800] focus:ring-2 focus:ring-[#8bc500]/20"
+                        >
+                          <option value="">-- Selecciona una marca --</option>
+                          {availableBrands.map((bName) => (
+                            <option key={bName} value={bName}>
+                              {bName}
+                            </option>
+                          ))}
+                          <option value="__OTRA__">Otra marca (escribir manualmente)...</option>
+                        </select>
+
+                        {/* Entrada manual para otra marca */}
+                        {(isCustomBrand || (brand && !availableBrands.includes(brand))) && (
+                          <input
+                            type="text"
+                            value={brand}
+                            onChange={(e) => setBrand(e.target.value)}
+                            placeholder="Escribe la marca del vehículo"
+                            className="mt-1.5 w-full h-10 px-3 rounded-lg border border-[#dde3eb] bg-white text-xs font-semibold outline-none focus:border-[#486800]"
+                          />
+                        )}
+
+                        {/* Pills de acceso rápido para las marcas más comunes */}
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {availableBrands.slice(0, 5).map((bName) => (
                             <button
                               key={bName}
                               type="button"
-                              onClick={() => setBrand(bName)}
+                              onClick={() => {
+                                setIsCustomBrand(false);
+                                setBrand(bName);
+                                const models = getModelsForBrand(vehicleType, bName);
+                                if (models.length > 0) {
+                                  setModel(models[0]);
+                                  setIsCustomModel(false);
+                                }
+                              }}
                               className={`px-2 py-0.5 rounded text-[11px] font-bold border transition-all cursor-pointer ${
-                                brand.toLowerCase() === bName.toLowerCase()
+                                brand.toLowerCase() === bName.toLowerCase() && !isCustomBrand
                                   ? 'bg-[#486800] text-white border-[#486800]'
                                   : 'bg-white text-[#434935] border-slate-200 hover:border-[#486800]'
                               }`}
@@ -428,23 +488,51 @@ export default function HomePage() {
                             </button>
                           ))}
                         </div>
-                        <input
-                          type="text"
-                          value={brand}
-                          onChange={(e) => setBrand(e.target.value)}
-                          placeholder="Ej. Toyota, Hyundai, BMW, Suzuki"
-                          className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] bg-white text-xs font-semibold outline-none focus:border-[#486800]"
-                        />
                       </div>
                       <div>
                         <label className="font-bold text-[#161c22] block mb-1">Modelo</label>
-                        <input
-                          type="text"
-                          value={model}
-                          onChange={(e) => setModel(e.target.value)}
-                          placeholder="Ej. ZS, Corolla, Torito RE"
-                          className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] bg-white text-xs font-semibold outline-none focus:border-[#486800]"
-                        />
+                        {availableModels.length > 0 ? (
+                          <>
+                            <select
+                              value={isCustomModel ? '__OTRO__' : (availableModels.includes(model) ? model : (model ? '__OTRO__' : ''))}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === '__OTRO__') {
+                                  setIsCustomModel(true);
+                                } else {
+                                  setIsCustomModel(false);
+                                  setModel(val);
+                                }
+                              }}
+                              className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] bg-white text-xs font-semibold outline-none focus:border-[#486800] focus:ring-2 focus:ring-[#8bc500]/20"
+                            >
+                              <option value="">-- Selecciona el modelo --</option>
+                              {availableModels.map((mName) => (
+                                <option key={mName} value={mName}>
+                                  {mName}
+                                </option>
+                              ))}
+                              <option value="__OTRO__">Otro modelo (escribir manualmente)...</option>
+                            </select>
+                            {(isCustomModel || (model && !availableModels.includes(model))) && (
+                              <input
+                                type="text"
+                                value={model}
+                                onChange={(e) => setModel(e.target.value)}
+                                placeholder="Escribe el modelo"
+                                className="mt-1.5 w-full h-10 px-3 rounded-lg border border-[#dde3eb] bg-white text-xs font-semibold outline-none focus:border-[#486800]"
+                              />
+                            )}
+                          </>
+                        ) : (
+                          <input
+                            type="text"
+                            value={model}
+                            onChange={(e) => setModel(e.target.value)}
+                            placeholder="Ej. ZS, Corolla, Torito RE"
+                            className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] bg-white text-xs font-semibold outline-none focus:border-[#486800]"
+                          />
+                        )}
                       </div>
                       <div>
                         <label className="font-bold text-[#161c22] block mb-1">Año de fabricación</label>
@@ -508,7 +596,7 @@ export default function HomePage() {
 
                 <div>
                   <label className="block text-[13px] font-bold text-[#161c22] mb-1.5" htmlFor="docNumber">
-                    Documento del contratante
+                    Documento del contratante <span className="text-[#ba1a1a]">*</span>
                   </label>
                   <div className="flex gap-2">
                     <select
@@ -523,14 +611,40 @@ export default function HomePage() {
                     <input
                       id="docNumber"
                       type="text"
+                      required
                       maxLength={11}
                       placeholder="N° de documento"
                       value={documentNumber}
                       onChange={(e) => setDocumentNumber(e.target.value.replace(/\D/g, ''))}
-                      className="flex-1 h-12 px-3 rounded-xl border border-[#dde3eb] bg-white text-[#161c22] text-sm outline-none"
+                      className="flex-1 h-12 px-3 rounded-xl border border-[#dde3eb] bg-white text-[#161c22] text-sm outline-none focus:border-[#486800]"
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Nombres y Apellidos del Contratante / Titular */}
+              <div>
+                <label className="block text-[13px] font-bold text-[#161c22] mb-1.5" htmlFor="holderName">
+                  Nombres y Apellidos del Contratante / Titular <span className="text-[#ba1a1a]">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <span className="material-symbols-outlined text-[19px]">person</span>
+                  </div>
+                  <input
+                    id="holderName"
+                    name="holderName"
+                    type="text"
+                    required
+                    placeholder="Ej. Juan Carlos Pérez Gómez"
+                    value={holderName}
+                    onChange={(e) => setHolderName(e.target.value)}
+                    className="w-full h-12 pl-10 pr-3.5 rounded-xl border border-[#dde3eb] bg-white text-[#161c22] text-sm font-semibold uppercase outline-none focus:border-[#486800] focus:ring-4 focus:ring-[#8bc500]/25 transition-all"
+                  />
+                </div>
+                <p className="mt-1 text-[11px] text-[#434935]/80">
+                  Nombre completo oficial que figurará en el Certificado Electrónico SOAT emitido.
+                </p>
               </div>
 
               {/* Vigencia */}
