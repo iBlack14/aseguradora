@@ -119,6 +119,7 @@ export default function HomePage() {
   const [vehicleUse, setVehicleUse] = useState<'PARTICULAR' | 'PUBLICO' | 'COMERCIAL'>('PARTICULAR');
   const [vin, setVin] = useState('');
   const [showTechDetails, setShowTechDetails] = useState(false);
+  const [quoteStep, setQuoteStep] = useState<1 | 2>(1);
   const [showMoreVehicleTypes, setShowMoreVehicleTypes] = useState(false);
   const [isCustomBrand, setIsCustomBrand] = useState(false);
   const [isCustomModel, setIsCustomModel] = useState(false);
@@ -262,6 +263,12 @@ export default function HomePage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const finalPlate = plate.trim().toUpperCase() || 'ABC-123';
+
+    if (quoteStep === 1) {
+      if (!detectedVehicle) await lookupVehicle(finalPlate);
+      setQuoteStep(2);
+      return;
+    }
 
     let v = detectedVehicle;
     if (!v) {
@@ -589,6 +596,37 @@ export default function HomePage() {
                 </div>
               </div>
 
+              {quoteStep === 1 && (
+                <button
+                  type="submit"
+                  disabled={lookingUp || plate.replace(/[^A-Z0-9]/g, '').length < 5}
+                  className="w-full h-14 bg-[#8bc500] hover:bg-[#7ab000] disabled:bg-[#e3eadc] disabled:text-[#9aa694] text-[#344d00] font-extrabold text-[16px] rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#8bc500]/25 transition-all active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {lookingUp ? (
+                    <>
+                      <span className="material-symbols-outlined text-[20px] animate-spin">sync</span>
+                      <span>Buscando información...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Buscar datos del vehículo</span>
+                      <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                    </>
+                  )}
+                </button>
+              )}
+
+              {quoteStep === 2 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setQuoteStep(1)}
+                    className="inline-flex items-center gap-1 text-[12px] font-bold text-[#486800] hover:text-[#344d00]"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                    Cambiar placa
+                  </button>
+
               {/* Grilla 2 columnas: Departamento y Documento */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -720,6 +758,8 @@ export default function HomePage() {
                   </>
                 )}
               </button>
+                </>
+              )}
             </form>
             <div className="cotizador-secondary-action mt-[-8px] flex items-center justify-between gap-3 px-1 text-[12px] text-[#66705f]">
               <span>¿Ya cuentas con un SOAT vigente?</span>
