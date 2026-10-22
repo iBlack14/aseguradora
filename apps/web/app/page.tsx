@@ -298,7 +298,7 @@ export default function HomePage() {
   return (
     <main className="marketing-home flex-grow">
       {/* 3. HERO SECTION (Layout 2 columnas) */}
-      <section className="home-hero max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 lg:pt-12 lg:pb-24">
+      <section className="home-hero max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 lg:pt-12 lg:pb-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Columna Izquierda: Cotizador Hero Dominante (7 cols) */}
           <div className="lg:col-span-7 flex flex-col gap-6" id="cotizador">
