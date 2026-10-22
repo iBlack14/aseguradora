@@ -3,6 +3,95 @@ body {
   font-size: 16px;
   line-height: 1.55;
   text-rendering: optimizeLegibility;
+  background: #f8faf7;
+}
+
+/* Cotizador: dirección visual más liviana, con el formulario como protagonista. */
+.marketing-home {
+  background:
+    linear-gradient(180deg, rgba(248, 250, 247, .98) 0%, rgba(255, 255, 255, .98) 56%, #fff 100%);
+}
+
+.home-hero {
+  position: relative;
+  isolation: isolate;
+}
+
+.home-hero::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: -10vw;
+  width: min(54vw, 720px);
+  height: 520px;
+  pointer-events: none;
+  opacity: .42;
+  background: url('/assets/soat-grid.svg') top right / cover no-repeat;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 100%);
+}
+
+.marketing-home .vehicle-tabs {
+  background: rgba(232, 237, 232, .74) !important;
+  border: 1px solid rgba(203, 213, 201, .75);
+  box-shadow: none !important;
+  border-radius: 14px !important;
+}
+
+.marketing-home .vehicle-tabs button {
+  min-height: 44px;
+  border-radius: 10px !important;
+  color: #5e685d;
+}
+
+.marketing-home .vehicle-tabs button[class*="bg-white"] {
+  color: #345100 !important;
+  box-shadow: 0 2px 8px rgba(36, 52, 21, .08) !important;
+}
+
+.marketing-home .quote-form {
+  border-color: #dbe4d7 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 44px rgba(51, 75, 28, .08) !important;
+}
+
+.marketing-home .quote-form input,
+.marketing-home .quote-form select {
+  border-color: #ccd8c8 !important;
+  border-radius: 10px !important;
+}
+
+.marketing-home .quote-form input:focus,
+.marketing-home .quote-form select:focus {
+  border-color: #709d17 !important;
+  box-shadow: 0 0 0 3px rgba(139, 197, 0, .15) !important;
+}
+
+.marketing-home .quote-form button[type="submit"] {
+  border-radius: 10px !important;
+  box-shadow: 0 8px 18px rgba(139, 197, 0, .18) !important;
+}
+
+.marketing-home .trust-card {
+  border-color: #dbe4d7 !important;
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, .84) !important;
+  box-shadow: 0 18px 44px rgba(51, 75, 28, .06) !important;
+}
+
+.marketing-home .trust-card img {
+  border: 1px solid #dbe4d7;
+  background: #fff;
+}
+
+.marketing-home .insurer-strip {
+  background: #fbfcfa !important;
+}
+
+.marketing-home .insurer-strip [class*="rounded-2xl"] {
+  background: #fff !important;
+  border-color: #e2e9df !important;
+  box-shadow: none !important;
 }
 
 .marketing-home h1,

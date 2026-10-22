@@ -295,7 +295,7 @@ export default function HomePage() {
   return (
     <main className="marketing-home flex-grow">
       {/* 3. HERO SECTION (Layout 2 columnas) */}
-      <section className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 lg:pt-12 lg:pb-24">
+      <section className="home-hero max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 lg:pt-12 lg:pb-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Columna Izquierda: Cotizador Hero Dominante (7 cols) */}
           <div className="lg:col-span-7 flex flex-col gap-6" id="cotizador">
@@ -320,7 +320,7 @@ export default function HomePage() {
             </div>
 
             {/* Selector de pestañas dinámico */}
-            <div className="bg-[#e3e9f0] p-1.5 rounded-2xl flex gap-1 overflow-x-auto shadow-inner" role="tablist">
+            <div className="vehicle-tabs bg-[#e3e9f0] p-1.5 rounded-2xl flex gap-1 overflow-x-auto shadow-inner" role="tablist">
               {vehicleTabs.map((tab) => {
                 const isActive = vehicleType === tab.type;
                 return (
@@ -347,7 +347,7 @@ export default function HomePage() {
             {/* Formulario Principal de Cotización */}
             <form
               onSubmit={handleSubmit}
-              className="bg-white p-6 sm:p-8 rounded-2xl border border-[#dde3eb] shadow-md space-y-5"
+              className="quote-form bg-white p-6 sm:p-8 rounded-2xl border border-[#dde3eb] shadow-md space-y-5"
             >
               {/* Campo de Placa con Botón de Búsqueda */}
               <div>
@@ -716,7 +716,7 @@ export default function HomePage() {
 
           {/* Columna Derecha: Beneficios y Ficha de Confianza (5 cols) */}
           <div className="lg:col-span-5 flex flex-col gap-6">
-            <div className="relative rounded-3xl overflow-hidden border border-[#dde3eb] bg-gradient-to-br from-[#f8faef] to-white p-6 shadow-sm">
+            <div className="trust-card relative rounded-3xl overflow-hidden border border-[#dde3eb] bg-gradient-to-br from-[#f8faef] to-white p-6 shadow-sm">
               <Image
                 src="/assets/soat-vehicle-hero-v1.png"
                 alt="Vehículos SOAT"
@@ -768,7 +768,7 @@ export default function HomePage() {
       </section>
 
       {/* 4. SECCIÓN ASEGURADORAS VISIBLES */}
-      <section className="bg-white py-14 border-y border-[#dde3eb]" id="seguros">
+      <section className="insurer-strip bg-white py-14 border-y border-[#dde3eb]" id="seguros">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <span className="text-[12px] font-extrabold text-[#486800] uppercase tracking-wider">
             Alianzas Oficiales
