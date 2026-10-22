@@ -500,31 +500,6 @@ export default function HomePage() {
                           />
                         )}
 
-                        {/* Pills de acceso rápido para las marcas más comunes */}
-                        <div className="flex flex-wrap gap-1 mt-1.5">
-                          {availableBrands.slice(0, 5).map((bName) => (
-                            <button
-                              key={bName}
-                              type="button"
-                              onClick={() => {
-                                setIsCustomBrand(false);
-                                setBrand(bName);
-                                const models = getModelsForBrand(vehicleType, bName);
-                                if (models.length > 0) {
-                                  setModel(models[0]);
-                                  setIsCustomModel(false);
-                                }
-                              }}
-                              className={`px-2 py-0.5 rounded text-[11px] font-bold border transition-all cursor-pointer ${
-                                brand.toLowerCase() === bName.toLowerCase() && !isCustomBrand
-                                  ? 'bg-[#486800] text-white border-[#486800]'
-                                  : 'bg-white text-[#434935] border-slate-200 hover:border-[#486800]'
-                              }`}
-                            >
-                              {bName}
-                            </button>
-                          ))}
-                        </div>
                       </div>
                       <div>
                         <label className="font-bold text-[#161c22] block mb-1">Modelo</label>
