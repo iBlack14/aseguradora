@@ -205,7 +205,7 @@ export default function HomePage() {
       } else {
         setDetectedVehicle(null);
         setLookupMessage({
-          text: `Placa ${clean} detectada. No figura en el padrón automático: confirma la marca y modelo abajo para cotizar con precisión.`,
+          text: `No encontramos información asociada a esta placa. Completa los datos del vehículo para continuar con la cotización.`,
           type: 'info'
         });
         setShowTechDetails(true);
@@ -310,16 +310,6 @@ export default function HomePage() {
               <h1 className="text-[36px] sm:text-[44px] font-extrabold text-[#161c22] leading-tight tracking-tight">
                 Cotiza y compara tu SOAT en minutos
               </h1>
-              <p className="mt-2 text-[17px] text-[#434935] leading-relaxed">
-                Encuentra la compañía ideal para tu auto o moto y recibe tu póliza digital respaldada por las 5 aseguradoras autorizadas.
-              </p>
-              <Link
-                href="/consultar-soat"
-                className="mt-2 inline-flex w-fit items-center gap-2 text-sm font-extrabold text-[#486800] underline decoration-[#8bc500] decoration-2 underline-offset-4 hover:text-[#344d00]"
-              >
-                ¿Ya tienes SOAT? Consulta su vigencia
-                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-              </Link>
             </div>
 
             {/* Selector de pestañas dinámico */}
@@ -750,6 +740,16 @@ export default function HomePage() {
                 )}
               </button>
             </form>
+            <div className="cotizador-secondary-action mt-[-8px] flex items-center justify-between gap-3 px-1 text-[12px] text-[#66705f]">
+              <span>¿Ya cuentas con un SOAT vigente?</span>
+              <Link
+                href="/consultar-soat"
+                className="inline-flex shrink-0 items-center gap-1 font-extrabold text-[#486800] hover:text-[#344d00]"
+              >
+                Consultar vigencia
+                <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+              </Link>
+            </div>
           </div>
 
           {/* Columna Derecha: Beneficios y Ficha de Confianza (5 cols) */}
