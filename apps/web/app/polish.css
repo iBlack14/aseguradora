@@ -106,6 +106,7 @@ body {
 
 .marketing-home .trust-card {
   height: 100%;
+  min-height: 590px;
   display: flex;
   flex-direction: column;
   border-color: #dbe4d7 !important;
@@ -115,8 +116,10 @@ body {
 }
 
 .marketing-home .trust-card img {
+  height: 178px;
   border: 1px solid #dbe4d7;
   background: #fff;
+  object-fit: contain;
 }
 
 .marketing-home .trust-card > .mt-6 {
@@ -124,6 +127,13 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
+  gap: 12px;
+}
+
+@media (max-width: 1024px) {
+  .marketing-home .trust-card {
+    min-height: 0;
+  }
 }
 
 .marketing-home .insurer-strip {
@@ -207,7 +217,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #00b8b2;
+  color: #4e7f00;
   font-size: 18px;
 }
 
@@ -223,7 +233,7 @@ body {
   display: block;
   width: 5%;
   height: 100%;
-  background: #00c4bd;
+  background: #8bc500;
 }
 
 .vehicle-confirm-percent {
@@ -248,7 +258,7 @@ body {
 .vehicle-confirm-user-bubble {
   padding: 16px 28px;
   border-radius: 16px 16px 4px 16px;
-  background: #00bdb7;
+  background: #8bc500;
   color: white;
   font-weight: 800;
   letter-spacing: .04em;
@@ -273,8 +283,8 @@ body {
   height: 42px;
   place-items: center;
   border-radius: 50%;
-  background: #e7f6ed;
-  color: #3f7c49;
+  background: #edf6dc;
+  color: #4e7f00;
   font-size: 12px;
   font-weight: 900;
 }
@@ -298,7 +308,7 @@ body {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #00c4bd;
+  background: #8bc500;
 }
 
 .vehicle-confirm-card {
@@ -321,7 +331,7 @@ body {
 }
 
 .vehicle-confirm-kicker {
-  color: #00a9a3;
+  color: #4e7f00;
   font-size: 10px;
   font-weight: 900;
   letter-spacing: .12em;
@@ -344,8 +354,8 @@ body {
 .vehicle-confirm-type {
   padding: 8px 10px;
   border-radius: 99px;
-  background: #eefaf7;
-  color: #008f89;
+  background: #f0f8e4;
+  color: #4e7f00;
   font-size: 11px;
   font-weight: 800;
   white-space: nowrap;
@@ -356,6 +366,10 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 18px 20px;
   padding: 22px 0;
+}
+
+.vehicle-confirm-full {
+  grid-column: 1 / -1;
 }
 
 .vehicle-confirm-details > div,
@@ -394,7 +408,7 @@ body {
 
 .vehicle-confirm-details input:focus,
 .vehicle-confirm-details select:focus {
-  border-color: #00bdb7;
+  border-color: #8bc500;
 }
 
 .vehicle-confirm-primary {
@@ -404,10 +418,10 @@ body {
   justify-content: center;
   gap: 8px;
   height: 48px;
-  border: 1px solid #00bdb7;
+  border: 1px solid #8bc500;
   border-radius: 99px;
   background: #fff;
-  color: #00a9a3;
+  color: #4e7f00;
   font-size: 13px;
   font-weight: 900;
   cursor: pointer;
@@ -417,14 +431,28 @@ body {
   background: #edfffc;
 }
 
+.vehicle-confirm-primary:disabled {
+  cursor: not-allowed;
+  border-color: #d8e2d2;
+  background: #edf2e9;
+  color: #8b9686;
+}
+
 .vehicle-confirm-secondary {
   display: block;
   margin-top: 22px;
-  color: #00a9a3;
+  color: #4e7f00;
   font-size: 11px;
   font-weight: 900;
   text-align: center;
   text-transform: uppercase;
+}
+
+.vehicle-confirm-back {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
 @media (max-width: 640px) {
