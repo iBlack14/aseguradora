@@ -119,6 +119,7 @@ export default function HomePage() {
   const [vehicleUse, setVehicleUse] = useState<'PARTICULAR' | 'PUBLICO' | 'COMERCIAL'>('PARTICULAR');
   const [vin, setVin] = useState('');
   const [showTechDetails, setShowTechDetails] = useState(false);
+  const [showMoreVehicleTypes, setShowMoreVehicleTypes] = useState(false);
   const [isCustomBrand, setIsCustomBrand] = useState(false);
   const [isCustomModel, setIsCustomModel] = useState(false);
 
@@ -291,6 +292,8 @@ export default function HomePage() {
   }
 
   const currentTab = vehicleTabs.find((t) => t.type === vehicleType) || vehicleTabs[0];
+  const primaryVehicleTabs = vehicleTabs.filter((tab) => tab.type === 'AUTO' || tab.type === 'MOTO');
+  const additionalVehicleTabs = vehicleTabs.filter((tab) => tab.type !== 'AUTO' && tab.type !== 'MOTO');
 
   return (
     <main className="marketing-home flex-grow">
@@ -320,8 +323,8 @@ export default function HomePage() {
             </div>
 
             {/* Selector de pestañas dinámico */}
-            <div className="vehicle-tabs bg-[#e3e9f0] p-1.5 rounded-2xl flex gap-1 overflow-x-auto shadow-inner" role="tablist">
-              {vehicleTabs.map((tab) => {
+            <div className="vehicle-tabs bg-[#e3e9f0] p-1.5 rounded-2xl flex gap-1" role="tablist">
+              {primaryVehicleTabs.map((tab) => {
                 const isActive = vehicleType === tab.type;
                 return (
                   <button
@@ -342,6 +345,41 @@ export default function HomePage() {
                   </button>
                 );
               })}
+              <button
+                type="button"
+                onClick={() => setShowMoreVehicleTypes((current) => !current)}
+                className={`vehicle-more-trigger flex-1 min-w-[108px] py-2.5 px-3 rounded-xl text-center text-[13px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  vehicleType !== 'AUTO' && vehicleType !== 'MOTO'
+                    ? 'bg-white text-[#486800] shadow-sm'
+                    : 'text-[#434935] hover:text-[#161c22] hover:bg-white/60'
+                }`}
+                aria-expanded={showMoreVehicleTypes}
+              >
+                <span className="material-symbols-outlined text-[18px]">{vehicleType !== 'AUTO' && vehicleType !== 'MOTO' ? currentTab.icon : 'more_horiz'}</span>
+                <span>{vehicleType !== 'AUTO' && vehicleType !== 'MOTO' ? currentTab.label : 'Más tipos'}</span>
+                <span className="material-symbols-outlined text-[16px]">{showMoreVehicleTypes ? 'expand_less' : 'expand_more'}</span>
+              </button>
+              {showMoreVehicleTypes && (
+                <div className="vehicle-more-menu absolute z-10 mt-[58px] right-0 min-w-[190px] rounded-xl border border-[#dbe4d7] bg-white p-1.5 shadow-lg">
+                  {additionalVehicleTabs.map((tab) => (
+                    <button
+                      key={tab.type}
+                      type="button"
+                      onClick={() => {
+                        setVehicleType(tab.type);
+                        setLookupMessage(null);
+                        setShowMoreVehicleTypes(false);
+                      }}
+                      className={`w-full flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[13px] font-bold ${
+                        vehicleType === tab.type ? 'bg-[#f4f9ea] text-[#486800]' : 'text-[#434935] hover:bg-[#f8faf4]'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Formulario Principal de Cotización */}

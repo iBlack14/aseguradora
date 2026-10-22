@@ -32,10 +32,15 @@ body {
 }
 
 .marketing-home .vehicle-tabs {
+  position: relative;
   background: rgba(232, 237, 232, .74) !important;
   border: 1px solid rgba(203, 213, 201, .75);
   box-shadow: none !important;
   border-radius: 14px !important;
+}
+
+.marketing-home .vehicle-more-menu {
+  right: 6px;
 }
 
 .marketing-home .vehicle-tabs button {
