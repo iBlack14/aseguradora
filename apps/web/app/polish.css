@@ -136,6 +136,43 @@ body {
   box-shadow: none !important;
 }
 
+.consult-soat-page {
+  background: linear-gradient(180deg, #f8faf7 0%, #ffffff 78%);
+}
+
+.consult-hero {
+  background:
+    linear-gradient(90deg, rgba(248, 250, 247, .98), rgba(255, 255, 255, .96)),
+    url('/assets/soat-grid.svg') right center / 560px auto no-repeat;
+}
+
+.consult-hero-art {
+  filter: drop-shadow(0 14px 22px rgba(48, 70, 20, .08));
+}
+
+.consult-soat-page .consult-card,
+.consult-soat-page .consult-result-card {
+  border-radius: 18px;
+  box-shadow: 0 16px 38px rgba(48, 70, 20, .06);
+}
+
+.consult-soat-page input {
+  border-radius: 10px !important;
+  border-color: #ccd8c8 !important;
+}
+
+.consult-soat-page input:focus {
+  border-color: #709d17 !important;
+  box-shadow: 0 0 0 3px rgba(139, 197, 0, .15) !important;
+}
+
+.consult-soat-page button[type="submit"] {
+  border-radius: 10px !important;
+  background: #8bc500 !important;
+  color: #344d00 !important;
+  box-shadow: 0 8px 18px rgba(139, 197, 0, .16);
+}
+
 .marketing-home h1,
 .marketing-home h2,
 .marketing-home h3 {

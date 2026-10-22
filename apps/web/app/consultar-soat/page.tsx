@@ -55,17 +55,20 @@ export default function ConsultarSoatPage() {
   const status = result ? statusCopy[result.status] : null;
 
   return (
-    <main className="min-h-[calc(100vh-156px)] bg-[#f6f8f4]">
-      <section className="border-b border-[#dce3d5] bg-white">
-        <div className="mx-auto max-w-[1100px] px-4 py-12 sm:px-6 lg:px-8">
+    <main className="consult-soat-page min-h-[calc(100vh-156px)] bg-[#f6f8f4]">
+      <section className="consult-hero border-b border-[#dce3d5] bg-white">
+        <div className="mx-auto grid max-w-[1100px] items-center gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_260px] lg:px-8 lg:py-14">
+          <div>
           <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-[#486800]">Consulta pública</p>
           <h1 className="max-w-2xl text-3xl font-extrabold tracking-[-0.03em] text-[#161c22] sm:text-5xl">Consulta el estado de tu SOAT</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-[#667085]">Verifica la vigencia del certificado registrado para tu vehículo de forma simple y segura.</p>
+          <p className="mt-3 max-w-2xl text-base leading-7 text-[#667085]">Verifica la vigencia de tu certificado en pocos segundos.</p>
+          </div>
+          <img className="consult-hero-art mx-auto w-full max-w-[230px]" src="/assets/soat-verify.svg" alt="Verificación digital del SOAT" />
         </div>
       </section>
 
       <section className="mx-auto grid max-w-[1100px] gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_0.85fr] lg:px-8 lg:py-12">
-        <div className="rounded-2xl border border-[#dce3d5] bg-white p-6 shadow-[0_12px_32px_rgba(48,70,20,.06)] sm:p-8">
+        <div className="consult-card rounded-2xl border border-[#dce3d5] bg-white p-6 shadow-[0_12px_32px_rgba(48,70,20,.06)] sm:p-8">
           <div className="mb-6">
             <h2 className="text-xl font-extrabold text-[#161c22]">Datos de consulta</h2>
             <p className="mt-1 text-sm text-[#667085]">Los campos marcados con * son obligatorios.</p>
@@ -85,7 +88,7 @@ export default function ConsultarSoatPage() {
           <p className="mt-5 text-xs leading-5 text-[#667085]">La consulta muestra únicamente información de certificados emitidos por esta plataforma. Para una validación oficial, revisa también los canales del MTC y APESEG.</p>
         </div>
 
-        <div className="rounded-2xl border border-[#dce3d5] bg-[#f9fbf6] p-6 sm:p-8">
+        <div className="consult-result-card rounded-2xl border border-[#dce3d5] bg-[#f9fbf6] p-6 sm:p-8">
           {!result ? (
             <div className="flex h-full min-h-[260px] flex-col justify-center">
               <span className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-[#e9f8c7] text-2xl">✓</span>
