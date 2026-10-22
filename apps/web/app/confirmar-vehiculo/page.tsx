@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 
 const vehicleLabels: Record<string, string> = {
   AUTO: 'Auto / Camioneta',
@@ -12,7 +12,7 @@ const vehicleLabels: Record<string, string> = {
   CARGO: 'Carga / Pesado'
 };
 
-export default function ConfirmarVehiculoPage() {
+function ConfirmarVehiculoContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const plate = searchParams.get('placa') || '';
@@ -84,5 +84,13 @@ export default function ConfirmarVehiculoPage() {
         </section>
       </section>
     </main>
+  );
+}
+
+export default function ConfirmarVehiculoPage() {
+  return (
+    <Suspense fallback={<main className="vehicle-confirm-page min-h-[calc(100vh-156px)]" />}>
+      <ConfirmarVehiculoContent />
+    </Suspense>
   );
 }
