@@ -94,10 +94,52 @@ await app.register(rateLimit, {
 });
 
 const quotes: Quote[] = [];
+type PaymentConfig = {
+  yapeEnabled: boolean;
+  yapeName: string;
+  yapeNumber: string;
+  yapeInstructions: string;
+  yapeQrUrl: string;
+};
+
+let paymentConfig: PaymentConfig = {
+  yapeEnabled: false,
+  yapeName: 'Yape / Plin / Billetera digital',
+  yapeNumber: '',
+  yapeInstructions: 'Realiza el pago y conserva la constancia para que un asesor valide tu solicitud.',
+  yapeQrUrl: ''
+};
 // En modo de desarrollo o prototipo, el catálogo de contingencia se activa por defecto salvo que DEMO_MODE='false'
 const demoMode = process.env.DEMO_MODE !== 'false';
 const database = process.env.DATABASE_URL ? new PrismaClient() : null;
 if (process.env.NODE_ENV === 'production' && !database) throw new Error('DATABASE_URL is required in production');
+
+async function getPaymentConfig(): Promise<PaymentConfig> {
+  if (!database) return paymentConfig;
+  try {
+    const stored = await database.appSetting.findUnique({ where: { key: 'payment-config' } });
+    if (stored?.value && typeof stored.value === 'object' && !Array.isArray(stored.value)) {
+      return { ...paymentConfig, ...(stored.value as Partial<PaymentConfig>) };
+    }
+  } catch (error) {
+    app.log.warn({ error }, 'No fue posible leer la configuración de pagos');
+  }
+  return paymentConfig;
+}
+
+async function savePaymentConfig(next: PaymentConfig): Promise<void> {
+  paymentConfig = next;
+  if (!database) return;
+  try {
+    await database.appSetting.upsert({
+      where: { key: 'payment-config' },
+      create: { key: 'payment-config', value: next },
+      update: { value: next }
+    });
+  } catch (error) {
+    app.log.error({ error }, 'No fue posible guardar la configuración de pagos');
+  }
+}
 
 type StoredQuote = Prisma.QuoteGetPayload<{
   include: { customer: true; vehicle: true; offers: { include: { insurer: true } }; order: true };
@@ -477,6 +519,30 @@ app.get('/v1/tariffs', async () => {
     tariffs: Array.from(dynamicTariffs.values()),
     baseTariffs: tariffsByVehicle,
   };
+});
+
+app.get('/v1/payment-config', async () => ({ data: await getPaymentConfig() }));
+
+app.put('/v1/admin/payment-config', async (req, reply) => {
+  const adminKey = req.headers['x-admin-key'];
+  if (process.env.ADMIN_API_KEY && adminKey !== process.env.ADMIN_API_KEY) {
+    return reply.status(401).send({ error: 'UNAUTHORIZED' });
+  }
+
+  const parsed = z.object({
+    yapeEnabled: z.boolean(),
+    yapeName: z.string().trim().min(1).max(80),
+    yapeNumber: z.string().trim().max(40),
+    yapeInstructions: z.string().trim().max(240),
+    yapeQrUrl: z.string().trim().max(500)
+  }).safeParse(req.body);
+
+  if (!parsed.success) {
+    return reply.status(400).send({ error: 'VALIDATION_ERROR', details: parsed.error.flatten() });
+  }
+
+  await savePaymentConfig(parsed.data);
+  return reply.send({ success: true, data: await getPaymentConfig() });
 });
 
 app.post('/v1/admin/tariffs', async (req, reply) => {

@@ -10,7 +10,7 @@ export const VEHICLE_CATALOG: Record<VehicleType, Record<string, string[]>> = {
     Lifan: ['LF 200 ZH', 'LF 150', 'Pasajeros 200'],
     Ronco: ['Pantera 200', 'Super Cargo 200', 'Motokar 150'],
     Mavila: ['Veloz 200', 'Pasajeros 150', 'Carga 200'],
-    SSendas: ['Trimoto 200', 'Trimoto 150'],
+    Ssenda: ['Trimoto 200', 'Trimoto 150'],
     RTM: ['RTM 200', 'Pasajeros 150']
   },
   AUTO: {

@@ -29,7 +29,11 @@ function ConfirmarVehiculoContent() {
   const [documentNumber, setDocumentNumber] = useState('');
   const [holderName, setHolderName] = useState('');
   const [mobile, setMobile] = useState('');
-  const availableBrands = getBrandsForType(catalogType);
+  const catalogBrands = getBrandsForType(catalogType);
+  // Mantiene visible una marca detectada aunque aún no exista en el catálogo local.
+  const availableBrands = brand && !catalogBrands.some((item) => item.toLowerCase() === brand.trim().toLowerCase())
+    ? [...catalogBrands, brand].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base', numeric: true }))
+    : catalogBrands;
   const availableModels = getModelsForBrand(catalogType, brand);
 
   function continueToResults() {
@@ -94,7 +98,7 @@ function ConfirmarVehiculoContent() {
 
           <div className="vehicle-confirm-details">
             <div><span>Placa</span><strong>{plate || '—'}</strong></div>
-            <label><span>Marca</span><select value={brand} onChange={(event) => { setBrand(event.target.value); setModel(''); }}><option value="">Selecciona una marca</option>{availableBrands.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+            <label><span>Marca <small>{availableBrands.length} disponibles</small></span><select value={brand} onChange={(event) => { setBrand(event.target.value); setModel(''); }}><option value="">Selecciona una marca</option>{availableBrands.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
             <label><span>Modelo</span>{availableModels.length > 0 ? <select value={model} onChange={(event) => setModel(event.target.value)}><option value="">Selecciona un modelo</option>{availableModels.map((item) => <option key={item} value={item}>{item}</option>)}</select> : <input value={model} onChange={(event) => setModel(event.target.value)} placeholder="Ingresa el modelo" />}</label>
             <div><span>Año de fabricación</span><input value={year} onChange={(event) => setYear(event.target.value)} inputMode="numeric" placeholder="Año" /></div>
             <label><span>Zona de circulación</span><select value={department} onChange={(event) => setDepartment(event.target.value)}><option value="lima">Lima y Callao</option><option value="arequipa">Arequipa</option><option value="la-libertad">La Libertad</option><option value="cusco">Cusco</option><option value="piura">Piura</option><option value="otro">Otro departamento</option></select></label>

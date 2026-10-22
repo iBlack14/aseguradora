@@ -14,6 +14,14 @@ interface PlanDetail {
   badge: string;
 }
 
+interface PaymentConfig {
+  yapeEnabled: boolean;
+  yapeName: string;
+  yapeNumber: string;
+  yapeInstructions: string;
+  yapeQrUrl: string;
+}
+
 const basePlans: Record<string, PlanDetail> = {
   'la-positiva': {
     id: 'la-positiva',
@@ -111,6 +119,7 @@ export default function PaymentPage() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'tarjeta' | 'billetera'>('tarjeta');
+  const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(true);
 
   // Technical vehicle specs
@@ -121,6 +130,19 @@ export default function PaymentPage() {
   const [vin, setVin] = useState('');
   const [customPrice, setCustomPrice] = useState<number | null>(null);
   const [apiPrice, setApiPrice] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch('/api/backend/v1/payment-config')
+      .then((response) => response.ok ? response.json() : null)
+      .then((json) => {
+        const config = json?.data as PaymentConfig | undefined;
+        if (config) {
+          setPaymentConfig(config);
+          if (!config.yapeEnabled) setPaymentMethod('tarjeta');
+        }
+      })
+      .catch(() => setPaymentConfig(null));
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -455,7 +477,7 @@ export default function PaymentPage() {
                 <strong className="text-xs">Tarjeta de Débito / Crédito</strong>
               </label>
 
-              <label
+              {paymentConfig?.yapeEnabled && <label
                 onClick={() => setPaymentMethod('billetera')}
                 className={`flex cursor-pointer items-center gap-3 rounded-xl p-4 transition-all border ${
                   paymentMethod === 'billetera'
@@ -471,9 +493,21 @@ export default function PaymentPage() {
                   className="text-[#486800] focus:ring-[#8bc500]"
                 />
                 <span className="material-symbols-outlined text-[22px]">qr_code_2</span>
-                <strong className="text-xs">Yape / Plin / Billetera digital</strong>
+                <strong className="text-xs">{paymentConfig.yapeName}</strong>
               </label>
+              }
             </div>
+
+            {paymentConfig?.yapeEnabled && paymentMethod === 'billetera' && (
+              <div className="mt-4 rounded-xl border border-[#8bc500]/50 bg-[#f4f9ea] p-4 text-xs text-[#1c3300]">
+                <div className="flex items-center justify-between gap-3 font-bold">
+                  <span>Pago por {paymentConfig.yapeName}</span>
+                  {paymentConfig.yapeQrUrl && <a className="underline" href={paymentConfig.yapeQrUrl} target="_blank" rel="noreferrer">Ver QR</a>}
+                </div>
+                {paymentConfig.yapeNumber && <p className="mt-2 font-extrabold tracking-wide">Número: {paymentConfig.yapeNumber}</p>}
+                <p className="mt-2 leading-relaxed">{paymentConfig.yapeInstructions}</p>
+              </div>
+            )}
 
             <div className="mt-4 rounded-xl border border-dashed border-[#8bc500]/60 bg-[#f4f9ea]/50 p-3.5 text-xs text-[#1c3300] space-y-1">
               <div className="flex items-center gap-1.5 font-bold">
