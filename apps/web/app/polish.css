@@ -455,6 +455,20 @@ body {
   cursor: pointer;
 }
 
+.results-page {
+  max-width: 1280px !important;
+}
+
+.results-page article {
+  border-radius: 16px !important;
+  border-color: #e1e8dd !important;
+  box-shadow: 0 10px 28px rgba(48, 70, 20, .045) !important;
+}
+
+.results-page article:hover {
+  box-shadow: 0 14px 32px rgba(48, 70, 20, .08) !important;
+}
+
 @media (max-width: 640px) {
   .vehicle-confirm-shell { padding-top: 32px; }
   .vehicle-confirm-details { grid-template-columns: 1fr; }

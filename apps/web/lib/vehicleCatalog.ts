@@ -157,12 +157,12 @@ export const VEHICLE_CATALOG: Record<VehicleType, Record<string, string[]>> = {
 
 export function getBrandsForType(vehicleType: VehicleType): string[] {
   const map = VEHICLE_CATALOG[vehicleType] || VEHICLE_CATALOG.AUTO;
-  return Object.keys(map);
+  return Object.keys(map).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base', numeric: true }));
 }
 
 export function getModelsForBrand(vehicleType: VehicleType, brand: string): string[] {
   if (!brand) return [];
   const map = VEHICLE_CATALOG[vehicleType] || VEHICLE_CATALOG.AUTO;
   const matchKey = Object.keys(map).find((k) => k.toLowerCase() === brand.trim().toLowerCase());
-  return matchKey ? map[matchKey] : [];
+  return matchKey ? [...map[matchKey]].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base', numeric: true })) : [];
 }

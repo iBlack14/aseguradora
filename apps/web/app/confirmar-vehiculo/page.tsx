@@ -52,7 +52,10 @@ function ConfirmarVehiculoContent() {
     });
     const serie = searchParams.get('serie');
     if (serie) params.set('serie', serie);
-    router.push(`/resultados?${params.toString()}`);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('soat-quote', JSON.stringify(Object.fromEntries(params.entries())));
+    }
+    router.push('/resultados');
   }
 
   return (

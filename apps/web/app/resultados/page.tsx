@@ -139,7 +139,16 @@ export default function ResultsPage() {
   ]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const storedQuote = sessionStorage.getItem('soat-quote');
+    let params = new URLSearchParams(window.location.search);
+    if (storedQuote) {
+      try {
+        const quoteData = JSON.parse(storedQuote) as Record<string, string>;
+        params = new URLSearchParams(Object.entries(quoteData));
+      } catch {
+        // Mantiene la compatibilidad con enlaces antiguos si la sesión no es válida.
+      }
+    }
     const p = (params.get('placa') || params.get('plate') || '').toUpperCase().trim();
     if (p) setPlate(p);
 
@@ -306,7 +315,7 @@ export default function ResultsPage() {
       : 'Auto / Camioneta particular';
 
   return (
-    <main className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <main className="results-page max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       {/* Head */}
       <div className="mb-6">
         <span className="text-[12px] font-bold text-[#486800] uppercase tracking-wider">
