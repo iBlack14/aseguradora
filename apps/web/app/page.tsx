@@ -142,7 +142,7 @@ export default function HomePage() {
   const lookupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Consulta al padrón vehicular (backend o catálogo contingencia)
-  async function lookupVehicle(plateToLookup: string): Promise<DetectedVehicle | null> {
+  async function lookupVehicle(plateToLookup: string, revealDetails = false): Promise<DetectedVehicle | null> {
     const clean = plateToLookup.trim().toUpperCase();
     if (clean.length < 5) return null;
 
@@ -201,24 +201,28 @@ export default function HomePage() {
         if (v.use === 'TAXI' || v.use === 'PUBLICO') setVehicleUse('PUBLICO');
         if (v.use === 'COMERCIAL') setVehicleUse('COMERCIAL');
         if (v.zone) setDepartment(v.zone.toLowerCase().includes('callao') ? 'callao' : v.zone);
-        setShowTechDetails(true);
+        if (revealDetails) setShowTechDetails(true);
         return v;
       } else {
         setDetectedVehicle(null);
-        setLookupMessage({
-          text: `No encontramos información asociada a esta placa. Completa los datos del vehículo para continuar con la cotización.`,
-          type: 'info'
-        });
-        setShowTechDetails(true);
+        if (revealDetails) {
+          setLookupMessage({
+            text: `No encontramos información asociada a esta placa. Completa los datos del vehículo para continuar con la cotización.`,
+            type: 'info'
+          });
+          setShowTechDetails(true);
+        }
         return null;
       }
     } catch {
       setDetectedVehicle(null);
-      setLookupMessage({
-        text: 'No fue posible consultar el padrón. Puedes ingresar los datos técnicos del vehículo.',
-        type: 'info'
-      });
-      setShowTechDetails(true);
+      if (revealDetails) {
+        setLookupMessage({
+          text: 'No fue posible consultar el padrón. Puedes ingresar los datos técnicos del vehículo.',
+          type: 'info'
+        });
+        setShowTechDetails(true);
+      }
       return null;
     } finally {
       setLookingUp(false);
@@ -265,14 +269,24 @@ export default function HomePage() {
     const finalPlate = plate.trim().toUpperCase() || 'ABC-123';
 
     if (quoteStep === 1) {
-      if (!detectedVehicle) await lookupVehicle(finalPlate);
-      setQuoteStep(2);
+      const vehicle = detectedVehicle || await lookupVehicle(finalPlate, true);
+      const params = new URLSearchParams({
+        placa: finalPlate,
+        tipo: vehicle?.vehicleType || vehicleType,
+        dep: department,
+        uso: vehicleUse
+      });
+      if (vehicle?.brand || brand) params.set('marca', vehicle?.brand || brand);
+      if (vehicle?.model || model) params.set('modelo', vehicle?.model || model);
+      if (vehicle?.year || year) params.set('ano', String(vehicle?.year || year));
+      if (vehicle?.vin || vin) params.set('serie', vehicle?.vin || vin);
+      router.push(`/confirmar-vehiculo?${params.toString()}`);
       return;
     }
 
     let v = detectedVehicle;
     if (!v) {
-      v = await lookupVehicle(finalPlate);
+      v = await lookupVehicle(finalPlate, true);
     }
 
     const params = new URLSearchParams({
@@ -425,7 +439,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Tarjeta de Vehículo Identificado */}
-                {detectedVehicle && (
+                {detectedVehicle && quoteStep === 2 && (
                   <div className="mt-2.5 p-3 rounded-xl border border-[#4e7f00] bg-[#f4f9ea] text-[#1c3300] text-xs flex items-start gap-2.5 shadow-xs animate-fade-in">
                     <span className="material-symbols-outlined text-[20px] text-[#4e7f00] shrink-0 mt-0.5">verified</span>
                     <div>

@@ -193,6 +193,246 @@ body {
   border-bottom: 1px solid #edf2e9;
 }
 
+.vehicle-confirm-page {
+  background: #fff;
+}
+
+.vehicle-confirm-shell {
+  width: min(760px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 56px 0 90px;
+}
+
+.vehicle-confirm-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #00b8b2;
+  font-size: 18px;
+}
+
+.vehicle-confirm-progress-line {
+  height: 4px;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #e7e9ed;
+}
+
+.vehicle-confirm-progress-line span {
+  display: block;
+  width: 5%;
+  height: 100%;
+  background: #00c4bd;
+}
+
+.vehicle-confirm-percent {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.vehicle-confirm-progress-copy {
+  margin: 10px 0 42px 30px;
+  color: #4d5866;
+  font-size: 12px;
+  letter-spacing: .04em;
+}
+
+.vehicle-confirm-conversation {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.vehicle-confirm-user-bubble {
+  padding: 16px 28px;
+  border-radius: 16px 16px 4px 16px;
+  background: #00bdb7;
+  color: white;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+.vehicle-confirm-time {
+  color: #9aa2aa;
+  font-size: 10px;
+}
+
+.vehicle-confirm-agent-row {
+  display: flex;
+  align-self: flex-start;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.vehicle-confirm-agent-avatar {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e7f6ed;
+  color: #3f7c49;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.vehicle-confirm-message {
+  max-width: 360px;
+  padding: 14px 18px;
+  border-radius: 16px 16px 16px 4px;
+  background: #f7f8fa;
+  color: #667085;
+  font-size: 14px;
+}
+
+.vehicle-confirm-dots {
+  display: flex;
+  gap: 4px;
+  margin: 8px 0 0 14px;
+}
+
+.vehicle-confirm-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #00c4bd;
+}
+
+.vehicle-confirm-card {
+  width: min(520px, 100%);
+  margin: 28px auto 0;
+  padding: 26px;
+  border: 1px solid #e1e6ea;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 18px 45px rgba(34, 52, 67, .07);
+}
+
+.vehicle-confirm-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #edf0f2;
+}
+
+.vehicle-confirm-kicker {
+  color: #00a9a3;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.vehicle-confirm-card h1 {
+  margin: 6px 0 2px;
+  color: #18232e;
+  font-size: 22px;
+  text-transform: uppercase;
+}
+
+.vehicle-confirm-card-head p {
+  margin: 0;
+  color: #667085;
+  font-size: 13px;
+}
+
+.vehicle-confirm-type {
+  padding: 8px 10px;
+  border-radius: 99px;
+  background: #eefaf7;
+  color: #008f89;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.vehicle-confirm-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 20px;
+  padding: 22px 0;
+}
+
+.vehicle-confirm-details > div,
+.vehicle-confirm-details > label {
+  display: grid;
+  gap: 6px;
+}
+
+.vehicle-confirm-details span {
+  color: #7d8792;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.vehicle-confirm-details strong,
+.vehicle-confirm-details input,
+.vehicle-confirm-details select {
+  min-width: 0;
+  color: #25313c;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.vehicle-confirm-details input,
+.vehicle-confirm-details select {
+  width: 100%;
+  height: 36px;
+  border: 0;
+  border-bottom: 1px solid #ced7dc;
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+}
+
+.vehicle-confirm-details input:focus,
+.vehicle-confirm-details select:focus {
+  border-color: #00bdb7;
+}
+
+.vehicle-confirm-primary {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  border: 1px solid #00bdb7;
+  border-radius: 99px;
+  background: #fff;
+  color: #00a9a3;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.vehicle-confirm-primary:hover {
+  background: #edfffc;
+}
+
+.vehicle-confirm-secondary {
+  display: block;
+  margin-top: 22px;
+  color: #00a9a3;
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+@media (max-width: 640px) {
+  .vehicle-confirm-shell { padding-top: 32px; }
+  .vehicle-confirm-details { grid-template-columns: 1fr; }
+  .vehicle-confirm-card { padding: 20px; }
+}
+
 .marketing-home h1,
 .marketing-home h2,
 .marketing-home h3 {
