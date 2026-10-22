@@ -52,7 +52,20 @@ export const VEHICLE_CATALOG: Record<VehicleType, Record<string, string[]>> = {
     Omoda: ['C5', 'C5 GT', 'E5'],
     Chery: ['Tiggo 2', 'Tiggo 4', 'Tiggo 7', 'Tiggo 8', 'Arrizo 5', 'Arrizo 6'],
     Lexus: ['UX', 'NX', 'RX', 'ES', 'IS', 'GX'],
-    Porsche: ['Macan', 'Cayenne', '911', 'Panamera', 'Taycan']
+    Porsche: ['Macan', 'Cayenne', '911', 'Panamera', 'Taycan'],
+    'Land Rover': ['Defender', 'Discovery', 'Discovery Sport', 'Range Rover Evoque', 'Range Rover Sport'],
+    Mini: ['Cooper', 'Countryman', 'Clubman', 'Paceman'],
+    Jaguar: ['XE', 'XF', 'F-Pace', 'E-Pace', 'F-Type'],
+    Skoda: ['Fabia', 'Scala', 'Octavia', 'Karoq', 'Kodiaq'],
+    Seat: ['Ibiza', 'Leon', 'Arona', 'Ateca'],
+    Dacia: ['Duster', 'Sandero', 'Logan', 'Jogger'],
+    Lada: ['Niva', 'Niva Travel', 'Vesta', 'Granta'],
+    Daewoo: ['Tico', 'Matiz', 'Cielo', 'Nubira', 'Lanos'],
+    'Alfa Romeo': ['Giulietta', 'Giulia', 'Stelvio', 'Tonale'],
+    Tesla: ['Model 3', 'Model Y', 'Model S', 'Model X'],
+    Leapmotor: ['T03', 'C10', 'C11'],
+    Seres: ['3', '5', '7'],
+    Soueast: ['DX3', 'DX5', 'DX7']
   },
   MOTO: {
     Honda: ['CB 125', 'CB 190R', 'GL 125', 'Wave 110', 'XR 150', 'XR 190L', 'Navi', 'Elite 125'],
@@ -83,7 +96,19 @@ export const VEHICLE_CATALOG: Record<VehicleType, Record<string, string[]>> = {
     Piaggio: ['Liberty 125', 'Medley 150', 'Beverly 300', 'MP3 300'],
     Ducati: ['Monster', 'Scrambler', 'Panigale V2', 'Multistrada V2', 'DesertX'],
     'BMW Motorrad': ['G 310 R', 'G 310 GS', 'F 750 GS', 'F 850 GS', 'R 1250 GS'],
-    'Motokar/Honda': ['CGL 125', 'CBF 125', 'XR 150L', 'Wave 110', 'Navi']
+    'Motokar/Honda': ['CGL 125', 'CBF 125', 'XR 150L', 'Wave 110', 'Navi'],
+    Aprilia: ['RS 125', 'Tuono 125', 'SR GT 200', 'Tuareg 660'],
+    Triumph: ['Speed 400', 'Scrambler 400 X', 'Trident 660', 'Tiger 900'],
+    Husqvarna: ['Svartpilen 200', 'Vitpilen 401', 'Svartpilen 401', 'Norden 901'],
+    'Moto Guzzi': ['V7', 'V85 TT', 'V100 Mandello'],
+    'Harley-Davidson': ['Iron 883', 'Sportster S', 'Street Bob', 'Fat Bob', 'Pan America'],
+    Indian: ['Scout', 'FTR', 'Chief', 'Chieftain'],
+    GasGas: ['ES 300', 'EC 250', 'SM 700'],
+    Rieju: ['Aventura 500', 'MRT 125', 'Marathon 125'],
+    UM: ['Renegade 200', 'Dsr Adventure 200', 'Xtreet 230'],
+    Mavila: ['Mavila 150', 'Mavila 200', 'Mavila Cargo'],
+    RTM: ['RTM 125', 'RTM 150', 'RTM 200'],
+    Tuko: ['Tuko 150', 'Tuko 200', 'Tuko 250']
   },
   VAN: {
     Toyota: ['HiAce', 'Probox', 'Succeed', 'Avanza', 'Innova'],
