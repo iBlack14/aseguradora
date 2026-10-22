@@ -467,7 +467,7 @@ export default function HomePage() {
                 </p>
 
                 {/* Acordeón de Datos Técnicos Completables */}
-                <div className="mt-3 pt-2 border-t border-slate-100">
+                <div className="hidden">
                   <button
                     type="button"
                     onClick={() => setShowTechDetails(!showTechDetails)}
