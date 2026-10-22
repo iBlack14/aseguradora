@@ -307,9 +307,12 @@ export default function HomePage() {
                 <span className="material-symbols-outlined text-[#486800] text-[18px]">verified</span>
                 <span>SOAT 100% digital oficial</span>
               </div>
-              <h1 className="text-[36px] sm:text-[44px] font-extrabold text-[#161c22] leading-tight tracking-tight">
-                Cotiza y compara tu SOAT en minutos
-              </h1>
+               <h1 className="text-[36px] sm:text-[44px] font-extrabold text-[#161c22] leading-tight tracking-tight">
+                 Cotiza tu SOAT 100% digital
+               </h1>
+               <p className="cotizador-subtitle mt-2 text-[16px] text-[#434935] leading-relaxed">
+                 Selecciona tu vehículo para comenzar.
+               </p>
             </div>
 
             {/* Selector de pestañas dinámico */}
@@ -331,7 +334,10 @@ export default function HomePage() {
                     }`}
                   >
                     <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
-                    <span>{tab.label}</span>
+                     <span className="vehicle-tab-copy">
+                       <strong>{tab.type === 'AUTO' ? 'Auto / Camioneta' : 'Moto'}</strong>
+                       <small>{tab.type === 'AUTO' ? 'Autos, SUV y pick-ups' : 'Motos y scooters'}</small>
+                     </span>
                   </button>
                 );
               })}
