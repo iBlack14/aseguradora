@@ -776,6 +776,10 @@ export default function HomePage() {
           {/* Columna Derecha: Beneficios y Ficha de Confianza (5 cols) */}
           <div className="lg:col-span-5 flex flex-col gap-6">
             <div className="trust-card relative rounded-3xl overflow-hidden border border-[#dde3eb] bg-gradient-to-br from-[#f8faef] to-white p-6 shadow-sm">
+              <div className="trust-card-heading mb-4">
+                <span className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#709d17]">Protección digital</span>
+                <h2 className="mt-1 text-[20px] font-extrabold leading-tight text-[#161c22]">Tu SOAT, simple y seguro</h2>
+              </div>
               <Image
                 src="/assets/soat-vehicle-hero-v1.png"
                 alt="Vehículos SOAT"

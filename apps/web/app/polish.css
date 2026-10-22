@@ -173,6 +173,26 @@ body {
   box-shadow: 0 8px 18px rgba(139, 197, 0, .16);
 }
 
+.consult-soat-page .consult-result-card {
+  background: #ffffff !important;
+}
+
+.consult-soat-page .consult-result-art {
+  opacity: .9;
+}
+
+.consult-soat-page .consult-result-body {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.marketing-home .trust-card-heading {
+  padding-bottom: 4px;
+  border-bottom: 1px solid #edf2e9;
+}
+
 .marketing-home h1,
 .marketing-home h2,
 .marketing-home h3 {

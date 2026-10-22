@@ -91,12 +91,13 @@ export default function ConsultarSoatPage() {
         <div className="consult-result-card rounded-2xl border border-[#dce3d5] bg-[#f9fbf6] p-6 sm:p-8">
           {!result ? (
             <div className="flex h-full min-h-[260px] flex-col justify-center">
-              <span className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-[#e9f8c7] text-2xl">✓</span>
+              <img className="consult-result-art mb-5 h-auto w-[150px]" src="/assets/soat-verify.svg" alt="Consulta segura de SOAT" />
+              <span className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#709d17]">Validación digital</span>
               <h2 className="text-xl font-extrabold text-[#161c22]">Resultado de la consulta</h2>
-              <p className="mt-2 text-sm leading-6 text-[#667085]">Ingresa una placa para consultar el estado, la aseguradora y las fechas de vigencia.</p>
+              <p className="mt-2 max-w-sm text-sm leading-6 text-[#667085]">Ingresa una placa para consultar el estado, la aseguradora y las fechas de vigencia de tu certificado.</p>
             </div>
           ) : (
-            <div>
+            <div className="consult-result-body">
               <div className={`rounded-xl border p-4 ${status?.tone}`}>
                 <p className="text-lg font-extrabold">{status?.title}</p>
                 <p className="mt-1 text-sm">{status?.detail}</p>
@@ -110,7 +111,7 @@ export default function ConsultarSoatPage() {
                   <div className="flex justify-between gap-4"><dt className="text-[#667085]">Fin de vigencia</dt><dd className="text-right font-semibold text-[#161c22]">{formatDate(result.expiresAt)}</dd></div>
                 </dl>
               )}
-              {!result.found && <Link href="/#cotizador" className="mt-6 inline-flex h-11 items-center rounded-lg bg-[#8bc500] px-5 text-sm font-extrabold text-[#344d00]">Cotizar un SOAT</Link>}
+              {!result.found && <Link href="/#cotizador" className="mt-6 inline-flex h-11 items-center rounded-lg bg-[#8bc500] px-5 text-sm font-extrabold text-[#344d00]">Iniciar una cotización</Link>}
             </div>
           )}
         </div>
