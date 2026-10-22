@@ -244,13 +244,11 @@ export default function ResultsPage() {
     vehicleType === 'MOTOTAXI' &&
     (vehicleUse === 'PUBLICO' || department.toLowerCase().includes('callao'));
 
-  const isMoto = vehicleType === 'MOTO';
-
   const offersWithPricing = useMemo(() => {
     const prices = isMototaxiTaxi ? mototaxiTaxiTariffs : (tariffsByVehicle[vehicleType] || tariffsByVehicle.AUTO);
     return baseOffers.map((o) => {
       const apiOffer = apiOffers.find((item) => item.id === o.id);
-      if (apiOffer) {
+      if (apiOffer && apiOffer.price > 0) {
         return {
           ...o,
           price: apiOffer.price,
@@ -259,54 +257,6 @@ export default function ResultsPage() {
           unavailableReason: apiOffer.unavailableReason
         };
       }
-      if (isMoto) {
-        if (o.id === 'la-positiva') {
-          return {
-            ...o,
-            price: 630.0,
-            available: true,
-            badge: 'Precio actualizado',
-            unavailableReason: undefined
-          };
-        }
-        if (o.id === 'protecta') {
-          return {
-            ...o,
-            price: 0,
-            available: false,
-            badge: 'No disponible',
-            unavailableReason: 'Protecta Security no cuenta con SOAT para motos lineales.'
-          };
-        }
-        if (o.id === 'interseguro') {
-          return {
-            ...o,
-            price: 0,
-            available: false,
-            badge: 'No disponible en web',
-            unavailableReason: 'Interseguro no comercializa SOAT digital para motos lineales.'
-          };
-        }
-        if (o.id === 'mapfre') {
-          return {
-            ...o,
-            price: 0,
-            available: false,
-            badge: 'No disponible en web',
-            unavailableReason: 'MAPFRE no dispone de venta web directa para motocicletas.'
-          };
-        }
-        if (o.id === 'pacifico') {
-          return {
-            ...o,
-            price: 0,
-            available: false,
-            badge: 'No disponible en web',
-            unavailableReason: 'Pacífico no cuenta con emisión web directa para motos lineales.'
-          };
-        }
-      }
-
       return {
         ...o,
         price: prices[o.id] || 65.0,
@@ -315,7 +265,7 @@ export default function ResultsPage() {
         badge: isMototaxiTaxi && o.id === 'la-positiva' ? 'Tarifa Oficial Taxi' : o.badge
       };
     });
-  }, [vehicleType, isMototaxiTaxi, isMoto, apiOffers]);
+  }, [vehicleType, isMototaxiTaxi, apiOffers]);
 
   const filteredAndSortedOffers = useMemo(() => {
     const list = offersWithPricing.filter((o) => selectedInsurers.includes(o.id));

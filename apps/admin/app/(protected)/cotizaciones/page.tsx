@@ -112,6 +112,14 @@ const insurerLabels: Record<string, string> = {
   protecta: 'Protecta Security'
 };
 
+const basePriceByVehicle: Record<Vehicle['vehicleType'], number> = {
+  AUTO: 65,
+  MOTO: 630,
+  MOTOTAXI: 120,
+  VAN: 130,
+  CARGO: 210
+};
+
 type TariffEditor = { annualPrice: string; installmentAmount: string; installmentCount: string };
 type TariffResponse = { baseTariffs: Record<string, Record<string, number>>; tariffs: Array<{ insurerSlug: string; vehicleType: string; vehicleUse: string; department: string; annualPrice: number; installmentAmount?: number; installmentCount?: number }> };
 
@@ -181,7 +189,7 @@ export default function Quotes() {
     setEditUse(q.vehicle?.use || 'PARTICULAR');
     setEditDepartment(q.vehicle?.department || q.department || 'Lima');
     setEditOfferId(q.selectedOfferId || 'la-positiva');
-    setEditPrice(q.selectedPrice ? q.selectedPrice.toFixed(2) : '65.00');
+    setEditPrice(q.selectedPrice ? q.selectedPrice.toFixed(2) : `${basePriceByVehicle[q.vehicleType] || 65}.00`);
     const selectedOffer = q.offers?.find((offer) => offer.id === q.selectedOfferId);
     const hasInstallments = Boolean(selectedOffer?.installmentCount && selectedOffer.installmentCount > 1);
     setEditPaymentMethod(hasInstallments ? 'INSTALLMENTS' : 'CASH');
@@ -290,7 +298,7 @@ export default function Quotes() {
         const drafts: Record<string, TariffEditor> = {};
         Object.entries(insurerLabels).forEach(([id]) => {
           const dynamic = result.tariffs.find((item) => item.insurerSlug === id && item.vehicleType === tariffType && item.vehicleUse === tariffUse && item.department.toLowerCase() === tariffDepartment.toLowerCase());
-          const base = result.baseTariffs[tariffType]?.[id] || 0;
+          const base = result.baseTariffs[tariffType]?.[id] || basePriceByVehicle[tariffType];
           const count = dynamic?.installmentCount || (tariffType === 'MOTO' ? 4 : 1);
           drafts[id] = {
             annualPrice: String(dynamic?.annualPrice ?? base),
@@ -920,8 +928,8 @@ export default function Quotes() {
             const draft = tariffDrafts[id] || { annualPrice: '', installmentAmount: '', installmentCount: '1' };
             return <div className="tariff-row" key={id}>
               <div className="tariff-name"><strong>{name}</strong><small>{id === 'falabella' ? 'Incluida en el catálogo Falabella' : 'Aseguradora afiliada'}</small></div>
-              <label>Precio anual<input type="number" min="1" step="0.01" value={draft.annualPrice} onChange={(event) => setTariffDrafts((current) => ({ ...current, [id]: { ...draft, annualPrice: event.target.value } }))} /></label>
-              <label>Cuota desde<input type="number" min={tariffType === 'MOTO' ? 150 : 1} step="0.01" value={draft.installmentAmount} onChange={(event) => setTariffDrafts((current) => ({ ...current, [id]: { ...draft, installmentAmount: event.target.value } }))} /></label>
+              <label>Precio anual<input className="price-editable" type="number" min="1" step="0.01" value={draft.annualPrice} onChange={(event) => setTariffDrafts((current) => ({ ...current, [id]: { ...draft, annualPrice: event.target.value } }))} /></label>
+              <label>Cuota desde<input className="price-editable" type="number" min={tariffType === 'MOTO' ? 150 : 1} step="0.01" value={draft.installmentAmount} onChange={(event) => setTariffDrafts((current) => ({ ...current, [id]: { ...draft, installmentAmount: event.target.value } }))} /></label>
               <label>N.º cuotas<input type="number" min="1" step="1" value={draft.installmentCount} onChange={(event) => setTariffDrafts((current) => ({ ...current, [id]: { ...draft, installmentCount: event.target.value } }))} /></label>
               <button className="button" type="button" onClick={() => saveTariff(id)} disabled={savingTariff === id}>{savingTariff === id ? 'Guardando…' : 'Guardar'}</button>
             </div>;
