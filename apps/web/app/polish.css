@@ -56,6 +56,14 @@ body {
   color: #486800;
 }
 
+.marketing-home .vehicle-tab-png {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  object-fit: contain;
+  filter: saturate(.9) contrast(1.02);
+}
+
 .marketing-home .vehicle-tabs button:not([class*="bg-white"]) .vehicle-tab-icon {
   opacity: .86;
 }

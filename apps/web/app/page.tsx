@@ -89,6 +89,11 @@ function VehicleIcon({ type, more = false }: { type?: VehicleType; more?: boolea
   return <svg aria-hidden="true" className="vehicle-tab-icon" viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M5 15V9.5c0-1.4 1.1-2.5 2.5-2.5h13.8c1 0 1.9.5 2.4 1.3L27 13v5H5z" /><path d="M5 13h22M9 18v2M23 18v2" /><circle cx="9" cy="17" r="2.2" fill="currentColor" stroke="none" /><circle cx="23" cy="17" r="2.2" fill="currentColor" stroke="none" /></svg>;
 }
 
+function VehiclePngIcon({ type }: { type: 'AUTO' | 'MOTO' }) {
+  const src = type === 'AUTO' ? '/assets/icons/vehicle-auto.png' : '/assets/icons/vehicle-moto.png';
+  return <Image aria-hidden="true" src={src} alt="" width={42} height={42} className="vehicle-tab-png" />;
+}
+
 function TrustIcon({ type }: { type: 'digital' | 'compare' | 'advisor' }) {
   const src = {
     digital: '/assets/icons/benefit-digital.png',
@@ -376,7 +381,7 @@ export default function HomePage() {
                         : 'text-[#434935] hover:text-[#161c22] hover:bg-white/60'
                     }`}
                   >
-                    <VehicleIcon type={tab.type} />
+                    {tab.type === 'AUTO' || tab.type === 'MOTO' ? <VehiclePngIcon type={tab.type} /> : <VehicleIcon type={tab.type} />}
                      <span className="vehicle-tab-copy">
                        <strong>{tab.type === 'AUTO' ? 'Auto / Camioneta' : 'Moto'}</strong>
                        <small>{tab.type === 'AUTO' ? 'Autos, SUV y pick-ups' : 'Motos y scooters'}</small>
