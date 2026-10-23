@@ -49,6 +49,23 @@ body {
   color: #5e685d;
 }
 
+.marketing-home .vehicle-tab-icon {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  color: #486800;
+}
+
+.marketing-home .vehicle-tabs button:not([class*="bg-white"]) .vehicle-tab-icon {
+  opacity: .86;
+}
+
+.marketing-home .vehicle-more-trigger .vehicle-tab-icon {
+  width: 24px;
+  height: 24px;
+  flex-basis: 24px;
+}
+
 .marketing-home .vehicle-tab-copy {
   display: flex;
   flex-direction: column;

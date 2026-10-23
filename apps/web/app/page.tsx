@@ -76,6 +76,19 @@ const vehicleTabs: { type: VehicleType; label: string; icon: string; placeholder
   { type: 'CARGO', label: 'Carga / Pesado', icon: 'local_shipping', placeholder: 'T8K-912' }
 ];
 
+function VehicleIcon({ type, more = false }: { type?: VehicleType; more?: boolean }) {
+  if (more) {
+    return <svg aria-hidden="true" className="vehicle-tab-icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="19" cy="12" r="1.7" /></svg>;
+  }
+  if (type === 'MOTO') {
+    return <svg aria-hidden="true" className="vehicle-tab-icon" viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="7" cy="17" r="4" /><circle cx="25" cy="17" r="4" /><path d="M7 17h6l3-8h4l5 8M13 17l-4-8h5M17 9l3-3h3" /></svg>;
+  }
+  if (type === 'MOTOTAXI') {
+    return <svg aria-hidden="true" className="vehicle-tab-icon" viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="7" cy="18" r="3.5" /><circle cx="25" cy="18" r="3.5" /><path d="M7 18h18M10 14V7h12l4 7M13 7l-2-3h8l3 3M16 10h6" /></svg>;
+  }
+  return <svg aria-hidden="true" className="vehicle-tab-icon" viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M5 15V9.5c0-1.4 1.1-2.5 2.5-2.5h13.8c1 0 1.9.5 2.4 1.3L27 13v5H5z" /><path d="M5 13h22M9 18v2M23 18v2" /><circle cx="9" cy="17" r="2.2" fill="currentColor" stroke="none" /><circle cx="23" cy="17" r="2.2" fill="currentColor" stroke="none" /></svg>;
+}
+
 const insurers = [
   { slug: 'la-positiva', name: 'La Positiva', logo: '/assets/logos/la-positiva.png' },
   { slug: 'pacifico', name: 'Pacífico Seguros', logo: '/assets/logos/pacifico.png' },
@@ -354,7 +367,7 @@ export default function HomePage() {
                         : 'text-[#434935] hover:text-[#161c22] hover:bg-white/60'
                     }`}
                   >
-                    <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
+                    <VehicleIcon type={tab.type} />
                      <span className="vehicle-tab-copy">
                        <strong>{tab.type === 'AUTO' ? 'Auto / Camioneta' : 'Moto'}</strong>
                        <small>{tab.type === 'AUTO' ? 'Autos, SUV y pick-ups' : 'Motos y scooters'}</small>
@@ -372,7 +385,7 @@ export default function HomePage() {
                 }`}
                 aria-expanded={showMoreVehicleTypes}
               >
-                <span className="material-symbols-outlined text-[18px]">{vehicleType !== 'AUTO' && vehicleType !== 'MOTO' ? currentTab.icon : 'more_horiz'}</span>
+                <VehicleIcon type={vehicleType !== 'AUTO' && vehicleType !== 'MOTO' ? vehicleType : undefined} more={vehicleType === 'AUTO' || vehicleType === 'MOTO'} />
                 <span>{vehicleType !== 'AUTO' && vehicleType !== 'MOTO' ? currentTab.label : 'Más tipos'}</span>
                 <span className="material-symbols-outlined text-[16px]">{showMoreVehicleTypes ? 'expand_less' : 'expand_more'}</span>
               </button>
@@ -391,7 +404,7 @@ export default function HomePage() {
                         vehicleType === tab.type ? 'bg-[#f4f9ea] text-[#486800]' : 'text-[#434935] hover:bg-[#f8faf4]'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
+                      <VehicleIcon type={tab.type} />
                       <span>{tab.label}</span>
                     </button>
                   ))}
