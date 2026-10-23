@@ -793,7 +793,7 @@ app.get('/v1/vehicles/:plate', async (req, reply) => {
   const live = await lookupVerifik(normalized);
   if (live) {
     const offers = calculateOffers(live.vehicleType, 'Lima');
-    return { data: live, offers, mode: 'LIVE_VERIFIK' };
+    return { found: true, data: live, offers, mode: 'LIVE_VERIFIK' };
   }
 
   // 2. Try verified padrón vehicles

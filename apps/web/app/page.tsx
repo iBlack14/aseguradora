@@ -191,10 +191,13 @@ export default function HomePage() {
             const minPrice = availableOffers.length > 0
               ? Math.min(...availableOffers.map((o: { price: number }) => o.price))
               : (json.data.vehicleType === 'MOTO' ? 630.0 : 32.0);
-            if (json.data.brand && json.data.model) {
+            // Conserva cualquier dato real que entregue el padrón, incluso si el
+            // proveedor no devuelve el modelo completo. El usuario podrá
+            // completar únicamente el dato pendiente en la siguiente pantalla.
+            if (json.data.brand || json.data.model) {
               v = {
-                brand: json.data.brand,
-                model: json.data.model,
+                brand: json.data.brand || '',
+                model: json.data.model || '',
                 year: json.data.year || 2026,
                 color: json.data.color || 'Registrado',
                 plate: json.data.plate,
@@ -437,12 +440,6 @@ export default function HomePage() {
                   Número de placa <span className="text-[#ba1a1a]">*</span>
                 </label>
                 <div className="relative flex items-center">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <div className="flex items-center gap-1 bg-[#e9eef6] px-1.5 py-0.5 rounded border border-[#dde3eb] text-[11px] font-extrabold text-[#161c22]">
-                      <span>🇵🇪</span>
-                      <span>PE</span>
-                    </div>
-                  </div>
                   <input
                     id="placa"
                     name="placa"
@@ -452,7 +449,7 @@ export default function HomePage() {
                     value={plate}
                     onChange={(e) => handlePlateInput(e.target.value)}
                     placeholder={`Ej. ${currentTab.placeholder}`}
-                    className="w-full h-[54px] pl-16 pr-12 rounded-xl border border-[#dde3eb] bg-white text-[#161c22] text-center font-bold tracking-widest text-[19px] uppercase focus:border-[#486800] focus:ring-4 focus:ring-[#8bc500]/25 transition-all outline-none"
+                    className="w-full h-[54px] pl-4 pr-12 rounded-xl border border-[#dde3eb] bg-white text-[#161c22] text-center font-bold tracking-widest text-[19px] uppercase focus:border-[#486800] focus:ring-4 focus:ring-[#8bc500]/25 transition-all outline-none"
                   />
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
                     {lookingUp ? (
@@ -826,7 +823,7 @@ export default function HomePage() {
                 alt="Vehículos SOAT"
                 width={600}
                 height={400}
-                className="w-full h-auto object-contain rounded-2xl"
+                className="trust-card-hero w-full h-auto object-contain rounded-2xl"
                 priority
               />
               <div className="mt-6 space-y-4">

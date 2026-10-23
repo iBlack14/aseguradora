@@ -147,10 +147,18 @@ body {
   box-shadow: 0 18px 44px rgba(51, 75, 28, .06) !important;
 }
 
-.marketing-home .trust-card img {
+.marketing-home .trust-card-hero {
   height: 178px;
   border: 1px solid #dbe4d7;
   background: #fff;
+  object-fit: contain;
+}
+
+.marketing-home .trust-card .trust-benefit-icon {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  background: transparent;
   object-fit: contain;
 }
 
