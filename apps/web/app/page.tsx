@@ -89,6 +89,16 @@ function VehicleIcon({ type, more = false }: { type?: VehicleType; more?: boolea
   return <svg aria-hidden="true" className="vehicle-tab-icon" viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M5 15V9.5c0-1.4 1.1-2.5 2.5-2.5h13.8c1 0 1.9.5 2.4 1.3L27 13v5H5z" /><path d="M5 13h22M9 18v2M23 18v2" /><circle cx="9" cy="17" r="2.2" fill="currentColor" stroke="none" /><circle cx="23" cy="17" r="2.2" fill="currentColor" stroke="none" /></svg>;
 }
 
+function TrustIcon({ type }: { type: 'digital' | 'compare' | 'advisor' }) {
+  if (type === 'digital') {
+    return <svg aria-hidden="true" className="trust-benefit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m13.2 2-7 11h5.1L10.8 22l7-11h-5.1L13.2 2Z" /></svg>;
+  }
+  if (type === 'compare') {
+    return <svg aria-hidden="true" className="trust-benefit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v16M5 7h14M7 7l-3 6a3.2 3.2 0 0 0 6 0L7 7Zm10 0-3 6a3.2 3.2 0 0 0 6 0l-3-6ZM3 19h18" /></svg>;
+  }
+  return <svg aria-hidden="true" className="trust-benefit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13a7 7 0 0 1 14 0M3.5 13v3.5a2 2 0 0 0 2 2H7v-6H5.5a2 2 0 0 0-2 2ZM20.5 13v3.5a2 2 0 0 1-2 2H17v-6h1.5a2 2 0 0 1 2 2ZM9 20h4" /></svg>;
+}
+
 const insurers = [
   { slug: 'la-positiva', name: 'La Positiva', logo: '/assets/logos/la-positiva.png' },
   { slug: 'pacifico', name: 'Pacífico Seguros', logo: '/assets/logos/pacifico.png' },
@@ -818,7 +828,7 @@ export default function HomePage() {
               <div className="mt-6 space-y-4">
                 <div className="flex items-start gap-3.5">
                   <div className="w-10 h-10 rounded-xl bg-[#dff5ad] text-[#486800] flex items-center justify-center shrink-0 font-bold">
-                    <span className="material-symbols-outlined text-[22px]">bolt</span>
+                    <TrustIcon type="digital" />
                   </div>
                   <div>
                     <h3 className="text-[14px] font-bold text-[#161c22]">Emisión digital e inmediata</h3>
@@ -830,7 +840,7 @@ export default function HomePage() {
 
                 <div className="flex items-start gap-3.5">
                   <div className="w-10 h-10 rounded-xl bg-[#dff5ad] text-[#486800] flex items-center justify-center shrink-0 font-bold">
-                    <span className="material-symbols-outlined text-[22px]">balance</span>
+                    <TrustIcon type="compare" />
                   </div>
                   <div>
                     <h3 className="text-[14px] font-bold text-[#161c22]">Comparativa transparente SBS</h3>
@@ -842,7 +852,7 @@ export default function HomePage() {
 
                 <div className="flex items-start gap-3.5">
                   <div className="w-10 h-10 rounded-xl bg-[#dff5ad] text-[#486800] flex items-center justify-center shrink-0 font-bold">
-                    <span className="material-symbols-outlined text-[22px]">support_agent</span>
+                    <TrustIcon type="advisor" />
                   </div>
                   <div>
                     <h3 className="text-[14px] font-bold text-[#161c22]">Cotización asistida con asesor</h3>

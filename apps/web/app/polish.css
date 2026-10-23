@@ -66,6 +66,13 @@ body {
   flex-basis: 24px;
 }
 
+.marketing-home .trust-benefit-icon {
+  width: 23px;
+  height: 23px;
+  color: currentColor;
+  flex: 0 0 23px;
+}
+
 .marketing-home .vehicle-tab-copy {
   display: flex;
   flex-direction: column;
