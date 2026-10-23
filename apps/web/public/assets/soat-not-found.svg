@@ -1,0 +1,12 @@
+<svg width="220" height="160" viewBox="0 0 220 160" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">SOAT no encontrado</title>
+  <desc id="desc">Documento de seguro sin coincidencias</desc>
+  <rect x="38" y="18" width="104" height="124" rx="16" fill="#F8FBF5" stroke="#D7E4CC" stroke-width="2"/>
+  <path d="M58 48H117M58 64H103M58 80H111" stroke="#B9D69A" stroke-width="7" stroke-linecap="round"/>
+  <rect x="58" y="101" width="52" height="20" rx="10" fill="#EAF5D8"/>
+  <path d="M75 111L81 117L94 104" stroke="#5F8D00" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="157" cy="104" r="35" fill="#F2F8E8" stroke="#B7D78D" stroke-width="2"/>
+  <path d="M157 81L178 89V105C178 119 169 130 157 136C145 130 136 119 136 105V89L157 81Z" fill="#DFF5AD" stroke="#5F8D00" stroke-width="3"/>
+  <path d="M148 106L154 112L166 99" stroke="#5F8D00" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M18 143H199" stroke="#E6EEE0" stroke-width="2" stroke-linecap="round"/>
+</svg>

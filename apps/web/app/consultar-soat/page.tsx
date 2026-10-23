@@ -69,11 +69,11 @@ export default function ConsultarSoatPage() {
         <div className="consult-card rounded-2xl border border-[#dce3d5] bg-white p-6 shadow-[0_12px_32px_rgba(48,70,20,.06)] sm:p-8">
           <div className="mb-6">
             <h2 className="text-xl font-extrabold text-[#161c22]">Datos de consulta</h2>
-            <p className="mt-1 text-sm text-[#667085]">Los campos marcados con * son obligatorios.</p>
+            <p className="mt-1 text-sm text-[#667085]">Ingresa la placa para consultar la vigencia.</p>
           </div>
           <form onSubmit={handleSubmit} className="grid gap-5">
             <label className="grid gap-2 text-sm font-bold text-[#434935]" htmlFor="consulta-placa">
-              Placa del vehículo <span className="text-[#ba1a1a]">*</span>
+              Placa del vehículo
               <input id="consulta-placa" value={plate} onChange={(event) => setPlate(event.target.value.toUpperCase())} required maxLength={9} placeholder="ABC-123" className="h-12 rounded-lg border border-[#cfd8c5] px-3 text-base uppercase outline-none focus:border-[#4e7f00] focus:ring-4 focus:ring-[#8bc500]/20" />
             </label>
             {error && <p className="rounded-lg border border-[#f0c7bd] bg-[#fff4f1] p-3 text-sm text-[#8d2817]">{error}</p>}
@@ -92,6 +92,7 @@ export default function ConsultarSoatPage() {
             </div>
           ) : (
             <div className="consult-result-body">
+              {!result.found && <img className="consult-not-found-art mb-5 h-auto w-[150px]" src="/assets/soat-not-found.svg" alt="No se encontró un SOAT" />}
               <div className={`rounded-xl border p-4 ${status?.tone}`}>
                 <p className="text-lg font-extrabold">{status?.title}</p>
                 <p className="mt-1 text-sm">{status?.detail}</p>
@@ -105,7 +106,7 @@ export default function ConsultarSoatPage() {
                   <div className="flex justify-between gap-4"><dt className="text-[#667085]">Fin de vigencia</dt><dd className="text-right font-semibold text-[#161c22]">{formatDate(result.expiresAt)}</dd></div>
                 </dl>
               )}
-              {!result.found && <Link href="/#cotizador" className="mt-6 inline-flex h-11 items-center rounded-lg bg-[#8bc500] px-5 text-sm font-extrabold text-[#344d00]">Iniciar una cotización</Link>}
+              {!result.found && <Link href="/#cotizador" className="consult-start-quote mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#8bc500] px-5 text-sm font-extrabold text-[#344d00] shadow-[0_8px_18px_rgba(139,197,0,.18)] transition hover:-translate-y-0.5 hover:bg-[#7ab000]">Iniciar una cotización <span className="material-symbols-outlined text-[19px]">arrow_forward</span></Link>}
             </div>
           )}
         </div>
