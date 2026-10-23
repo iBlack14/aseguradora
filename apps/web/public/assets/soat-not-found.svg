@@ -1,12 +1,20 @@
-<svg width="220" height="160" viewBox="0 0 220 160" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">SOAT no encontrado</title>
-  <desc id="desc">Documento de seguro sin coincidencias</desc>
-  <rect x="38" y="18" width="104" height="124" rx="16" fill="#F8FBF5" stroke="#D7E4CC" stroke-width="2"/>
-  <path d="M58 48H117M58 64H103M58 80H111" stroke="#B9D69A" stroke-width="7" stroke-linecap="round"/>
-  <rect x="58" y="101" width="52" height="20" rx="10" fill="#EAF5D8"/>
-  <path d="M75 111L81 117L94 104" stroke="#5F8D00" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="157" cy="104" r="35" fill="#F2F8E8" stroke="#B7D78D" stroke-width="2"/>
-  <path d="M157 81L178 89V105C178 119 169 130 157 136C145 130 136 119 136 105V89L157 81Z" fill="#DFF5AD" stroke="#5F8D00" stroke-width="3"/>
-  <path d="M148 106L154 112L166 99" stroke="#5F8D00" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M18 143H199" stroke="#E6EEE0" stroke-width="2" stroke-linecap="round"/>
+<svg width="280" height="176" viewBox="0 0 280 176" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">No encontramos un SOAT</title>
+  <desc id="desc">Consulta de placa sin coincidencias en la red aseguradora</desc>
+  <rect x="72" y="25" width="136" height="102" rx="16" fill="#F8FBF5" stroke="#D7E4CC" stroke-width="2"/>
+  <path d="M92 48H167M92 62H151M92 76H158" stroke="#B9D69A" stroke-width="6" stroke-linecap="round"/>
+  <rect x="92" y="93" width="66" height="19" rx="9.5" fill="#EAF5D8"/>
+  <path d="M111 103L117 109L130 96" stroke="#5F8D00" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="184" cy="104" r="30" fill="#F2F8E8" stroke="#B7D78D" stroke-width="2"/>
+  <path d="M184 84L202 91V104C202 116 194 125 184 130C174 125 166 116 166 104V91L184 84Z" fill="#DFF5AD" stroke="#5F8D00" stroke-width="3"/>
+  <path d="M176 105L181 110L192 99" stroke="#5F8D00" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M29 30H54M29 146H251" stroke="#E6EEE0" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="30" cy="88" r="22" fill="#F5F8F2" stroke="#D7E4CC"/>
+  <text x="30" y="92" text-anchor="middle" fill="#486800" font-family="Arial, sans-serif" font-size="9" font-weight="700">APESEG</text>
+  <circle cx="250" cy="62" r="15" fill="#F5F8F2" stroke="#D7E4CC"/>
+  <image href="/assets/logos/seguros-falabella.png" x="241" y="56" width="18" height="12" preserveAspectRatio="xMidYMid meet"/>
+  <circle cx="44" cy="142" r="15" fill="#F5F8F2" stroke="#D7E4CC"/>
+  <image href="/assets/logos/la-positiva.png" x="35" y="137" width="18" height="10" preserveAspectRatio="xMidYMid meet"/>
+  <circle cx="236" cy="142" r="15" fill="#F5F8F2" stroke="#D7E4CC"/>
+  <image href="/assets/logos/pacifico.png" x="227" y="137" width="18" height="10" preserveAspectRatio="xMidYMid meet"/>
 </svg>

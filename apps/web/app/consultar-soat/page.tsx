@@ -92,7 +92,7 @@ export default function ConsultarSoatPage() {
             </div>
           ) : (
             <div className="consult-result-body">
-              {!result.found && <img className="consult-not-found-art mb-5 h-auto w-[150px]" src="/assets/soat-not-found.svg" alt="No se encontró un SOAT" />}
+              {!result.found && <img className="consult-not-found-art mb-5 h-auto w-[220px]" src="/assets/soat-not-found.svg" alt="No se encontró un SOAT en la red aseguradora" />}
               <div className={`rounded-xl border p-4 ${status?.tone}`}>
                 <p className="text-lg font-extrabold">{status?.title}</p>
                 <p className="mt-1 text-sm">{status?.detail}</p>
