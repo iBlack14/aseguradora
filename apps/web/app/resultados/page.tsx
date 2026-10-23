@@ -625,7 +625,7 @@ export default function ResultsPage() {
         <section className="lg:col-span-8 space-y-4">
           {filteredAndSortedOffers.map((offer) => {
             const isCompared = selected.includes(offer.id);
-            const targetUrl = `/pago?oferta=${offer.id}&placa=${encodeURIComponent(plate)}&tipo=${vehicleType}&dep=${encodeURIComponent(department)}&marca=${encodeURIComponent(brand)}&modelo=${encodeURIComponent(model)}&ano=${year}&uso=${vehicleUse}&serie=${encodeURIComponent(vin)}&precio=${offer.price}&titular=${encodeURIComponent(holderName)}&docType=${encodeURIComponent(docType)}&docNum=${encodeURIComponent(docNum)}`;
+            const targetUrl = `/pago?oferta=${encodeURIComponent(offer.id)}`;
 
             return (
               <article
@@ -720,6 +720,22 @@ export default function ResultsPage() {
                       </div>
                       <Link
                         href={targetUrl}
+                        onClick={() => {
+                          sessionStorage.setItem('soat-payment', JSON.stringify({
+                            placa: plate,
+                            tipo: vehicleType,
+                            dep: department,
+                            marca: brand,
+                            modelo: model,
+                            ano: year,
+                            uso: vehicleUse,
+                            serie: vin,
+                            precio: offer.price,
+                            titular: holderName,
+                            docType,
+                            docNum
+                          }));
+                        }}
                         className="inline-flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl bg-[#8bc500] hover:bg-[#7ab000] text-[#344d00] font-extrabold text-xs shadow-xs transition-all active:scale-[0.98]"
                       >
                         <span>Elegir esta oferta</span>

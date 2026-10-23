@@ -145,7 +145,17 @@ export default function PaymentPage() {
   }, []);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const storedPayment = sessionStorage.getItem('soat-payment');
+    let params = new URLSearchParams(window.location.search);
+    if (storedPayment) {
+      try {
+        const data = JSON.parse(storedPayment) as Record<string, string | number>;
+        const storedParams = new URLSearchParams(Object.entries(data).map(([key, value]) => [key, String(value)]));
+        params = new URLSearchParams([...params.entries(), ...storedParams.entries()]);
+      } catch {
+        // Continúa usando los parámetros de la URL como compatibilidad.
+      }
+    }
     const oferta = params.get('oferta');
     if (oferta && basePlans[oferta]) setSelectedOfferId(oferta);
 
