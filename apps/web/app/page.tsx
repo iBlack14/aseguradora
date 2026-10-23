@@ -90,13 +90,12 @@ function VehicleIcon({ type, more = false }: { type?: VehicleType; more?: boolea
 }
 
 function TrustIcon({ type }: { type: 'digital' | 'compare' | 'advisor' }) {
-  if (type === 'digital') {
-    return <svg aria-hidden="true" className="trust-benefit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m13.2 2-7 11h5.1L10.8 22l7-11h-5.1L13.2 2Z" /></svg>;
-  }
-  if (type === 'compare') {
-    return <svg aria-hidden="true" className="trust-benefit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v16M5 7h14M7 7l-3 6a3.2 3.2 0 0 0 6 0L7 7Zm10 0-3 6a3.2 3.2 0 0 0 6 0l-3-6ZM3 19h18" /></svg>;
-  }
-  return <svg aria-hidden="true" className="trust-benefit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13a7 7 0 0 1 14 0M3.5 13v3.5a2 2 0 0 0 2 2H7v-6H5.5a2 2 0 0 0-2 2ZM20.5 13v3.5a2 2 0 0 1-2 2H17v-6h1.5a2 2 0 0 1 2 2ZM9 20h4" /></svg>;
+  const src = {
+    digital: '/assets/icons/benefit-digital.png',
+    compare: '/assets/icons/benefit-compare.png',
+    advisor: '/assets/icons/benefit-advisor.png'
+  }[type];
+  return <Image aria-hidden="true" src={src} alt="" width={44} height={44} className="trust-benefit-icon" />;
 }
 
 const insurers = [

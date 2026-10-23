@@ -67,10 +67,10 @@ body {
 }
 
 .marketing-home .trust-benefit-icon {
-  width: 23px;
-  height: 23px;
-  color: currentColor;
-  flex: 0 0 23px;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  flex: 0 0 34px;
 }
 
 .marketing-home .vehicle-tab-copy {
