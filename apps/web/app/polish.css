@@ -255,6 +255,13 @@ body {
   opacity: .9;
 }
 
+.consult-soat-page .consult-result-network {
+  display: block;
+  margin-inline: auto;
+  opacity: 1;
+  filter: drop-shadow(0 12px 18px rgba(48, 70, 20, .08));
+}
+
 .consult-soat-page .consult-result-body {
   display: flex;
   min-height: 100%;

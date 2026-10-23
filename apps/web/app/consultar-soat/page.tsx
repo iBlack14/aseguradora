@@ -18,7 +18,7 @@ const statusCopy: Record<Consultation['status'], { title: string; detail: string
   VIGENTE: { title: 'SOAT vigente', detail: 'El certificado se encuentra activo en nuestros registros.', tone: 'border-[#b8d889] bg-[#f3f9e8] text-[#315300]' },
   VENCIDO: { title: 'SOAT vencido', detail: 'El certificado registrado ya no se encuentra vigente.', tone: 'border-[#f0c7bd] bg-[#fff4f1] text-[#8d2817]' },
   AÚN_NO_VIGENTE: { title: 'SOAT aún no vigente', detail: 'La fecha de inicio del certificado todavía no ha llegado.', tone: 'border-[#ead69e] bg-[#fff9e8] text-[#765300]' },
-  NO_ENCONTRADO: { title: 'No encontramos un SOAT emitido', detail: 'Verifica la placa y el documento ingresado, o solicita una nueva cotización.', tone: 'border-[#dce3d5] bg-white text-[#434935]' }
+  NO_ENCONTRADO: { title: 'No encontramos un SOAT emitido', detail: 'Verifica la placa ingresada o solicita una nueva cotización.', tone: 'border-[#dce3d5] bg-white text-[#434935]' }
 };
 
 function formatDate(value?: string) {
@@ -28,7 +28,6 @@ function formatDate(value?: string) {
 
 export default function ConsultarSoatPage() {
   const [plate, setPlate] = useState('');
-  const [documentNumber, setDocumentNumber] = useState('');
   const [result, setResult] = useState<Consultation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -40,7 +39,6 @@ export default function ConsultarSoatPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams({ plate: plate.trim().toUpperCase() });
-      if (documentNumber.trim()) params.set('documentNumber', documentNumber.trim().toUpperCase());
       const response = await fetch(`/api/backend/v1/soat/consulta?${params.toString()}`);
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || 'Revisa la placa ingresada.');
@@ -78,10 +76,6 @@ export default function ConsultarSoatPage() {
               Placa del vehículo <span className="text-[#ba1a1a]">*</span>
               <input id="consulta-placa" value={plate} onChange={(event) => setPlate(event.target.value.toUpperCase())} required maxLength={9} placeholder="ABC-123" className="h-12 rounded-lg border border-[#cfd8c5] px-3 text-base uppercase outline-none focus:border-[#4e7f00] focus:ring-4 focus:ring-[#8bc500]/20" />
             </label>
-            <label className="grid gap-2 text-sm font-bold text-[#434935]" htmlFor="consulta-documento">
-              DNI o documento del titular <span className="font-normal text-[#667085]">(opcional)</span>
-              <input id="consulta-documento" value={documentNumber} onChange={(event) => setDocumentNumber(event.target.value.toUpperCase())} maxLength={12} placeholder="Número de documento" className="h-12 rounded-lg border border-[#cfd8c5] px-3 text-base outline-none focus:border-[#4e7f00] focus:ring-4 focus:ring-[#8bc500]/20" />
-            </label>
             {error && <p className="rounded-lg border border-[#f0c7bd] bg-[#fff4f1] p-3 text-sm text-[#8d2817]">{error}</p>}
             <button type="submit" disabled={loading} className="h-12 rounded-lg bg-[#4e7f00] px-5 font-extrabold text-white transition hover:bg-[#3d6500] disabled:cursor-wait disabled:opacity-60">{loading ? 'Consultando…' : 'Consultar SOAT'}</button>
           </form>
@@ -91,7 +85,7 @@ export default function ConsultarSoatPage() {
         <div className="consult-result-card rounded-2xl border border-[#dce3d5] bg-[#f9fbf6] p-6 sm:p-8">
           {!result ? (
             <div className="flex h-full min-h-[260px] flex-col justify-center">
-              <img className="consult-result-art mb-5 h-auto w-[150px]" src="/assets/soat-verify.svg" alt="Consulta segura de SOAT" />
+              <img className="consult-result-art consult-result-network mb-4 h-auto w-full max-w-[290px]" src="/assets/apeseg-network.png" alt="Red de validación y aseguradoras asociadas" />
               <span className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#709d17]">Validación digital</span>
               <h2 className="text-xl font-extrabold text-[#161c22]">Resultado de la consulta</h2>
               <p className="mt-2 max-w-sm text-sm leading-6 text-[#667085]">Ingresa una placa para consultar el estado, la aseguradora y las fechas de vigencia de tu certificado.</p>
