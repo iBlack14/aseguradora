@@ -145,6 +145,7 @@ export default function Quotes() {
   const [tariffDrafts, setTariffDrafts] = useState<Record<string, TariffEditor>>({});
   const [savingTariff, setSavingTariff] = useState<string | null>(null);
   const [deletingQuoteId, setDeletingQuoteId] = useState<string | null>(null);
+  const [annullingQuoteId, setAnnullingQuoteId] = useState<string | null>(null);
 
   // States for + Nueva cotización Brand & Model selectors
   const [adminBrand, setAdminBrand] = useState('');
@@ -214,13 +215,34 @@ export default function Quotes() {
     setDeletingQuoteId(q.id);
     try {
       const response = await fetch(`/api/backend/v1/quotes/${encodeURIComponent(q.id)}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error();
+      if (!response.ok) {
+        const failure = await response.json().catch(() => null) as { message?: string } | null;
+        throw new Error(failure?.message || 'No fue posible eliminar la cotización.');
+      }
       setQuotes((current) => current.filter((item) => item.id !== q.id));
       if (selectedQuote?.id === q.id) setSelectedQuote(null);
-    } catch {
-      alert('No fue posible eliminar la cotización.');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'No fue posible eliminar la cotización.');
     } finally {
       setDeletingQuoteId(null);
+    }
+  }
+
+  async function annulQuote(q: Quote) {
+    if (annullingQuoteId || q.status !== 'EMITIDA') return;
+    if (!window.confirm(`¿Anular el SOAT ${q.policyNumber || q.code}? La póliza quedará registrada como anulada y no se podrá eliminar.`)) return;
+    setAnnullingQuoteId(q.id);
+    try {
+      const response = await fetch(`/api/backend/v1/quotes/${encodeURIComponent(q.id)}/annul`, { method: 'POST' });
+      const result = await response.json().catch(() => null) as { data?: Quote; message?: string } | null;
+      if (!response.ok || !result?.data) throw new Error(result?.message || 'No fue posible anular el SOAT.');
+      setQuotes((current) => current.map((item) => item.id === q.id ? result.data! : item));
+      if (selectedQuote?.id === q.id) setSelectedQuote(result.data);
+      alert('SOAT anulado correctamente.');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'No fue posible anular el SOAT.');
+    } finally {
+      setAnnullingQuoteId(null);
     }
   }
 
@@ -232,7 +254,7 @@ export default function Quotes() {
     updatedVehicle?: Partial<NonNullable<Quote['vehicle']>>,
     payment?: { method: 'CASH' | 'INSTALLMENTS'; installmentCount?: number; installmentAmount?: number }
   ) {
-    if (q.status === 'EMITIDA' || emitting) return;
+    if (q.status === 'EMITIDA' || q.status === 'ANULADA' || emitting) return;
     const finalOfferId = offerId || q.selectedOfferId || selectedOfferId || 'la-positiva';
     const finalPrice = overridePrice || (realPriceOverride ? parseFloat(realPriceOverride) : q.selectedPrice);
     const finalHolderName = updatedHolderName !== undefined ? updatedHolderName : q.holderName;
@@ -485,15 +507,16 @@ export default function Quotes() {
         <form className="card quote-form" onSubmit={submit}>
           <div className="form-heading">
             <div>
-              <h2>Cotizador Interno de Emisión</h2>
+              <span className="quick-quote-kicker">Cotización rápida</span>
+              <h2>Nueva cotización</h2>
               <p className="muted">
-                Ingresa la placa para consultar el vehículo y obtener las tarifas configuradas para el cliente.
+                Busca la placa, completa los datos del cliente y elige la mejor tarifa.
               </p>
             </div>
           </div>
 
-          <div className="admin-form-grid">
-            <label>
+          <div className="quick-quote-grid">
+            <label className="quick-plate-field">
               Placa vehicular
               <div className="plate-search">
                 <input
@@ -520,42 +543,7 @@ export default function Quotes() {
             </label>
 
             <label>
-              Tipo de vehículo
-              <select
-                name="vehicleType"
-                value={vehicleType}
-                onChange={(e) => handleVehicleTypeChange(e.target.value as Vehicle['vehicleType'])}
-              >
-                {Object.entries(vehicleLabels).map(([value, label]) => (
-                  <option value={value} key={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Departamento o ciudad de registro de la placa
-              <select name="department" value={adminDepartment} onChange={(event) => { const value = event.target.value; setAdminDepartment(value); handleVehicleTypeChange(vehicleType, value, adminUse); }}>
-                {departments.map((dep) => (
-                  <option key={dep} value={dep}>
-                    {dep}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Uso del vehículo
-              <select value={adminUse} onChange={(event) => { const value = event.target.value; setAdminUse(value); handleVehicleTypeChange(vehicleType, adminDepartment, value); }}>
-                <option value="PARTICULAR">Particular</option>
-                <option value="PUBLICO">Servicio público / transporte de pasajeros</option>
-                <option value="COMERCIAL">Comercial / carga</option>
-              </select>
-            </label>
-
-            <label>
-              Tipo de documento
+              Documento
               <select name="documentType">
                 <option value="DNI">DNI</option>
                 <option value="CE">CE</option>
@@ -564,124 +552,22 @@ export default function Quotes() {
             </label>
 
             <label>
-              Número de documento
-              <input name="documentNumber" required minLength={8} maxLength={11} placeholder="Ingresa el número de documento" />
+              Número
+              <input name="documentNumber" required minLength={8} maxLength={11} placeholder="Ej. 12345678" inputMode="numeric" />
             </label>
 
-            <label>
-              Nombres y Apellidos del Contratante / Titular
+            <label className="quick-holder-field">
+              Nombre del titular
               <input
                 name="holderName"
                 required
-                placeholder="Ingresa nombres y apellidos"
+                placeholder="Nombres y apellidos"
                 style={{ textTransform: 'uppercase' }}
               />
             </label>
 
             <label>
-              Marca del vehículo
-              <select
-                value={adminCustomBrand ? '__OTRA__' : (adminAvailableBrands.includes(adminBrand) ? adminBrand : (adminBrand ? '__OTRA__' : ''))}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === '__OTRA__') {
-                    setAdminCustomBrand(true);
-                  } else {
-                    setAdminCustomBrand(false);
-                    setAdminBrand(val);
-                    const models = getModelsForBrand(vehicleType, val);
-                    if (models.length > 0) {
-                      setAdminModel(models[0]);
-                      setAdminCustomModel(false);
-                    }
-                  }
-                }}
-              >
-                <option value="">-- Selecciona una marca --</option>
-                {adminAvailableBrands.map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-                <option value="__OTRA__">Otra marca (escribir)...</option>
-              </select>
-            </label>
-
-            {(adminCustomBrand || (adminBrand && !adminAvailableBrands.includes(adminBrand))) && (
-              <label>
-                Escribe la marca
-                <input
-                  value={adminBrand}
-                  onChange={(e) => setAdminBrand(e.target.value)}
-                  placeholder="Escribe la marca"
-                />
-              </label>
-            )}
-
-            <label>
-              Modelo del vehículo
-              {adminAvailableModels.length > 0 ? (
-                <select
-                  value={adminCustomModel ? '__OTRO__' : (adminAvailableModels.includes(adminModel) ? adminModel : (adminModel ? '__OTRO__' : ''))}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '__OTRO__') {
-                      setAdminCustomModel(true);
-                    } else {
-                      setAdminCustomModel(false);
-                      setAdminModel(val);
-                    }
-                  }}
-                >
-                  <option value="">-- Selecciona el modelo --</option>
-                  {adminAvailableModels.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                  <option value="__OTRO__">Otro modelo (escribir)...</option>
-                </select>
-              ) : (
-                <input
-                  value={adminModel}
-                  onChange={(e) => setAdminModel(e.target.value)}
-                  placeholder="Escribe el modelo"
-                />
-              )}
-            </label>
-
-            {(adminCustomModel || (adminModel && !adminAvailableModels.includes(adminModel) && adminAvailableModels.length > 0)) && (
-              <label>
-                Escribe el modelo
-                <input
-                  value={adminModel}
-                  onChange={(e) => setAdminModel(e.target.value)}
-                  placeholder="Escribe el modelo"
-                />
-              </label>
-            )}
-
-            <label>
-              Año de fabricación
-              <input
-                value={adminYear}
-                onChange={(e) => setAdminYear(e.target.value)}
-                placeholder="Año de fabricación"
-              />
-            </label>
-
-            <label>
-              N° de Chasis / Serie / VIN
-              <input
-                value={adminVin}
-                onChange={(e) => setAdminVin(e.target.value.toUpperCase())}
-                placeholder="Ingresa el chasis o VIN"
-                style={{ textTransform: 'uppercase' }}
-              />
-            </label>
-
-            <label>
-              Inicio de vigencia de póliza
+              Inicio de vigencia
               <input
                 name="startsAt"
                 required
@@ -690,6 +576,67 @@ export default function Quotes() {
               />
             </label>
           </div>
+
+          <details className="quick-quote-advanced">
+            <summary>
+              <span>Datos del vehículo</span>
+              <small>Opcional: tipo, uso, marca, modelo, año y VIN</small>
+            </summary>
+            <div className="admin-form-grid">
+              <label>
+                Tipo de vehículo
+                <select name="vehicleType" value={vehicleType} onChange={(e) => handleVehicleTypeChange(e.target.value as Vehicle['vehicleType'])}>
+                  {Object.entries(vehicleLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
+                </select>
+              </label>
+              <label>
+                Departamento
+                <select name="department" value={adminDepartment} onChange={(event) => { const value = event.target.value; setAdminDepartment(value); handleVehicleTypeChange(vehicleType, value, adminUse); }}>
+                  {departments.map((dep) => <option key={dep} value={dep}>{dep}</option>)}
+                </select>
+              </label>
+              <label>
+                Uso del vehículo
+                <select value={adminUse} onChange={(event) => { const value = event.target.value; setAdminUse(value); handleVehicleTypeChange(vehicleType, adminDepartment, value); }}>
+                  <option value="PARTICULAR">Particular</option>
+                  <option value="PUBLICO">Servicio público / pasajeros</option>
+                  <option value="COMERCIAL">Comercial / carga</option>
+                </select>
+              </label>
+              <label>
+                Marca
+                <select value={adminCustomBrand ? '__OTRA__' : (adminAvailableBrands.includes(adminBrand) ? adminBrand : (adminBrand ? '__OTRA__' : ''))} onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '__OTRA__') setAdminCustomBrand(true);
+                  else {
+                    setAdminCustomBrand(false); setAdminBrand(val);
+                    const models = getModelsForBrand(vehicleType, val);
+                    if (models.length > 0) { setAdminModel(models[0]); setAdminCustomModel(false); }
+                  }
+                }}>
+                  <option value="">Selecciona una marca</option>
+                  {adminAvailableBrands.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
+                  <option value="__OTRA__">Otra marca</option>
+                </select>
+              </label>
+              {(adminCustomBrand || (adminBrand && !adminAvailableBrands.includes(adminBrand))) && <label>Escribe la marca<input value={adminBrand} onChange={(e) => setAdminBrand(e.target.value)} /></label>}
+              <label>
+                Modelo
+                {adminAvailableModels.length > 0 ? <select value={adminCustomModel ? '__OTRO__' : (adminAvailableModels.includes(adminModel) ? adminModel : (adminModel ? '__OTRO__' : ''))} onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '__OTRO__') setAdminCustomModel(true);
+                  else { setAdminCustomModel(false); setAdminModel(val); }
+                }}>
+                  <option value="">Selecciona el modelo</option>
+                  {adminAvailableModels.map((model) => <option key={model} value={model}>{model}</option>)}
+                  <option value="__OTRO__">Otro modelo</option>
+                </select> : <input value={adminModel} onChange={(e) => setAdminModel(e.target.value)} placeholder="Escribe el modelo" />}
+              </label>
+              {(adminCustomModel || (adminModel && !adminAvailableModels.includes(adminModel) && adminAvailableModels.length > 0)) && <label>Escribe el modelo<input value={adminModel} onChange={(e) => setAdminModel(e.target.value)} /></label>}
+              <label>Año<input value={adminYear} onChange={(e) => setAdminYear(e.target.value)} inputMode="numeric" /></label>
+              <label>Chasis / VIN<input value={adminVin} onChange={(e) => setAdminVin(e.target.value.toUpperCase())} style={{ textTransform: 'uppercase' }} /></label>
+            </div>
+          </details>
 
           {vehicle && (
             <div className="vehicle-result" aria-live="polite">
@@ -768,8 +715,8 @@ export default function Quotes() {
             <button type="button" className="button ghost" onClick={() => setShowForm(false)}>
               Cancelar
             </button>
-            <button className="button" type="submit">
-              Guardar cotización {selectedOffer && selectedFinalPrice ? `(S/ ${selectedFinalPrice.toFixed(2)})` : ''}
+            <button className="button" type="submit" disabled={!selectedOffer || !selectedFinalPrice}>
+              {selectedOffer && selectedFinalPrice ? `Guardar cotización · S/ ${selectedFinalPrice.toFixed(2)}` : 'Primero busca la placa'}
             </button>
           </div>
         </form>
@@ -844,21 +791,21 @@ export default function Quotes() {
                       </small>
                     </td>
                     <td data-label="Estado">
-                      {q.status === 'EMITIDA' ? (
+                      {q.status === 'EMITIDA' || q.status === 'ANULADA' ? (
                         <span
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: 4,
-                            background: '#dcfce7',
-                            color: '#15803d',
+                            background: q.status === 'ANULADA' ? '#fee2e2' : '#dcfce7',
+                            color: q.status === 'ANULADA' ? '#b42318' : '#15803d',
                             padding: '3px 8px',
                             borderRadius: 12,
                             fontSize: 11,
                             fontWeight: 700
                           }}
                         >
-                          EMITIDO
+                          {q.status === 'ANULADA' ? 'ANULADO' : 'EMITIDO'}
                         </span>
                       ) : (
                         <span className="status">Nueva</span>
@@ -876,25 +823,32 @@ export default function Quotes() {
                             Ver detalle
                           </button>
                         )}
-                        <button
-                          className="button"
-                          style={{
-                            padding: '6px 12px',
-                            fontSize: 12,
-                            background: q.status === 'EMITIDA' ? '#0f766e' : '#16a34a'
-                          }}
-                          onClick={() => (q.status === 'EMITIDA' ? generateAndDownloadSoatPdf(q) : openQuoteDetail(q))}
-                        >
-                          {q.status === 'EMITIDA' ? 'Descargar póliza' : 'Emitir Póliza'}
-                        </button>
-                        <button
-                          className="button ghost"
-                          style={{ padding: '6px 10px', fontSize: 12, color: '#b42318', borderColor: '#f2c5c0' }}
-                          disabled={deletingQuoteId === q.id}
-                          onClick={() => deleteQuote(q)}
-                        >
-                          {deletingQuoteId === q.id ? 'Eliminando…' : 'Eliminar'}
-                        </button>
+                        {q.status !== 'ANULADA' && <button
+                            className="button"
+                            style={{ padding: '6px 12px', fontSize: 12, background: q.status === 'EMITIDA' ? '#0f766e' : '#16a34a' }}
+                            onClick={() => (q.status === 'EMITIDA' ? generateAndDownloadSoatPdf(q) : openQuoteDetail(q))}
+                          >
+                            {q.status === 'EMITIDA' ? 'Descargar póliza' : 'Emitir Póliza'}
+                          </button>}
+                        {q.status === 'EMITIDA' ? (
+                          <button
+                            className="button ghost"
+                            style={{ padding: '6px 10px', fontSize: 12, color: '#b42318', borderColor: '#f2c5c0' }}
+                            disabled={annullingQuoteId === q.id}
+                            onClick={() => annulQuote(q)}
+                          >
+                            {annullingQuoteId === q.id ? 'Anulando…' : 'Anular'}
+                          </button>
+                        ) : q.status !== 'ANULADA' ? (
+                          <button
+                            className="button ghost"
+                            style={{ padding: '6px 10px', fontSize: 12, color: '#b42318', borderColor: '#f2c5c0' }}
+                            disabled={deletingQuoteId === q.id}
+                            onClick={() => deleteQuote(q)}
+                          >
+                            {deletingQuoteId === q.id ? 'Eliminando…' : 'Eliminar'}
+                          </button>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -1120,7 +1074,7 @@ export default function Quotes() {
             </div>
 
             {/* Formulario de Verificación y Relleno de Datos Oficiales Antes de Emitir */}
-            {selectedQuote.status !== 'EMITIDA' && (
+            {selectedQuote.status !== 'EMITIDA' && selectedQuote.status !== 'ANULADA' && (
               <div style={{ marginTop: 16, padding: 16, background: '#f8fafc', border: '1.5px solid #cbd5e1', borderRadius: 10 }}>
                 <strong style={{ display: 'block', fontSize: 13, color: '#0f172a', marginBottom: 4 }}>
                   📋 Datos Oficiales para la Emisión (Verificar o rellenar antes de emitir)
@@ -1378,7 +1332,7 @@ export default function Quotes() {
               <button className="button ghost" onClick={() => setSelectedQuote(null)}>
                 Cerrar detalle
               </button>
-              <button
+              {selectedQuote.status !== 'ANULADA' && <button
                 className="button"
                 disabled={emitting}
                 style={{ background: selectedQuote.status === 'EMITIDA' ? '#0f766e' : '#16a34a' }}
@@ -1429,7 +1383,7 @@ export default function Quotes() {
                 {selectedQuote.status === 'EMITIDA'
                   ? 'Descargar Certificado Oficial (PDF)'
                   : (emitting ? 'Emitiendo póliza…' : 'Emitir Póliza SOAT (PDF)')}
-              </button>
+              </button>}
             </div>
           </div>
         </div>
