@@ -62,5 +62,17 @@ services:
     expose: ["3001"]
     depends_on:
       api: { condition: service_healthy }
+  cotizador:
+    restart: unless-stopped
+    init: true
+    build:
+      context: .
+      dockerfile: infrastructure/docker/cotizador.Dockerfile
+    environment:
+      NODE_ENV: production
+      API_URL: http://api:4000
+    expose: ["3002"]
+    depends_on:
+      api: { condition: service_healthy }
 volumes:
   postgres_data:

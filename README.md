@@ -21,6 +21,8 @@ Monorepo para el cotizador público de SOAT, el panel interno de operaciones y l
 4. Ejecuta `npm install` y `npm run db:generate`.
 5. Usa `npm run dev:web`, `npm run dev:admin`, `npm run dev:cotizador` y `npm run dev:api` en terminales separadas.
 
+Para desplegar el cotizador en Easypanel, consulta `docs/easypanel.md`.
+
 Sin `DATABASE_URL`, la API usa memoria únicamente en desarrollo. Los precios y beneficios incluidos actualmente son tarifas demostrativas; `DEMO_MODE` debe permanecer en `false` en producción para no simular datos vehiculares.
 
 ## Despliegue en VPS
