@@ -25,7 +25,7 @@ export default function CotizadorPage() {
   }
 
   return <>
-    <header className="topbar"><div className="brand"><span className="brand-mark">✦</span> La Positiva <small>seguros</small></div><div className="help">¿Necesitas ayuda?</div></header>
+    <header className="topbar"><div className="brand"><img src="/assets/reference/lapositiva-logo.png" alt="La Positiva" /></div><div className="help">¿Necesitas ayuda?</div></header>
     <main>
       <section className="cotizador-shell"><div className="cotizador-card">
       <div className="banner"><picture><source media="(max-width: 767px)" srcSet="/assets/reference/Banner-mobile.png" /><img src="/assets/reference/Banner.png" alt="Cotiza tu SOAT" /></picture></div>

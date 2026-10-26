@@ -41,6 +41,7 @@ h1 { font-size:clamp(34px,5vw,58px); line-height:1.05; letter-spacing:-.055em; m
 /* Replica visual del cotizador de referencia */
 .topbar { height:68px; box-shadow:0 2px 5px #0002; padding:0 5%; }
 .brand { color:#12585e; font-size:25px; font-weight:700; }
+.brand img { width:150px; max-height:48px; object-fit:contain; }
 .brand-mark { color:#ff6d46; font-size:28px; margin-right:5px; }
 .brand small { display:block; color:#7a7a87; font-size:9px; letter-spacing:.18em; margin-left:38px; margin-top:-5px; }
 .help { color:#12585e; }
