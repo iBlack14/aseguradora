@@ -11,6 +11,7 @@
     "dev:all": "node tools/dev-all.mjs",
     "dev:web": "npm run dev -w @falabella/web",
     "dev:admin": "npm run dev -w @falabella/admin",
+    "dev:cotizador": "npm run dev -w @falabella/cotizador",
     "dev:api": "npm run dev -w @falabella/api",
     "build": "npm run build -ws --if-present",
     "typecheck": "npm run typecheck -ws --if-present",

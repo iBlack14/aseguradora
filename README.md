@@ -6,6 +6,7 @@ Monorepo para el cotizador público de SOAT, el panel interno de operaciones y l
 
 - `apps/web`: portal público en Next.js.
 - `apps/admin`: sistema interno en Next.js.
+- `apps/cotizador`: cotizador independiente en Next.js, conectado a la misma API y base de datos.
 - `apps/api`: API HTTP en Fastify con persistencia PostgreSQL.
 - `packages/database`: esquema Prisma/PostgreSQL.
 - `packages/validation`: contratos Zod compartidos.
@@ -18,7 +19,7 @@ Monorepo para el cotizador público de SOAT, el panel interno de operaciones y l
 2. Ajusta `DATABASE_URL` para usar `localhost` si ejecutarás la API fuera de Docker.
 3. Ejecuta PostgreSQL localmente o con Docker.
 4. Ejecuta `npm install` y `npm run db:generate`.
-5. Usa `npm run dev:web`, `npm run dev:admin` y `npm run dev:api` en terminales separadas.
+5. Usa `npm run dev:web`, `npm run dev:admin`, `npm run dev:cotizador` y `npm run dev:api` en terminales separadas.
 
 Sin `DATABASE_URL`, la API usa memoria únicamente en desarrollo. Los precios y beneficios incluidos actualmente son tarifas demostrativas; `DEMO_MODE` debe permanecer en `false` en producción para no simular datos vehiculares.
 
