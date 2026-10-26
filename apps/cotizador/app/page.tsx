@@ -4,6 +4,15 @@ import { FormEvent, useState } from 'react';
 
 type Vehicle = 'auto' | 'moto';
 
+const faqs = [
+  ['¿Qué es el SOAT y para qué sirve?', 'El Seguro Obligatorio de Accidentes de Tránsito (SOAT) es un seguro obligatorio establecido por ley que asegura la atención inmediata e incondicional de las víctimas de accidentes de tránsito en todo el territorio nacional.'],
+  ['¿Dónde comprar el SOAT?', 'Puedes cotizar y comprar un SOAT Virtual en La Positiva de forma rápida, segura y completamente digital.'],
+  ['¿Qué no cubre el SOAT Vehicular?', 'No cubre accidentes ocurridos en territorio extranjero, competencias vehiculares ni accidentes fortuitos por guerra o desastres, entre otras exclusiones.'],
+  ['¿Cuál es la diferencia entre un SOAT Físico y un SOAT Digital?', 'Ambos acreditan la contratación del SOAT. El SOAT Digital se compra y emite de manera electrónica.'],
+  ['¿Cuál es el precio del SOAT de moto?', 'El precio puede variar según la zona, el tipo de moto, la cilindrada y otros factores. Cotiza ingresando tu placa para conocer el precio disponible.'],
+  ['¿Cuánto tiempo dura el SOAT para moto lineal?', 'El SOAT tiene una vigencia de un año desde la fecha de emisión.']
+];
+
 export default function CotizadorPage() {
   const [vehicle, setVehicle] = useState<Vehicle>('auto');
   const [plate, setPlate] = useState('');
@@ -11,6 +20,7 @@ export default function CotizadorPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ data?: { brand?: string; model?: string }; offers?: { price?: number }[] } | null>(null);
+  const [openFaq, setOpenFaq] = useState(0);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -41,8 +51,12 @@ export default function CotizadorPage() {
         <button className="primary" disabled={!accepted || loading}>{loading ? 'Consultando…' : 'Vamos por tu SOAT'}</button>
         {error && <div className="error">{error}</div>}
         {result && <div className="result"><h3>¡Encontramos tu vehículo!</h3><p>{result.data?.brand || 'Vehículo registrado'} {result.data?.model || ''}</p><p>Desde <strong>S/ {Math.min(...(result.offers || []).map(o => o.price || 9999), 9999).toFixed(2)}</strong></p></div>}
-      </form></div><p className="info">Cotiza y compra un SOAT Digital. Selecciona el tipo de vehículo, ingresa la placa y conoce el precio del SOAT para auto, camioneta, motos y más.</p></section>
+      </form></div><p className="info">Cotiza y compra un SOAT Digital en La Positiva. Selecciona el tipo de vehículo, ingresa la placa y conoce el precio del SOAT para auto, camioneta, motos y más.</p></section>
+      <section className="benefits-section"><h2>¡Te presentamos los beneficios de tu nuevo SOAT!</h2><p className="section-lead">Para que te sientas seguro y disfrutes todos sus beneficios.</p><div className="benefits-grid"><Benefit image="beneficiosSOAT.svg" title="Beneficios SOAT" text="Protección para ti y los pasajeros ante un accidente de tránsito." /><Benefit image="servicio-grua.svg" title="Servicio de grúa" text="Cuando el vehículo no enciende por choque, desperfecto mecánico o eléctrico." /><Benefit image="servicio-mecanico.svg" title="Auxilio mecánico" text="Recarga de batería, combustible, cambio de llanta y apertura del vehículo." /><Benefit image="descuentos-promociones.svg" title="Promociones y descuentos" text="Accede a múltiples promociones y descuentos en clínicas, tiendas, restaurantes y más." /></div></section>
+      <section className="faq-section"><div className="faq-title"><span>?</span><h2>Preguntas frecuentes sobre SOAT Vehicular</h2></div><div className="faq-list">{faqs.map(([question, answer], index) => <article className={`faq-item ${openFaq === index ? 'open' : ''}`} key={question}><button type="button" onClick={() => setOpenFaq(openFaq === index ? -1 : index)}><span>{question}</span><b>{openFaq === index ? '−' : '+'}</b></button>{openFaq === index && <p>{answer}</p>}</article>)}</div></section>
     </main>
     <footer className="footer">© {new Date().getFullYear()} La Positiva Seguros. Todos los derechos reservados.</footer>
   </>;
 }
+
+function Benefit({ image, title, text }: { image: string; title: string; text: string }) { return <article className="benefit"><img src={`/assets/reference/${image}`} alt="" /><h3>{title}</h3><p>{text}</p><button type="button">Ver más</button></article>; }
