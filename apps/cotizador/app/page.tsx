@@ -16,17 +16,24 @@ const faqs = [
 export default function CotizadorPage() {
   const [vehicle, setVehicle] = useState<Vehicle>('auto');
   const [plate, setPlate] = useState('');
-  const [accepted, setAccepted] = useState(false);
+  const [finalidadesAccepted, setFinalidadesAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ data?: { brand?: string; model?: string }; offers?: { price?: number }[] } | null>(null);
   const [openFaq, setOpenFaq] = useState(0);
+  const cleanPlate = plate.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  const validPlate = cleanPlate.length >= 6;
+  const canSubmit = validPlate && finalidadesAccepted && privacyAccepted && !loading;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    setError(''); setResult(null); setLoading(true);
+    setError(''); setResult(null);
+    if (!validPlate) { setError('Debes ingresar una placa válida.'); return; }
+    if (!privacyAccepted) { setError('Debes aceptar las Políticas de Privacidad.'); return; }
+    setLoading(true);
     try {
-      const response = await fetch(`/api/backend/v1/vehicles/${encodeURIComponent(plate.replace(/\s/g, '').toUpperCase())}`);
+      const response = await fetch(`/api/backend/v1/vehicles/${encodeURIComponent(cleanPlate)}`);
       const data = await response.json();
       if (!response.ok || !data?.data) throw new Error('No encontramos la información de esta placa.');
       setResult(data);
@@ -42,13 +49,14 @@ export default function CotizadorPage() {
       <form className="quote" onSubmit={submit}>
         <div className="mobile-kicker">¡Qué buena elección!</div><h1>Cotiza tu <strong>SOAT 100% digital</strong></h1><p className="select-title">Selecciona tu vehículo</p>
         <div className="vehicle-grid">
-          <button type="button" className={`vehicle ${vehicle === 'auto' ? 'active' : ''}`} onClick={() => setVehicle('auto')}><img src="/assets/reference/soat_auto_desk.svg" alt="" /><strong>Autos, camionetas<br />y “Pick ups”</strong><small>Para uso particular, taxi y carga</small><i>✓</i></button>
-          <button type="button" className={`vehicle ${vehicle === 'moto' ? 'active' : ''}`} onClick={() => setVehicle('moto')}><img src="/assets/reference/soat_moto_desk.svg" alt="" /><strong>Motos, mototaxis<br />y trimotos</strong><small>Págalo <b>en cuotas</b> con tu tarjeta</small><i>✓</i></button>
+          <button type="button" className={`vehicle ${vehicle === 'auto' ? 'active' : ''}`} onClick={() => setVehicle('auto')}><img src="/assets/reference/soat_auto_desk.svg" alt="" /><strong>Autos, camionetas<br />y “Pick ups”</strong><small><img className="benefit-icon" src="/assets/reference/ticket-auto.svg" alt="" /> Para uso particular, taxi y carga</small><i>✓</i></button>
+          <button type="button" className={`vehicle ${vehicle === 'moto' ? 'active' : ''}`} onClick={() => setVehicle('moto')}><img src="/assets/reference/soat_moto_desk.svg" alt="" /><strong>Motos, mototaxis<br />y trimotos</strong><small><img className="benefit-icon" src="/assets/reference/tarjeta-moto.svg" alt="" /> Págalo <b>en cuotas</b> con tu tarjeta</small><i>✓</i></button>
         </div>
-        <p className="plate-title">Ingresa tu número de placa</p><div className="plate-wrap"><img src="/assets/reference/icono-placa.svg" alt="" /><input id="plate" className="plate" value={plate} onChange={e => setPlate(e.target.value)} placeholder="X9X999" maxLength={8} required /></div>
-        <label className="consent"><input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} />Acepto las <a href="#finalidades">Finalidades Secundarias</a></label>
-        <label className="consent"><input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} />Acepto las <a href="#privacidad">Políticas de Privacidad</a></label>
-        <button className="primary" disabled={!accepted || loading}>{loading ? 'Consultando…' : 'Vamos por tu SOAT'}</button>
+        <p className="plate-title">Ingresa tu número de placa</p><div className={`plate-wrap ${plate && !validPlate ? 'invalid' : ''}`}><img src="/assets/reference/icono-placa.svg" alt="" /><input id="plate" className="plate" value={plate} onChange={e => setPlate(e.target.value.replace(/[^a-zA-Z0-9-]/g, '').toUpperCase())} placeholder="X9X999" maxLength={8} required /></div>
+        {plate && !validPlate && <div className="field-error">Debes ingresar una placa válida</div>}
+        <label className="consent"><input type="checkbox" checked={finalidadesAccepted} onChange={e => setFinalidadesAccepted(e.target.checked)} />Acepto las <a href="#finalidades">Finalidades Secundarias</a></label>
+        <label className="consent"><input type="checkbox" checked={privacyAccepted} onChange={e => setPrivacyAccepted(e.target.checked)} />Acepto las <a href="#privacidad">Políticas de Privacidad</a></label>
+        <button className="primary" disabled={!canSubmit}>{loading ? 'Consultando…' : 'Vamos por tu SOAT'}</button>
         {error && <div className="error">{error}</div>}
         {result && <div className="result"><h3>¡Encontramos tu vehículo!</h3><p>{result.data?.brand || 'Vehículo registrado'} {result.data?.model || ''}</p><p>Desde <strong>S/ {Math.min(...(result.offers || []).map(o => o.price || 9999), 9999).toFixed(2)}</strong></p></div>}
       </form></div><p className="info">Cotiza y compra un SOAT Digital en La Positiva. Selecciona el tipo de vehículo, ingresa la placa y conoce el precio del SOAT para auto, camioneta, motos y más.</p></section>
