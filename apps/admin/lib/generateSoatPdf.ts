@@ -46,11 +46,13 @@ interface InsurerMeta {
 
 const INSURERS: Record<string, InsurerMeta> = {
   falabella: {
-    logoPath: '/assets/logos/seguros-falabella.png',
+    // Esta variante no tiene el gran margen transparente del logo genérico,
+    // por lo que conserva una presencia visual correcta dentro del certificado.
+    logoPath: '/assets/logos/seguros-falabella-header.png',
     name: 'SEGUROS FALABELLA CORREDORES DE SEGUROS',
     emergencyPhone: '01 615 4300 LIMA Y PROVINCIAS',
-    width: 27.0,
-    height: 8.5
+    width: 22.7,
+    height: 9.2
   },
   'la-positiva': {
     logoPath: '/assets/logos/la-positiva.png',
@@ -209,15 +211,28 @@ export async function generateAndDownloadSoatPdf(quote: QuoteForPdf) {
   doc.text('SOAT', pageWidth - margin, 15.5, { align: 'right' });
   divider(18.8);
 
-  // 2. Sección COMPAÑÍA DE SEGUROS y EN CASO DE EMERGENCIAS
-  heading('COMPAÑÍA DE SEGUROS', 3.5, 22.2, 5.2);
-  heading('EN CASO DE EMERGENCIAS', 34.8, 22.2, 5.2);
+  // 2. Bloque principal de aseguradora y central de emergencias.
+  // Una superficie tenue y un divisor vertical ordenan ambos contenidos sin
+  // perder la estética compacta del certificado oficial.
+  doc.setFillColor(249, 247, 252);
+  doc.roundedRect(2.8, 20.4, pageWidth - 5.6, 12.4, 1.2, 1.2, 'F');
+  doc.setDrawColor(229, 224, 235);
+  doc.setLineWidth(0.16);
+  doc.line(32.6, 21.6, 32.6, 31.5);
+
+  heading('COMPAÑÍA DE SEGUROS', 4.2, 23.0, 4.4);
+  heading('CENTRAL DE EMERGENCIAS 24/7', 35.0, 23.0, 4.2);
 
   // Cargar y dibujar el logo oficial correspondiente de la empresa aseguradora
   let logoDrawn = false;
   try {
     const insurerLogo = await loadImageDataUrl(insurerInfo.logoPath);
-    doc.addImage(insurerLogo, 'PNG', 3.5, 23.4, insurerInfo.width, insurerInfo.height, undefined, 'FAST');
+    const logoScale = Math.min(25 / insurerInfo.width, 7 / insurerInfo.height, 1);
+    const logoWidth = insurerInfo.width * logoScale;
+    const logoHeight = insurerInfo.height * logoScale;
+    const logoX = 12.7 - logoWidth / 2;
+    const logoY = 24.1 + (7 - logoHeight) / 2;
+    doc.addImage(insurerLogo, 'PNG', logoX, logoY, logoWidth, logoHeight, undefined, 'FAST');
     logoDrawn = true;
   } catch (err) {
     console.warn(`[PDF] No se pudo cargar el logo ${insurerInfo.logoPath}, usando texto:`, err);
@@ -229,15 +244,20 @@ export async function generateAndDownloadSoatPdf(quote: QuoteForPdf) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.4);
     setColor(PURPLE);
-    doc.text(insurerLines, 3.5, 26.7, { lineHeightFactor: 1.18 });
+    doc.text(insurerLines, 17.7, 26.8, { align: 'center', lineHeightFactor: 1.18 });
   }
 
   // Teléfono oficial de emergencias 24/7 de la aseguradora
-  const emergencyLines = doc.splitTextToSize(insurerInfo.emergencyPhone, 27.2).slice(0, 2);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.4);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.0);
+  const emergencyLines = doc.splitTextToSize(insurerInfo.emergencyPhone, 25.0).slice(0, 2);
   setColor(PURPLE);
-  doc.text(emergencyLines, 34.8, 26.7, { lineHeightFactor: 1.18 });
+  doc.text(emergencyLines, 35.0, 26.2, { lineHeightFactor: 1.12 });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(3.6);
+  setColor(LIGHT);
+  doc.text('Atención inmediata en Lima y provincias', 35.0, 31.0);
 
   // Diagonal security band from the model.
   doc.setDrawColor(PURPLE[0], PURPLE[1], PURPLE[2]);

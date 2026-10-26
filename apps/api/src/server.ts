@@ -57,7 +57,7 @@ type Quote = {
   documentNumber: string;
   startsAt: string;
   source: QuoteSource;
-  status: 'NUEVA' | 'COTIZADA' | 'EMITIDA';
+  status: 'NUEVA' | 'COTIZADA' | 'EMITIDA' | 'ANULADA';
   createdAt: string;
   vehicle?: VehicleSnapshot;
   selectedOfferId?: string;
@@ -186,7 +186,7 @@ function storedQuoteToApi(record: StoredQuote): Quote {
     documentNumber: record.documentNumber,
     startsAt: record.startsAt.toISOString(),
     source: record.source as QuoteSource,
-    status: record.status === 'ISSUED' ? 'EMITIDA' : 'NUEVA',
+    status: record.status === 'ISSUED' ? 'EMITIDA' : record.status === 'CANCELLED' ? 'ANULADA' : 'NUEVA',
     createdAt: record.createdAt.toISOString(),
     vehicle,
     holderName,
@@ -911,9 +911,17 @@ app.delete('/v1/quotes/:id', async (req, reply) => {
   if (database) {
     const stored = await database.quote.findFirst({
       where: { OR: [{ id }, { code: id }] },
-      select: { id: true }
+      select: { id: true, status: true }
     });
     if (stored) {
+      if (stored.status === 'ISSUED' || stored.status === 'CANCELLED') {
+        return reply.status(409).send({
+          error: 'ISSUED_QUOTE_CANNOT_BE_DELETED',
+          message: stored.status === 'CANCELLED'
+            ? 'Una póliza anulada debe conservarse para auditoría.'
+            : 'Un SOAT emitido no se puede eliminar. Debes anularlo.'
+        });
+      }
       await database.$transaction(async (transaction) => {
         await transaction.order.deleteMany({ where: { quoteId: stored.id } });
         await transaction.quote.delete({ where: { id: stored.id } });
@@ -924,8 +932,44 @@ app.delete('/v1/quotes/:id', async (req, reply) => {
 
   const index = quotes.findIndex((quote) => quote.id === id || quote.code === id);
   if (index === -1) return reply.status(404).send({ error: 'QUOTE_NOT_FOUND' });
+  if (quotes[index].status === 'EMITIDA' || quotes[index].status === 'ANULADA') {
+    return reply.status(409).send({
+      error: 'ISSUED_QUOTE_CANNOT_BE_DELETED',
+      message: quotes[index].status === 'ANULADA'
+        ? 'Una póliza anulada debe conservarse para auditoría.'
+        : 'Un SOAT emitido no se puede eliminar. Debes anularlo.'
+    });
+  }
   quotes.splice(index, 1);
   return reply.status(204).send();
+});
+
+app.post('/v1/quotes/:id/annul', async (req, reply) => {
+  const { id } = req.params as { id: string };
+
+  if (database) {
+    const stored = await database.quote.findFirst({
+      where: { OR: [{ id }, { code: id }] },
+      select: { id: true, status: true }
+    });
+    if (!stored) return reply.status(404).send({ error: 'QUOTE_NOT_FOUND' });
+    if (stored.status === 'CANCELLED') return reply.status(409).send({ error: 'QUOTE_ALREADY_CANCELLED', message: 'La póliza ya está anulada.' });
+    if (stored.status !== 'ISSUED') return reply.status(409).send({ error: 'QUOTE_NOT_ISSUED', message: 'Solo se puede anular un SOAT emitido.' });
+
+    await database.$transaction([
+      database.quote.update({ where: { id: stored.id }, data: { status: 'CANCELLED' } }),
+      database.order.updateMany({ where: { quoteId: stored.id }, data: { status: 'CANCELLED' } })
+    ]);
+    const data = await loadStoredQuotes();
+    return reply.send({ data: data.find((quote) => quote.id === stored.id) });
+  }
+
+  const quote = quotes.find((item) => item.id === id || item.code === id);
+  if (!quote) return reply.status(404).send({ error: 'QUOTE_NOT_FOUND' });
+  if (quote.status === 'ANULADA') return reply.status(409).send({ error: 'QUOTE_ALREADY_CANCELLED', message: 'La póliza ya está anulada.' });
+  if (quote.status !== 'EMITIDA') return reply.status(409).send({ error: 'QUOTE_NOT_ISSUED', message: 'Solo se puede anular un SOAT emitido.' });
+  quote.status = 'ANULADA';
+  return reply.send({ data: quote });
 });
 
 // For development testing

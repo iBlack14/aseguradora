@@ -23,6 +23,7 @@ enum QuoteStatus {
   PAYMENT_PENDING
   PAID
   ISSUED
+  CANCELLED
   FAILED
   EXPIRED
 }
@@ -33,6 +34,7 @@ enum OrderStatus {
   PAID
   ISSUING
   ISSUED
+  CANCELLED
   FAILED
   REFUNDED
 }
