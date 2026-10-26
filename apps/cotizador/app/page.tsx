@@ -43,6 +43,6 @@ export default function CotizadorPage() {
         {result && <div className="result"><h3>¡Encontramos tu vehículo!</h3><p>{result.data?.brand || 'Vehículo registrado'} {result.data?.model || ''}</p><p>Desde <strong>S/ {Math.min(...(result.offers || []).map(o => o.price || 9999), 9999).toFixed(2)}</strong></p></div>}
       </form></div><p className="info">Cotiza y compra un SOAT Digital. Selecciona el tipo de vehículo, ingresa la placa y conoce el precio del SOAT para auto, camioneta, motos y más.</p></section>
     </main>
-    <footer className="footer">© {new Date().getFullYear()} Seguros Falabella. Todos los derechos reservados.</footer>
+    <footer className="footer">© {new Date().getFullYear()} La Positiva Seguros. Todos los derechos reservados.</footer>
   </>;
 }
