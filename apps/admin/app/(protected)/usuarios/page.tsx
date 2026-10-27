@@ -2,8 +2,10 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 
-type User = { id: string; name: string; email: string; role: string; active: boolean; createdAt: string };
+type Theme = 'CORPORATE' | 'DARK' | 'OCEAN' | 'PLUM';
+type User = { id: string; name: string; email: string; role: string; theme: Theme; active: boolean; createdAt: string };
 const roleNames: Record<string, string> = { ADMIN: 'Administrador', SALES: 'Vendedor', OPERATIONS: 'Operaciones', SUPPORT: 'Soporte', AUDITOR: 'Auditoría' };
+const themeNames: Record<Theme, string> = { CORPORATE: 'Corporativo', DARK: 'Oscuro', OCEAN: 'Océano', PLUM: 'Ciruela' };
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -43,13 +45,20 @@ export default function UsersPage() {
     setUsers((current) => current.map((item) => item.id === user.id ? { ...item, active: !item.active } : item));
   }
 
+  async function changeTheme(user: User, theme: Theme) {
+    setError('');
+    const response = await fetch(`/api/backend/v1/admin/users/${user.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ theme }) });
+    if (!response.ok) { setError('No se pudo guardar el tema del usuario.'); return; }
+    setUsers((current) => current.map((item) => item.id === user.id ? { ...item, theme } : item));
+  }
+
   return <>
     <header className="topbar"><div><p className="muted">Accesos del equipo comercial y operativo</p><h1>Usuarios y roles</h1></div><button className="button" onClick={loadUsers}>Actualizar lista</button></header>
     {error && <div className="user-alert error" role="alert">{error}</div>}
     {success && <div className="user-alert success" role="status">{success}</div>}
     <section className="users-layout">
       <form className="card user-form" onSubmit={createUser}><h2>Crear vendedor</h2><p className="muted">Crea un acceso para que pueda gestionar cotizaciones y ventas.</p><label>Nombre completo<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required placeholder="Ej. María López" /></label><label>Correo corporativo<input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required placeholder="maria@segurosfalabella.com.pe" /></label><label>Contraseña temporal<input type="password" minLength={8} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required placeholder="Mínimo 8 caracteres" /></label><label>Rol<select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })}><option value="SALES">Vendedor</option><option value="OPERATIONS">Operaciones</option><option value="SUPPORT">Soporte</option><option value="AUDITOR">Auditoría</option></select></label><button className="button" disabled={saving}>{saving ? 'Creando…' : 'Crear usuario'}</button></form>
-      <section className="card"><div className="users-heading"><div><h2>Usuarios registrados</h2><p className="muted">{users.length} acceso{users.length === 1 ? '' : 's'} en el sistema.</p></div></div>{loading ? <div className="empty-state">Cargando usuarios…</div> : users.length === 0 ? <div className="empty-state"><strong>Aún no hay usuarios</strong><span>Crea el primer vendedor desde el formulario.</span></div> : <div className="table-scroll"><table className="users-table"><thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Acción</th></tr></thead><tbody>{users.map((user) => <tr key={user.id}><td data-label="Usuario"><strong>{user.name}</strong><small>{user.email}</small></td><td data-label="Rol">{roleNames[user.role] || user.role}</td><td data-label="Estado"><span className={`status ${user.active ? '' : 'inactive'}`}>{user.active ? 'Activo' : 'Inactivo'}</span></td><td data-label="Acción">{user.role === 'ADMIN' ? <span className="muted">Cuenta principal</span> : <button className="button ghost small-button" onClick={() => toggleUser(user)}>{user.active ? 'Desactivar' : 'Activar'}</button>}</td></tr>)}</tbody></table></div>}</section>
+      <section className="card"><div className="users-heading"><div><h2>Usuarios registrados</h2><p className="muted">{users.length} acceso{users.length === 1 ? '' : 's'} en el sistema. El tema se aplica al volver a iniciar sesión.</p></div></div>{loading ? <div className="empty-state">Cargando usuarios…</div> : users.length === 0 ? <div className="empty-state"><strong>Aún no hay usuarios</strong><span>Crea el primer vendedor desde el formulario.</span></div> : <div className="table-scroll"><table className="users-table"><thead><tr><th>Usuario</th><th>Rol</th><th>Tema</th><th>Estado</th><th>Acción</th></tr></thead><tbody>{users.map((user) => <tr key={user.id}><td data-label="Usuario"><strong>{user.name}</strong><small>{user.email}</small></td><td data-label="Rol">{roleNames[user.role] || user.role}</td><td data-label="Tema"><select className="theme-select" value={user.theme || 'CORPORATE'} onChange={(event) => changeTheme(user, event.target.value as Theme)} disabled={user.role === 'ADMIN'}><option value="CORPORATE">{themeNames.CORPORATE}</option><option value="DARK">{themeNames.DARK}</option><option value="OCEAN">{themeNames.OCEAN}</option><option value="PLUM">{themeNames.PLUM}</option></select></td><td data-label="Estado"><span className={`status ${user.active ? '' : 'inactive'}`}>{user.active ? 'Activo' : 'Inactivo'}</span></td><td data-label="Acción">{user.role === 'ADMIN' ? <span className="muted">Cuenta principal</span> : <button className="button ghost small-button" onClick={() => toggleUser(user)}>{user.active ? 'Desactivar' : 'Activar'}</button>}</td></tr>)}</tbody></table></div>}</section>
     </section>
   </>;
 }
