@@ -2,10 +2,11 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { Suspense } from 'react';
 
 type VehicleData = { brand?: string; model?: string; year?: number; vin?: string; chassisNumber?: string; vehicleType?: string };
 
-export default function ValidacionPage() {
+function ValidacionContent() {
   const params = useSearchParams();
   const plate = params.get('plate') || '';
   const vehicle = params.get('vehicle') === 'moto' ? 'moto' : 'auto';
@@ -66,4 +67,8 @@ export default function ValidacionPage() {
       <div ref={endRef} />
     </section>
   </main>;
+}
+
+export default function ValidacionPage() {
+  return <Suspense fallback={<main className="validation-page" aria-busy="true"><section className="quote-flow standalone-flow"><div className="flow-loading">Estamos preparando la validación de tu vehículo…</div></section></main>}><ValidacionContent /></Suspense>;
 }
