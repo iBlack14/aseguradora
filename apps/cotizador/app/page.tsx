@@ -21,7 +21,7 @@ const faqs = [
 ];
 
 export default function CotizadorPage() {
-  const [vehicle, setVehicle] = useState<Vehicle>('auto');
+  const [vehicle, setVehicle] = useState<Vehicle>('moto');
   const [plate, setPlate] = useState('');
   const [finalidadesAccepted, setFinalidadesAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
