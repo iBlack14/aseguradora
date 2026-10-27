@@ -6,6 +6,7 @@ Monorepo para el cotizador público de SOAT, el panel interno de operaciones y l
 
 - `apps/web`: portal público en Next.js.
 - `apps/admin`: sistema interno en Next.js.
+- `apps/consulta`: consulta SOAT independiente, referencia visual APESEG, en el puerto 3003. Ver `apps/consulta/README.md`.
 - `apps/cotizador`: cotizador independiente en Next.js, conectado a la misma API y base de datos.
 - `apps/api`: API HTTP en Fastify con persistencia PostgreSQL.
 - `packages/database`: esquema Prisma/PostgreSQL.
@@ -35,3 +36,17 @@ Sin `DATABASE_URL`, la API usa memoria únicamente en desarrollo. Los precios y 
 6. Verifica `docker compose ps`, `curl http://127.0.0.1:3000` y el acceso al panel administrativo.
 
 La API aplica automáticamente las migraciones Prisma al iniciar. El endpoint de emisión/pago continúa deshabilitado hasta conectar una pasarela y los adaptadores reales de aseguradoras.
+
+## Acceso interno y emisión
+
+Configura el mismo `ADMIN_API_KEY` aleatorio en los servicios `api` y `admin`. Es una credencial interna: no debe configurarse en `web`, `cotizador` ni variables `NEXT_PUBLIC_*`. En producción la API requiere esta clave para iniciar; el proxy administrativo requiere además una sesión válida y comprueba el rol. Solo ADMIN puede cambiar usuarios, tarifas y configuración; SUPPORT y AUDITOR tienen acceso de lectura.
+
+La emisión y la generación de certificados están deshabilitadas hasta integrar confirmación de pago y emisión oficial. Los números simulados anteriores no se muestran como pólizas vigentes en la consulta pública. Las tarifas modificadas se guardan en PostgreSQL mediante AppSetting; sin base de datos, el modo de desarrollo utiliza memoria temporal. Si falla una escritura con base de datos configurada, se devuelve un error sin anunciar éxito.
+
+## Verificación
+
+- `npm run typecheck`: comprobación de tipos de todos los paquetes.
+- `npm test`: compila la API y comprueba acceso por roles, emisión deshabilitada, validación de tarifas y cotización pública en un proceso aislado sin base de datos.
+- `npm run build` y después `npm run test:proxies`: compila las aplicaciones y prueba sus proxies HTTP con sesiones válidas, inválidas y distintos roles.
+
+Para desarrollo local, configura la misma clave `ADMIN_API_KEY` en `apps/api/.env` y `apps/admin/.env.local` (archivos ignorados por Git). En Docker/Easypanel se inyecta mediante variables de entorno.

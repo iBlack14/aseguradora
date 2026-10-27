@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { publicUrl } from '@/lib/publicUrl';
 import { SESSION_COOKIE, sessionRole } from '@/lib/session';
 
 const apiBaseUrl = () => process.env.API_INTERNAL_URL || process.env.API_URL || 'http://127.0.0.1:4000';
@@ -9,9 +10,16 @@ async function proxy(request: NextRequest, { params }: { params: Promise<{ path:
     return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
   }
   const path = segments.join('/');
-  if (path === 'v1/admin/users' || path.startsWith('v1/admin/users/')) {
-    const role = await sessionRole(request.cookies.get(SESSION_COOKIE)?.value);
-    if (role !== 'ADMIN') return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
+  const role = await sessionRole(request.cookies.get(SESSION_COOKIE)?.value);
+  if (!role) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+  if ((path.startsWith('v1/admin/') && role !== 'ADMIN') ||
+      (!['GET', 'HEAD'].includes(request.method) && !['ADMIN', 'OPERATIONS', 'SALES'].includes(role))) {
+    return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
+  }
+  if (!process.env.ADMIN_API_KEY) return NextResponse.json({ error: 'ADMIN_API_KEY_REQUIRED' }, { status: 503 });
+  if (!['GET', 'HEAD'].includes(request.method)) {
+    const origin = request.headers.get('origin');
+    if (!origin || origin !== publicUrl(request, '/').origin) return NextResponse.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
   }
   const target = new URL(path, `${apiBaseUrl().replace(/\/$/, '')}/`);
   target.search = request.nextUrl.search;
@@ -21,11 +29,8 @@ async function proxy(request: NextRequest, { params }: { params: Promise<{ path:
     const headers: Record<string, string> = {};
     const ct = request.headers.get('content-type');
     if (ct) headers['content-type'] = ct;
-    const auth = request.headers.get('authorization');
-    if (auth) headers['authorization'] = auth;
-    const adminKey = request.headers.get('x-admin-key');
-    if (adminKey) headers['x-admin-key'] = adminKey;
-    else if (process.env.ADMIN_API_KEY) headers['x-admin-key'] = process.env.ADMIN_API_KEY;
+    headers['x-admin-key'] = process.env.ADMIN_API_KEY;
+    headers['x-admin-role'] = role;
 
     const response = await fetch(target, {
       method: request.method,

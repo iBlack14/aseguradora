@@ -1,0 +1,1670 @@
+/* KingComposer Mapper - General
+--------------------------------------------- */
+.sectionGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-areas: "title" "content" "button";
+  grid-gap: 1rem;
+  width: 100%;
+
+  @media (min-width: 426px) {
+    align-items: center;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "title button" "content content";
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+  }
+}
+
+/* KingComposer Mapper - Title
+--------------------------------------------- */
+.title-apeseg {
+  font-size: clamp(1.5rem, 5vw, 1.8rem);
+  font-weight: 600;
+  color: var(--secondary-color);
+}
+
+/* KingComposer Mapper - Seguros
+--------------------------------------------- */
+
+.seguros-apeseg .tab-seguros {
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  gap: 0 20px;
+}
+
+.seguros-apeseg .tab-seguros button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(44, 155, 118, 0.8);
+  border-radius: 15px;
+  margin-bottom: 30px;
+  background-color: #fff;
+  min-height: 180px;
+  max-width: 145px;
+  min-width: 125px;
+  width: 100%;
+  padding: 22px 15px;
+  font-weight: 400;
+  color: var(--tercery-color);
+  cursor: pointer;
+  transition: all 0.3s ease-in;
+}
+
+.seguros-apeseg.morado .tab-seguros button {
+  border-color: rgba(72, 53, 150, 0.8);
+}
+
+.seguros-apeseg .tab-seguros button img {
+  margin-bottom: 5px;
+  width: 115px;
+}
+
+.seguros-apeseg .tab-seguros button:hover {
+  background-color: rgba(44, 155, 118, 0.8);
+  color: #fff;
+}
+
+.seguros-apeseg.morado .tab-seguros button:hover {
+  background-color: rgba(72, 53, 150, 0.8);
+}
+
+.seguros-apeseg .tab-seguros button.active {
+  background-color: rgba(44, 155, 118, 0.8);
+  color: #fff;
+}
+
+.seguros-apeseg.morado .tab-seguros button.active {
+  background-color: rgba(72, 53, 150, 0.8);
+}
+
+.seguros-apeseg .tablinks.active::after {
+  z-index: 10;
+  position: absolute;
+  bottom: -50px;
+  left: 50%;
+  content: "";
+  -webkit-transform: translateX(-50%) rotate(45deg);
+  transform: translateX(-50%) rotate(45deg);
+  background-color: #fff;
+  height: 30px;
+  width: 30px;
+  box-shadow: 2px 2px 5px #aeaeae;
+}
+
+.seguros-apeseg .tabcontent {
+  display: none;
+  border-radius: 10px;
+  padding: 25px;
+  text-align: center;
+  box-shadow: 1px 1px 10px #eaeaea;
+}
+
+.seguros-apeseg .tabcontent button {
+  display: none;
+}
+
+.seguros-apeseg .tabcontent ul {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 5px 0 0;
+  padding: 0;
+  list-style: none;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+}
+
+.seguros-apeseg .tabcontent ul li {
+  position: relative;
+  padding: 0 10px;
+}
+
+.seguros-apeseg .tabcontent ul li:after {
+  position: absolute;
+  top: 6px;
+  right: 0;
+  content: "";
+  border-right: 1px solid var(--primary-color);
+  height: 10px;
+}
+
+.seguros-apeseg .tabcontent ul li:last-child:after {
+  content: none;
+}
+
+.seguros-apeseg .tabcontent ul li a {
+  text-decoration: none;
+  text-transform: uppercase;
+  font-size: var(--small);
+  font-weight: 400;
+  color: var(--primary-color);
+}
+
+.seguros-apeseg.morado .tabcontent ul li a {
+  color: var(--secondary-color);
+}
+
+/* KingComposer Mapper - Lo más reciente
+--------------------------------------------- */
+
+.reciente-post {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+}
+
+.reciente-post .item-reciente {
+  position: relative;
+  display: flex;
+  border: 1px solid #2c9b767a;
+  margin-bottom: 20px;
+  background-color: #aeaeae;
+  height: 555px;
+  flex: 64%;
+}
+
+.reciente-post .item-reciente img {
+  width: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+  -o-object-position: center;
+  object-position: center;
+}
+
+.reciente-post .item-reciente .title-reciente {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 30px;
+  color: #fff;
+}
+
+.reciente-post .item-reciente .title-reciente p {
+  margin: 0;
+  text-shadow: 2px 2px 0px var(--tercery-color);
+  font-size: var(--medium);
+  font-weight: 400;
+}
+
+.reciente-post .item-reciente .title-reciente h4 {
+  margin: 0 0 10px;
+  text-shadow: 2px 2px 0px var(--tercery-color);
+  font-size: var(--x-large);
+  line-height: 1.2em;
+  font-weight: 600;
+}
+
+.reciente-post .item-reciente .title-reciente a {
+  display: inline-block;
+  border: 1px solid var(--primary-color);
+  border-radius: 5px;
+  background-color: var(--primary-color);
+  padding: 5px 15px;
+  text-decoration: none;
+  font-weight: 400;
+  color: #fff;
+  transition: all 0.3s ease-in;
+}
+
+.reciente-post .item-reciente .title-reciente a:hover {
+  background-color: #fff;
+  color: var(--primary-color);
+}
+
+.reciente-post .mas-leido {
+  border: 1px solid #2c9b767a;
+  margin-bottom: 30px;
+  min-height: 555px;
+  flex: 30%;
+}
+
+.reciente-post .mas-leido h3 {
+  margin: 0;
+  background-color: #2c9b767a;
+  padding: 5px 10px;
+  color: var(--primary-color);
+}
+
+.reciente-post .mas-leido ul {
+  margin: 0;
+  padding: 0px 15px;
+  list-style: none;
+}
+
+.reciente-post .mas-leido ul li {
+  border-bottom: 1px solid var(--primary-color);
+  padding: 15px 0px;
+}
+
+.reciente-post .mas-leido ul li:last-child {
+  border-bottom: none;
+}
+
+.reciente-post .mas-leido ul li p {
+  margin: 0;
+  font-size: var(--x-small);
+}
+
+.reciente-post .mas-leido ul li a {
+  margin: 0;
+  text-decoration: none;
+  font-size: var(--medium);
+  line-height: 1.2em;
+  font-weight: 600;
+  color: var(--tercery-color);
+  transition: all 0.3s ease-in;
+}
+
+.reciente-post .mas-leido ul li a:hover {
+  color: var(--primary-color);
+}
+
+.recentsPosts {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-gap: 1.5rem;
+
+  @media (min-width: 769px) {
+    grid-template-columns: 645px 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+
+  & .recentsPosts__div {
+    position: relative;
+
+    & .recentsPosts__h3 {
+      margin-bottom: 0.6rem;
+      line-height: 1.2em;
+      font-weight: 600;
+      text-wrap: balance;
+    }
+
+    &:not(.recentsPosts__div--first) {
+      display: flex;
+      align-items: center;
+      -webkit-box-align: center;
+      -ms-flex-align: center;
+      gap: 1rem;
+
+      .recentsPosts__img {
+        display: none;
+
+        @media (min-width: 426px) {
+          display: block;
+          max-width: 170px;
+          -o-object-fit: cover;
+          object-fit: cover;
+          -o-object-position: center;
+          object-position: center;
+          aspect-ratio: 1 / 1;
+        }
+
+        @media (min-width: 769px) {
+          max-height: 204px;
+          aspect-ratio: 2 / 3;
+        }
+      }
+
+      & .recentsPosts__h3 {
+        font-family: var(--font-montserrat);
+        font-size: clamp(1.25rem, 5vw, 1.5625rem);
+        line-height: 30px;
+        font-weight: 700;
+        color: var(--secondary-color);
+      }
+    }
+
+    &.recentsPosts__div--first {
+      display: flex;
+      grid-column: 1 / 2;
+      grid-row: 1 / 3;
+
+      & .recentsPosts__content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        top: 0;
+        right: 0;
+        padding: 1rem;
+        align-content: end;
+        background: linear-gradient(45deg, hsl(0deg 0% 0% / 50%), transparent);
+        border-radius: 8px;
+      }
+
+      & .recentsPosts__h3 {
+        font-size: clamp(1.5rem, 5vw, 2.65rem);
+        color: #fff;
+      }
+    }
+
+    & .recentsPost__a {
+      display: inline-block;
+      border: 1px solid var(--primary-color);
+      border-radius: 7px;
+      background-color: var(--primary-color);
+      padding: 0.5rem 1.5rem;
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #fff;
+      transition: all 0.3s ease-in;
+
+      &:hover {
+        background-color: #fff;
+        color: var(--primary-color);
+      }
+    }
+
+    & .recentsPosts__img {
+      border-radius: 8px;
+      -o-object-fit: cover;
+      object-fit: cover;
+    }
+  }
+}
+
+/* KingComposer Mapper - Servicios
+--------------------------------------------- */
+
+.servicio-apeseg {
+  margin-bottom: 20px;
+  background-color: #eaeaea;
+  padding: 20px;
+}
+
+.servicio-apeseg h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: calc(var(--medium) + 2px);
+  line-height: 1.2em;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.servicio-apeseg p {
+  font-size: var(--small);
+  line-height: 1.2em;
+}
+
+.servicio-apeseg a {
+  display: inline-block;
+  border: 1px solid var(--secondary-color);
+  border-radius: 5px;
+  background-color: var(--secondary-color);
+  padding: 5px 15px;
+  text-decoration: none;
+  font-weight: 400;
+  color: #fff;
+  transition: all 0.3s ease-in;
+}
+
+.servicio-apeseg a:hover {
+  background-color: #fff;
+  color: var(--secondary-color);
+}
+
+.services {
+  & .services__row {
+    display: flex;
+    flex-wrap: wrap;
+    grid-area: content;
+    gap: 2rem;
+  }
+
+  & .services__div {
+    flex-basis: 300px;
+    flex-grow: 1;
+    background-color: #f6f6f6;
+    padding: clamp(1rem, 5%, 2rem);
+    -ms-flex-preferred-size: 300px;
+    -webkit-box-flex: 1;
+    -ms-flex-positive: 1;
+  }
+
+  & .services__h3 {
+    margin-bottom: 0.5rem;
+    font-size: clamp(1.2rem, 5vw, 1.8rem);
+    line-height: 1.2em;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-wrap: balance;
+  }
+
+  & .services__p {
+    margin-bottom: 0.8rem;
+  }
+
+  & .services__a {
+    display: inline-block;
+    border: 1px solid var(--secondary-color);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    font-weight: 500;
+    color: var(--secondary-color);
+    transition: all 0.3s ease-in;
+
+    &:hover {
+      background-color: var(--secondary-color);
+      color: #fff;
+    }
+  }
+
+  & .services__title {
+    grid-area: title;
+  }
+
+  & .services__button {
+    grid-area: button;
+    text-align: center;
+    @media (min-width: 426px) {
+      text-align: right;
+    }
+  }
+}
+
+/* KingComposer Mapper - Lista de últimos post
+--------------------------------------------- */
+
+.posts-apeseg {
+  display: flex;
+  flex-flow: wrap;
+  gap: 0 20px;
+}
+
+.posts-apeseg .item-posts {
+  position: relative;
+  display: flex;
+  margin-bottom: 20px;
+  background-color: #aeaeae;
+  height: 200px;
+  flex: 20%;
+}
+
+.posts-apeseg .item-posts img {
+  border: 1px solid #2c9b767a;
+  width: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+  -o-object-position: center;
+  object-position: center;
+}
+
+.posts-apeseg .item-posts .title-posts {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 15px;
+}
+
+.posts-apeseg .item-posts:last-child .title-posts {
+  width: 100%;
+}
+
+.posts-apeseg .item-posts .title-posts h4 {
+  margin: 0;
+  text-shadow: 2px 2px 0px var(--tercery-color);
+  font-size: var(--medium);
+  line-height: 1.2em;
+  font-weight: 600;
+  color: #fff;
+}
+
+.posts-apeseg .item-posts .title-posts a {
+  display: inline-block;
+  border: 1px solid var(--primary-color);
+  border-radius: 5px;
+  margin-top: 5px;
+  background-color: var(--primary-color);
+  padding: 5px 15px;
+  text-decoration: none;
+  font-weight: 400;
+  color: #fff;
+  transition: all 0.3s ease-in;
+}
+
+.posts-apeseg .item-posts .title-posts a:hover {
+  background-color: #fff;
+  color: var(--primary-color);
+}
+
+/* KingComposer Mapper - Especiales del mes
+--------------------------------------------- */
+
+a.specials {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  text-decoration: none;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2) !important;
+
+  & .specials__img {
+    -o-object-fit: cover;
+    object-fit: cover;
+    -o-object-position: center;
+    object-position: center;
+    aspect-ratio: 12 / 6;
+  }
+
+  & .specials__p {
+    margin: 0;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    color: var(--secondary-color);
+    transition: all 0.3s ease-in;
+  }
+
+  &:hover .specials__p {
+    background-color: var(--secondary-color);
+    color: #fff;
+  }
+}
+
+/* KingComposer Mapper - Temas de interés
+--------------------------------------------- */
+
+.temas-apeseg {
+  position: relative;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.temas-apeseg h3 {
+  margin: 0;
+  background-color: var(--primary-color);
+  padding: 10px;
+  text-transform: uppercase;
+  font-size: var(--medium);
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+}
+
+.temas-apeseg ul {
+  margin: 0 0 15px;
+  padding: 0;
+  list-style: none;
+}
+
+.temas-apeseg ul li {
+  border-bottom: 1px solid var(--tercery-color);
+  padding: 15px 0;
+  text-align: left;
+}
+
+.temas-apeseg ul li:last-child {
+  border-bottom: none;
+}
+
+.temas-apeseg ul li .img-sugerencia {
+  position: relative;
+  display: flex;
+  margin-bottom: 10px;
+  background-color: #aeaeae;
+  height: 200px;
+  width: 100%;
+}
+
+.temas-apeseg ul li .img-sugerencia img {
+  width: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+  -o-object-position: center;
+  object-position: center;
+}
+
+.temas-apeseg ul li p {
+  margin: 0;
+  font-size: var(--x-small);
+}
+
+.temas-apeseg ul li a {
+  display: flex;
+  align-items: center;
+  height: 50px;
+  width: 100%;
+  text-decoration: none;
+  font-size: calc(var(--medium) + 1px);
+  line-height: 1.2em;
+  font-weight: 600;
+  color: var(--tercery-color);
+  transition: all 0.3s ease-in;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+}
+
+.temas-apeseg ul li a:hover {
+  color: var(--primary-color);
+}
+
+.temas-apeseg ul li:first-child a {
+  color: var(--primary-color);
+}
+
+.temas-apeseg ul li:first-child a:hover {
+  color: var(--secondary-color);
+}
+
+.temas-apeseg .ver-mas {
+  display: inline-block;
+  border: 1px solid var(--primary-color);
+  border-radius: 5px;
+  background-color: var(--primary-color);
+  padding: 5px 15px;
+  text-decoration: none;
+  font-size: var(--medium);
+  font-weight: 400;
+  color: #fff;
+  transition: all 0.3s ease-in;
+}
+
+.temas-apeseg .ver-mas:hover {
+  background-color: #fff;
+  color: var(--primary-color);
+}
+
+.temas-apeseg .nociones-tecnicas {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #eaeaea;
+  margin-bottom: 20px;
+}
+
+.temas-apeseg .nociones-tecnicas a.link-nociones {
+  padding: 10px 15px;
+  text-decoration: none;
+  font-size: calc(var(--medium) + 1px);
+  font-weight: 400;
+  color: var(--tercery-color);
+  text-align: left;
+}
+
+.temas-apeseg .nociones-tecnicas .title-nociones {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #eaeaea;
+  padding: 5px 15px;
+  -webkit-box-pack: justify;
+  -ms-flex-pack: justify;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+}
+
+.temas-apeseg .nociones-tecnicas .title-nociones h6 {
+  margin: 0;
+  font-size: var(--small);
+  font-weight: 600;
+}
+
+.temas-apeseg .nociones-tecnicas .title-nociones a {
+  text-decoration: none;
+  font-size: var(--xx-small);
+  font-weight: 400;
+  color: var(--tercery-color);
+}
+
+/* KingComposer Mapper - Logo seguros asociados
+--------------------------------------------- */
+
+.logo-asociado-apeseg {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 15px;
+  height: 100px;
+  width: 100%;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+}
+
+.logo-asociado-apeseg img {
+  -webkit-filter: grayscale(1);
+  filter: grayscale(1);
+  transition: all 0.3s ease-in;
+}
+
+.logo-asociado-apeseg img:hover {
+  -webkit-filter: grayscale(0);
+  filter: grayscale(0);
+  scale: 1.2;
+}
+
+/* KingComposer Mapper - Subtitle
+--------------------------------------------- */
+
+.susbtitle-apeseg {
+  border-bottom: 1px solid var(--secondary-color);
+  margin-bottom: 10px;
+  font-size: var(--x-large);
+  font-weight: 600;
+  color: var(--secondary-color);
+}
+
+/* KingComposer Mapper - Slide Apeseg
+--------------------------------------------- */
+
+.slide-apeseg {
+  position: relative;
+  display: flex;
+  height: 300px;
+  width: 100%;
+}
+
+.slide-apeseg img {
+  width: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+  -o-object-position: center;
+  object-position: center;
+}
+
+.slide-apeseg h4 {
+  position: absolute;
+  bottom: 0;
+  background-color: var(--secondary-color);
+  width: 100%;
+  padding: 15px 10px;
+  font-size: var(--small);
+  color: #fff;
+  text-align: center;
+}
+
+/* KingComposer Mapper - Slide Apeseg
+--------------------------------------------- */
+
+.soat-apeseg {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.soat-apeseg h6 {
+  position: relative;
+  font-size: var(--medium);
+}
+
+.soat-apeseg h6:after {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  content: " ";
+  display: inline-block;
+  background-color: var(--primary-color);
+  height: 2px;
+  width: 25px;
+}
+
+.soat-apeseg ul {
+  padding-left: 20px;
+}
+
+.soat-apeseg ul li {
+  margin-bottom: 0px;
+}
+
+/* KingComposer Mapper - Post tag
+--------------------------------------------- */
+
+.post-tag {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.post-tag h3 {
+  margin-bottom: 20px;
+  background-color: var(--secondary-color);
+  padding: 5px 15px;
+  font-size: var(--medium);
+  color: #fff;
+}
+
+.post-tag .list-posts-tag {
+  display: flex;
+  flex-direction: row;
+  gap: 0 20px;
+}
+
+.post-tag .list-posts-tag .img-post-tag {
+  position: relative;
+  display: flex;
+  margin-bottom: 10px;
+  background-color: #eaeaea;
+  height: 200px;
+  width: 100%;
+}
+
+.post-tag .list-posts-tag .img-post-tag img {
+  width: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+  -o-object-position: center;
+  object-position: center;
+}
+
+.post-tag .list-posts-tag a {
+  margin-bottom: 20px;
+  text-decoration: none;
+  font-size: var(--small);
+  color: #777;
+  transition: all 0.3s ease-in;
+  flex: 33.33%;
+  text-align: center;
+}
+
+.post-tag .list-posts-tag a:hover {
+  color: var(--primary-color);
+}
+
+.post-tag .list-posts-tag h4 {
+  padding: 0 30px;
+  font-size: var(--medium);
+  line-height: 1em;
+  font-weight: 600;
+}
+
+.post-tag .list-posts-tag h6 {
+  font-size: var(--small);
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex-row a {
+  margin-right: 1rem;
+}
+
+.flex-row a:last-child {
+  margin-right: 0;
+}
+
+/* KingComposer Mapper - Lo más leído
+--------------------------------------------- */
+
+.lo-mas-leido-apeseg h3 {
+  margin-bottom: 20px;
+  background-color: var(--secondary-color);
+  padding: 5px 15px;
+  font-size: var(--medium);
+  color: #fff;
+}
+
+.lo-mas-leido-apeseg a {
+  display: inline-block;
+  margin-bottom: 20px;
+  width: 100%;
+  text-decoration: none;
+  color: #777;
+  transition: all 0.3s ease-in;
+  text-align: center;
+}
+
+.lo-mas-leido-apeseg a:hover {
+  color: var(--primary-color);
+}
+
+.img-lo-mas-leido-apeseg {
+  position: relative;
+  display: flex;
+  margin-bottom: 10px;
+  background-color: #eaeaea;
+  height: 250px;
+  width: 100%;
+}
+
+.img-lo-mas-leido-apeseg img {
+  width: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+  -o-object-position: center;
+  object-position: center;
+}
+
+.lo-mas-leido-apeseg h4 {
+  padding: 0 30px;
+  font-size: var(--medium);
+  line-height: 1em;
+  font-weight: 600;
+}
+
+.lo-mas-leido-apeseg h6 {
+  font-size: var(--small);
+}
+
+/* KingComposer Mapper - Seguro Apeseg
+--------------------------------------------- */
+
+.seguro-apeseg {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid var(--primary-color);
+  border-radius: 10px;
+  margin-bottom: 20px;
+  height: 250px;
+  padding: 1rem;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  gap: 0 20px;
+}
+
+.seguro-apeseg img {
+  width: 200px;
+}
+
+.seguro-apeseg .image-seguro-apeseg {
+  flex-basis: 20%;
+  -ms-flex-preferred-size: 20%;
+}
+
+.contenido-seguro-apeseg {
+  flex-basis: 80%;
+  -ms-flex-preferred-size: 80%;
+}
+
+.seguro-apeseg .contenido-seguro-apeseg h1 {
+  font-size: var(--medium);
+  color: var(--primary-color);
+}
+
+.seguro-apeseg .contenido-seguro-apeseg ul {
+  -webkit-columns: 2;
+  -moz-columns: 2;
+  columns: 2;
+}
+
+.seguro-apeseg .contenido-seguro-apeseg ul a {
+  text-decoration: none;
+  text-transform: uppercase;
+  color: #666;
+}
+
+.seguro-apeseg .contenido-seguro-apeseg ul a:hover {
+  font-weight: 400;
+  color: var(--primary-color);
+}
+
+/* KingComposer Mapper - Subtitle 2
+--------------------------------------------- */
+
+.subtitle-2-apeseg {
+  position: relative;
+  display: inline-block;
+  margin: 20px 0;
+  width: 100%;
+}
+
+.subtitle-2-apeseg h4 {
+  margin-bottom: -10px;
+  font-size: var(--x-large);
+  line-height: 1.2em;
+  color: #392a7e;
+}
+
+.subtitle-2-apeseg span {
+  display: inline-block;
+  border-radius: 5px;
+  background-color: var(--secondary-color);
+  height: 2px;
+  width: 50px;
+}
+
+/* KingComposer Mapper - Presentación
+--------------------------------------------- */
+
+.presentacion-apeseg {
+  position: relative;
+  display: flex;
+  background: rgba(0, 0, 0, 0.3);
+  height: 180px;
+  width: 100%;
+}
+
+.presentacion-apeseg img {
+  z-index: -1;
+  width: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+  -o-object-position: center;
+  object-position: center;
+}
+
+.presentacion-apeseg h4 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  width: 90%;
+  text-shadow: 2px 2px 5px #666;
+  font-size: var(--large);
+  line-height: 1em;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+}
+
+.presentacion-apeseg h6 {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  border-left: 20px solid var(--primary-color);
+  padding-left: 10px;
+  text-shadow: 2px 2px 5px #666;
+  font-size: var(--small);
+  color: #fff;
+}
+
+/* KingComposer Mapper - Estadísticas
+--------------------------------------------- */
+
+.estadistica-apeseg {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-decoration: none;
+  transition: all 0.3s ease-in;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  text-align: center;
+}
+.estadistica-apeseg img {
+  margin: 0 auto 10px;
+  height: 150px;
+  width: 150px;
+}
+.estadistica-apeseg h6 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #666;
+}
+.estadistica-apeseg:hover h6 {
+  color: var(--primary-color);
+}
+
+/* KingComposer Mapper - Circulo
+--------------------------------------------- */
+
+.circulo-detalle-apeseg {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+  margin-bottom: 20px;
+  width: 100%;
+  -ms-flex-line-pack: center;
+  text-align: center;
+}
+.circulo-detalle-apeseg h4 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  margin: 10px auto 10px;
+  background: var(--primary-color);
+  height: 150px;
+  width: 150px;
+  font-size: var(--xxx-large);
+  font-weight: 600;
+  color: #fff;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+}
+
+.circulo-detalle-apeseg span {
+  position: absolute;
+  top: 16%;
+  left: 50%;
+  -webkit-transform: translateX(-50%);
+  transform: translateX(-50%);
+  font-size: 25px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* KingComposer Mapper - Descarga
+--------------------------------------------- */
+.descarga-archivos-apeseg {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.descarga-archivos-apeseg a {
+  position: relative;
+  display: flex;
+  margin-bottom: 10px;
+  height: 200px;
+  width: 100%;
+}
+
+.descarga-archivos-apeseg img {
+  width: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+  -o-object-position: center;
+  object-position: center;
+}
+
+.descarga-archivos-apeseg i {
+  position: absolute;
+  bottom: -20px;
+  right: -10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background: var(--primary-color);
+  height: 40px;
+  width: 40px;
+  font-size: 24px;
+  color: #fff;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+}
+
+/* KingComposer Mapper - Opcion de Servicio
+--------------------------------------------- */
+
+.opcion-servicio-apeseg {
+  position: relative;
+  display: flex;
+  margin-bottom: 30px;
+  height: 300px;
+  width: 100%;
+  text-decoration: none;
+  color: #fff;
+}
+.opcion-servicio-apeseg img {
+  width: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+  -o-object-position: center;
+  object-position: center;
+}
+.title-opcion-apeseg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(rgba(255, 255, 255, 0), rgba(0, 0, 0, 0.8));
+  padding: 15px;
+}
+.title-opcion-apeseg h1 {
+  text-shadow: 2px 2px 0px var(--tercery-color);
+  font-size: var(--large);
+  font-weight: 600;
+  color: #fff;
+}
+.title-opcion-apeseg p {
+  font-size: var(--small);
+  line-height: 1.2em;
+  font-weight: 500;
+  color: #fff;
+}
+
+/* KingComposer Mapper - Popup Youtube
+--------------------------------------------- */
+
+.popup-youtube-apeseg {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+}
+.popup-youtube-apeseg h3 {
+  margin-bottom: 10px;
+  font-size: calc(var(--small) + 2px);
+  line-height: 1.2em;
+  font-weight: 400;
+  text-align: center;
+}
+.popup-youtube-apeseg a {
+  display: flex;
+  height: 200px;
+  width: 100%;
+}
+.popup-youtube-apeseg a img {
+  width: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+  -o-object-position: center;
+  object-position: center;
+}
+
+/* KingComposer Mapper - Popup PDF
+--------------------------------------------- */
+
+.opcion-pdf-apeseg {
+  display: flex;
+  flex-direction: column;
+}
+.opcion-pdf-apeseg h1 {
+  margin-bottom: 10px;
+  font-size: calc(var(--small) + 2px);
+  line-height: 1.2em;
+  font-weight: 400;
+  text-align: center;
+}
+.opcion-pdf-apeseg a {
+  position: relative;
+  display: flex;
+  border: 1px solid #eaeaea;
+  height: 200px;
+  width: 100%;
+}
+.opcion-pdf-apeseg a img {
+  width: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+  -o-object-position: center;
+  object-position: center;
+}
+
+.fancybox-content {
+  height: 80vh !important;
+  width: 80vw !important;
+}
+
+/* SOAT Form
+--------------------------------------------- */
+
+.soatForm {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-areas: "form1 buttom" "form2 buttom";
+  grid-gap: 20px;
+}
+
+.soatForm__placa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  -webkit-box-pack: justify;
+  -ms-flex-pack: justify;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  grid-area: form1;
+}
+
+.soatForm__captcha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  -webkit-box-pack: justify;
+  -ms-flex-pack: justify;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  grid-area: form2;
+}
+
+.soatForm__placa input,
+.soatForm__captcha input {
+  max-width: 200px;
+  width: 100%;
+}
+
+.soatForm__placa label {
+  font-size: 1.3rem;
+}
+
+.soatForm #SOATForm.btnSoat {
+  margin-top: 25%;
+  background: var(--primary-color);
+  width: auto;
+  padding: 0.5rem 2rem;
+  border-color: var(--primary-color);
+  grid-area: buttom;
+}
+
+.soatForm #SOATForm.btnSoat:hover {
+  background-color: var(--secondary-color);
+  color: #fff;
+  border-color: var(--secondary-color);
+}
+
+/* Accede a Servicios
+--------------------------------------------- */
+.accede-servicios {
+  display: inline-block;
+  border: 1px solid #bcd3cc;
+  margin: 1.2rem 0;
+  width: 100%;
+}
+
+.accede-servicios__title {
+  background: #bcd3cc;
+  padding: 0.5rem 1rem;
+  letter-spacing: 0.07em;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.accede-servicios__footer {
+  display: flex;
+  padding: 0.5rem 1rem;
+}
+
+.accede-servicios__image {
+  position: relative;
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+  height: 280px;
+  width: 100%;
+}
+
+.accede-servicios__image img {
+  z-index: -1;
+  border-radius: 5px;
+  width: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+  -o-object-position: center;
+  object-position: center;
+}
+
+.accede-servicios__option {
+  position: relative;
+  margin: 0.8rem;
+}
+
+.accede-servicios__option-title {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 80%;
+  padding: 1rem 1.3rem;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
+  line-height: 1.3em;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* INDEMNIZACIÓN
+--------------------------------------------- */
+.banner-link {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  min-height: 200px;
+  overflow: hidden;
+  padding: 2rem;
+  text-decoration: none;
+  color: #fff;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  text-align: center;
+}
+
+.banner-link img {
+  z-index: -1;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+  -o-object-position: center;
+  object-position: center;
+}
+
+.banner-link:hover {
+  text-decoration: none;
+  color: #fff;
+}
+
+.banner-link__title {
+  display: block;
+  font-size: 1.6rem;
+  line-height: 1.1em;
+  text-wrap: balance;
+}
+
+.banner-link__subtitle {
+  font-size: 1.3rem;
+}
+
+.banner-dqts {
+  flex-direction: column;
+  background: #6be3cf;
+}
+
+@media (min-width: 999px) and (max-width: 1055px) {
+  .seguros-apeseg .tab-seguros {
+    gap: 0 10px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 999px) {
+  /*post apeseg*/
+  .posts-apeseg .item-posts {
+    flex: 48%;
+  }
+
+  .soatForm {
+    grid-template-columns: 1fr;
+    grid-template-areas: "form1" "form2" "buttom";
+  }
+
+  .soatForm #SOATForm.btnSoat {
+    margin-top: 0;
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  /*post apeseg*/
+
+  .posts-apeseg .item-posts {
+    flex: 100%;
+  }
+
+  .post-tag .list-posts-tag {
+    flex-direction: column;
+  }
+
+  .soatForm {
+    grid-template-columns: 1fr;
+    grid-template-areas: "form1" "form2" "buttom";
+  }
+
+  .soatForm__placa,
+  .soatForm__captcha {
+    flex-direction: column;
+  }
+
+  .soatForm__placa input,
+  .soatForm__captcha input {
+    margin: 0.5rem 0;
+  }
+
+  .soatForm #SOATForm.btnSoat {
+    margin-top: 0;
+  }
+
+  .accede-servicios__footer {
+    flex-direction: column;
+  }
+
+  .seguro-apeseg {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .seguro-apeseg .contenido-seguro-apeseg ul {
+    -webkit-columns: 1;
+    -moz-columns: 1;
+    columns: 1;
+  }
+
+  .flex-row {
+    flex-direction: column;
+  }
+}
+
+@media only screen and (max-width: 999px) {
+  /* Seguros tab*/
+  .seguros-apeseg .tab-seguros {
+    flex-wrap: wrap;
+  }
+
+  .seguros-apeseg .tabcontent {
+    z-index: 9;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    border-radius: 0;
+    margin-bottom: 40px;
+    background-color: #fff;
+    width: 100%;
+  }
+
+  .seguros-apeseg .tabcontent button {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    height: 32px;
+    width: 32px;
+    padding: 0;
+    font-weight: 600;
+    color: #fff;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    text-align: center;
+    box-shadow: 0px -2px 5px #aeaeae;
+  }
+
+  .seguros-apeseg .tablinks.active::after {
+    content: inherit;
+  }
+
+  .seguros-apeseg .tab-seguros button {
+    width: 125px;
+  }
+
+  /* Lo más reciente*/
+
+  .reciente-post .item-reciente,
+  .reciente-post .mas-leido {
+    flex: 100%;
+  }
+
+  .reciente-post .item-reciente {
+    height: 300px;
+  }
+
+  .reciente-post .mas-leido {
+    min-height: auto;
+  }
+}
+
+/* DQTS */
+.title-dqts {
+  max-width: 250px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 2rem;
+  line-height: 1em;
+  font-weight: 600;
+  color: #085445;
+  text-wrap: balance;
+  text-align: left;
+}
+
+.dqts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+
+  & .dqts__div {
+    display: flex;
+    flex-direction: column;
+    flex-basis: 300px;
+    flex-grow: 1;
+    border: 1px solid #64d8c2;
+    border-radius: 7px;
+    padding: 1rem;
+    -ms-flex-preferred-size: 300px;
+    -webkit-box-flex: 1;
+    -ms-flex-positive: 1;
+    gap: 1rem;
+  }
+
+  & .dqts__img {
+    width: 100%;
+    -o-object-fit: cover;
+    object-fit: cover;
+    aspect-ratio: 5 / 3;
+  }
+
+  & .dqts__h2 {
+    margin: auto 0;
+    font-family: "Barlow Condensed", serif;
+    font-size: 1.6rem;
+    line-height: 1.2em;
+    font-weight: 600;
+    color: #085445;
+    text-wrap: balance;
+  }
+
+  & .dqts__link {
+    margin-top: auto;
+    margin-left: auto;
+    text-decoration: none;
+    font-family: "Barlow Condensed", serif;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: #085445;
+    transition: all 0.3s ease-in;
+
+    &:hover {
+      color: #64d8c2;
+    }
+  }
+}
+
+a.serivices___a--dqts {
+  color: #085445 !important;
+  border-color: #085445 !important;
+  &:hover {
+    background-color: #085445 !important;
+    color: #fff !important;
+  }
+}

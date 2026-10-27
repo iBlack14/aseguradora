@@ -21,6 +21,7 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:?Set ADMIN_API_KEY in .env}
       API_PORT: 4000
       DEMO_MODE: ${DEMO_MODE:-false}
       VERIFIK_TOKEN: ${VERIFIK_TOKEN:-}
@@ -56,6 +57,7 @@ services:
       NODE_ENV: production
       API_INTERNAL_URL: http://api:4000
       API_URL: http://api:4000
+      ADMIN_API_KEY: ${ADMIN_API_KEY:?Set ADMIN_API_KEY in .env}
       AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env}
       ADMIN_EMAIL: ${ADMIN_EMAIL:?Set ADMIN_EMAIL in .env}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
@@ -74,5 +76,14 @@ services:
     expose: ["3002"]
     depends_on:
       api: { condition: service_healthy }
+  consulta:
+    restart: unless-stopped
+    init: true
+    build:
+      context: .
+      dockerfile: infrastructure/docker/consulta.Dockerfile
+    environment:
+      NODE_ENV: production
+    expose: ["3003"]
 volumes:
   postgres_data:

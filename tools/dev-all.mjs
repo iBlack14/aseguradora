@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 const services = [
   { name: 'API  ', command: 'npm', args: ['run', 'dev:api'], color: '\x1b[36m' }, // Cyan
   { name: 'WEB  ', command: 'npm', args: ['run', 'dev:web'], color: '\x1b[32m' }, // Green
+  { name: 'CONS ', command: 'npm', args: ['run', 'dev:consulta'], color: '\x1b[33m' },
   { name: 'ADMIN', command: 'npm', args: ['run', 'dev:admin'], color: '\x1b[35m' } // Magenta
 ];
 
@@ -14,6 +15,7 @@ console.log('\x1b[1m\x1b[34m%s\x1b[0m', '   Iniciando Plataforma Seguros Falabel
 console.log('\x1b[1m\x1b[34m%s\x1b[0m', '   - Web (Cliente):      http://localhost:3000');
 console.log('\x1b[1m\x1b[34m%s\x1b[0m', '   - Admin (Operaciones): http://localhost:3001');
 console.log('\x1b[1m\x1b[34m%s\x1b[0m', '   - API (Backend):      http://localhost:4000');
+console.log('\x1b[1m\x1b[34m%s\x1b[0m', '   - Consulta SOAT:      http://localhost:3003');
 console.log('\x1b[1m\x1b[34m%s\x1b[0m', '==================================================\n');
 
 for (const svc of services) {

@@ -826,9 +826,9 @@ export default function Quotes() {
                         {q.status !== 'ANULADA' && <button
                             className="button"
                             style={{ padding: '6px 12px', fontSize: 12, background: q.status === 'EMITIDA' ? '#0f766e' : '#16a34a' }}
-                            onClick={() => (q.status === 'EMITIDA' ? generateAndDownloadSoatPdf(q) : openQuoteDetail(q))}
+                            onClick={() => openQuoteDetail(q)}
                           >
-                            {q.status === 'EMITIDA' ? 'Descargar póliza' : 'Emitir Póliza'}
+                            Ver detalle
                           </button>}
                         {q.status === 'EMITIDA' ? (
                           <button
@@ -1334,7 +1334,7 @@ export default function Quotes() {
               </button>
               {selectedQuote.status !== 'ANULADA' && <button
                 className="button"
-                disabled={emitting}
+                disabled={true} title="Emisión y certificados deshabilitados hasta conectar la aseguradora"
                 style={{ background: selectedQuote.status === 'EMITIDA' ? '#0f766e' : '#16a34a' }}
                 onClick={() => {
                   const q = selectedQuote;
@@ -1381,8 +1381,8 @@ export default function Quotes() {
                 }}
               >
                 {selectedQuote.status === 'EMITIDA'
-                  ? 'Descargar Certificado Oficial (PDF)'
-                  : (emitting ? 'Emitiendo póliza…' : 'Emitir Póliza SOAT (PDF)')}
+                  ? 'Certificado pendiente de verificación'
+                  : 'Emisión no disponible'}
               </button>}
             </div>
           </div>
@@ -1626,7 +1626,7 @@ export default function Quotes() {
                   boxShadow: '0 4px 14px rgba(78, 127, 0, 0.35)',
                   cursor: 'pointer'
                 }}
-                onClick={() => generateAndDownloadSoatPdf(emissionQuote)}
+                disabled title="Certificado oficial no disponible"
               >
                 <span style={{ fontSize: 16 }}>📥</span>
                 <span>Descargar PDF</span>

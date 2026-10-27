@@ -6,3 +6,7 @@ dist
 *.log
 packages/database/prisma/dev.db
 .playwright-cli
+
+*.tsbuildinfo
+output/apeseg-api/
+.local-data/
