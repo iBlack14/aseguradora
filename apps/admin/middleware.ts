@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SESSION_COOKIE, sessionRole, validSession } from './lib/session';
+import { publicUrl } from './lib/publicUrl';
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -12,16 +13,16 @@ export async function middleware(request: NextRequest) {
   const authenticated = await validSession(request.cookies.get(SESSION_COOKIE)?.value);
   const role = await sessionRole(request.cookies.get(SESSION_COOKIE)?.value);
   if (path === '/login') {
-    if (authenticated) return NextResponse.redirect(new URL('/', request.url));
+    if (authenticated) return NextResponse.redirect(publicUrl(request, '/'));
     return NextResponse.next();
   }
 
   if (!authenticated) {
-    const login = new URL('/login', request.url);
+    const login = publicUrl(request, '/login');
     login.searchParams.set('next', path);
     return NextResponse.redirect(login);
   }
-  if (path === '/usuarios' && role !== 'ADMIN') return NextResponse.redirect(new URL('/', request.url));
+  if (path === '/usuarios' && role !== 'ADMIN') return NextResponse.redirect(publicUrl(request, '/'));
 
   return NextResponse.next();
 }

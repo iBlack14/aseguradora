@@ -31,7 +31,7 @@ Sin `DATABASE_URL`, la API usa memoria únicamente en desarrollo. Los precios y 
 2. Copia `.env.example` a `.env` y reemplaza todas las credenciales. La contraseña incluida en `DATABASE_URL` debe estar codificada para URL si contiene símbolos reservados.
 3. Configura `VERIFIK_TOKEN`; sin proveedor disponible, la consulta vehicular devuelve un error y nunca inventa datos con `DEMO_MODE=false`.
 4. Ejecuta `docker compose config` y luego `docker compose up -d --build`.
-5. Publica `127.0.0.1:3000` para la web y `127.0.0.1:3001` para el panel mediante HTTPS. PostgreSQL y la API quedan solo en la red interna de Docker.
+5. En un VPS, publica `127.0.0.1:3000` para la web y `127.0.0.1:3001` para el panel mediante un proxy HTTPS. En Easypanel, configura dominios propios para `web` y `admin`; no uses `https://localhost:3001`, porque `3001` es solo el puerto interno del contenedor. PostgreSQL y la API quedan solo en la red interna de Docker.
 6. Verifica `docker compose ps`, `curl http://127.0.0.1:3000` y el acceso al panel administrativo.
 
 La API aplica automáticamente las migraciones Prisma al iniciar. El endpoint de emisión/pago continúa deshabilitado hasta conectar una pasarela y los adaptadores reales de aseguradoras.
