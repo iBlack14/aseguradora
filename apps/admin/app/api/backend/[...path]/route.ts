@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { SESSION_COOKIE, sessionRole } from '@/lib/session';
 
 const apiBaseUrl = () => process.env.API_INTERNAL_URL || process.env.API_URL || 'http://127.0.0.1:4000';
 
@@ -8,6 +9,10 @@ async function proxy(request: NextRequest, { params }: { params: Promise<{ path:
     return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
   }
   const path = segments.join('/');
+  if (path === 'v1/admin/users' || path.startsWith('v1/admin/users/')) {
+    const role = await sessionRole(request.cookies.get(SESSION_COOKIE)?.value);
+    if (role !== 'ADMIN') return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
+  }
   const target = new URL(path, `${apiBaseUrl().replace(/\/$/, '')}/`);
   target.search = request.nextUrl.search;
 
