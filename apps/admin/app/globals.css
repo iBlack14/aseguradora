@@ -152,6 +152,38 @@ th,td{font-size:13px}
   .dashboard-table td::before{content:attr(data-label);color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
 }
 
+.apeseg-context{max-width:900px;color:var(--muted);font-size:13px;margin:16px 0 24px}
+.apeseg-register-list,.apeseg-register-form{margin-top:22px;background:var(--card,#fff)}
+.apeseg-list-heading,.apeseg-form-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.apeseg-list-heading h2,.apeseg-form-heading h2{margin:0;font-size:22px;letter-spacing:-.02em}
+.apeseg-list-heading p,.apeseg-form-heading p{font-size:13px;margin:6px 0 0}
+.apeseg-search{display:flex;gap:8px;flex-shrink:0;align-items:center}
+.apeseg-search input,.apeseg-fields input,.apeseg-fields select{min-width:0;width:100%;height:44px;border:1px solid var(--line);border-radius:9px;padding:0 12px;background:var(--card,#fff);color:var(--ink);outline:none;font:inherit}
+.apeseg-search input{width:180px}
+.apeseg-search input:focus,.apeseg-fields input:focus,.apeseg-fields select:focus{border-color:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 14%,transparent)}
+.apeseg-table-scroll{overflow-x:auto;margin-top:20px}
+.apeseg-register-table small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.apeseg-policy-number{overflow-wrap:anywhere;max-width:230px}
+.apeseg-status{display:inline-flex;white-space:nowrap;border-radius:6px;font-size:11px;font-weight:800;padding:4px 8px;background:#ecf2e3;color:#476624}
+.apeseg-status.vigente{background:#e5f5df;color:#26712b}.apeseg-status.vencido,.apeseg-status.anulado{background:#fff0ed;color:#a13929}.apeseg-status.aun_no_vigente{background:#fff6dd;color:#805800}
+.apeseg-eyebrow{display:block;margin-bottom:6px;color:var(--green);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:800}
+.apeseg-fieldset{min-width:0;margin:0;padding:0;border:0}
+.apeseg-field-group{border-top:1px solid var(--line);padding-top:24px;margin-top:26px}
+.apeseg-group-title{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px}
+.apeseg-group-title>span{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--canvas);color:var(--green);font-size:12px;font-weight:800;flex-shrink:0}
+.apeseg-group-title h3{font-size:16px;margin:0}.apeseg-group-title p{font-size:12px;margin:4px 0 0}
+.apeseg-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.apeseg-fields label{display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:800}
+.apeseg-fields input,.apeseg-fields select{font-size:13px;font-weight:500}
+.apeseg-fields input[aria-invalid=true]{border-color:#b43520}
+.apeseg-field-error{color:#b43520;font-size:11px;font-weight:600}
+.apeseg-field-help{font-size:12px;line-height:1.6;color:var(--muted);margin:16px 0 0}
+.apeseg-form-actions{display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--line);margin-top:28px;padding-top:20px}
+.apeseg-register-form{scroll-margin-top:24px}.apeseg-register-form button:disabled{cursor:wait;opacity:.6}.apeseg-fieldset:disabled{opacity:.85}
+.apeseg-search .sr-only,.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:1100px){.apeseg-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.apeseg-list-heading{flex-wrap:wrap}}
+@media(max-width:700px){.apeseg-fields{grid-template-columns:1fr}.apeseg-form-heading{flex-direction:column}.apeseg-search{width:100%}.apeseg-search input{width:100%;flex:1}.apeseg-form-actions .button{flex:1}.apeseg-register-table thead{display:none}.apeseg-register-table,.apeseg-register-table tbody{display:block}.apeseg-register-table tr{display:block;border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:12px}.apeseg-register-table td{display:grid;grid-template-columns:100px minmax(0,1fr);gap:10px;padding:9px 0;max-width:none}.apeseg-register-table td::before{content:attr(data-label);font-size:11px;font-weight:800;color:var(--muted)}.apeseg-register-table td:last-child{border-bottom:0}.apeseg-register-table td:first-child{display:block}.apeseg-register-table td:first-child::before{display:block;margin-bottom:5px}.apeseg-status{justify-self:start}.apeseg-list-heading{width:100%}}
+
 /* Print Clean Styles for SOAT Certificate */
 @media print {
   body, html {

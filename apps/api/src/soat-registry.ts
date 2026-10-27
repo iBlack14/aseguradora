@@ -13,7 +13,7 @@ const optionalText = (max = 120) => z.preprocess(value => value === '' || value 
 const optionalDate = z.preprocess(value => value === '' || value === undefined ? null : value, date.nullable());
 const shape = z.object({
   Placa: z.string().trim().toUpperCase().transform(value => value.replace(/-/g, '')).pipe(z.string().regex(/^[A-Z0-9]{6,8}$/)),
-  NombreCompania: z.string().trim().min(2).max(100),
+  NombreCompania: z.string().trim().min(2).max(100).transform(value => value.replace(/\s+/g, ' ').toUpperCase()),
   NumeroPoliza: z.string().trim().min(1).max(100),
   FechaInicio: date,
   FechaFin: date,
@@ -38,7 +38,7 @@ const input = shape.superRefine((data, context) => {
   if (data.Estado !== 'ANULADO' && data.FechaAnulacion) context.addIssue({ code: 'custom', path: ['FechaAnulacion'], message: 'Selecciona el estado Anulado para registrar esta fecha.' });
 });
 type Input = z.infer<typeof input>;
-type Record = Input & { id: string; createdAt: string | Date; updatedAt: string | Date };
+type Record = Omit<Input, 'Estado' | 'TipoCertificado'> & { Estado: string; TipoCertificado: string; id: string; createdAt: string | Date; updatedAt: string | Date };
 
 function present(record: Record) {
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());

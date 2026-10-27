@@ -1,5 +1,13 @@
 # Plataforma Seguros Falabella — propuesta
 
+## Registro manual de certificados
+
+En el panel, **Registro APESEG** (`/registro-apeseg`) permite registrar, buscar por placa y editar certificados con los 22 campos observados en el resultado de consulta SOAT. Conserva números de póliza con ceros iniciales y calcula la vigencia a partir de las fechas, respetando las anulaciones. Estos registros son internos: no inscriben certificados ante APESEG ni emiten pólizas.
+
+ADMIN, OPERATIONS y SALES pueden guardar cambios; SUPPORT y AUDITOR solo consultan. Las rutas `/v1/soat-registry` (GET y POST) y `/v1/soat-registry/:id` (PUT) requieren autenticación interna y rol.
+
+Con PostgreSQL se usa el modelo `SoatCertificate`, con auditoría transaccional. Aplicar la migración `20261027090000_add_soat_certificates` antes del despliegue; Docker la aplica al iniciar la API. En desarrollo sin DATABASE_URL, los registros se guardan de forma persistente en `apps/api/.local-data/soat-certificates.json` al iniciar la API desde su workspace. Los archivos locales quedan excluidos de Git y Docker.
+
 Monorepo para el cotizador público de SOAT, el panel interno de operaciones y la API.
 
 ## Aplicaciones

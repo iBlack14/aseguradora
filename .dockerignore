@@ -5,6 +5,8 @@ node_modules
 node_modules_*
 output
 .playwright-cli
+.local-data
+**/.local-data
 *.log
 .env
 .env.*

@@ -22,7 +22,7 @@
     "scrape:moto": "npx tsx tools/scraper/run-scraper.ts --type MOTO --dept Lima",
     "scrape:debug": "cross-env HEADLESS=false npx tsx tools/scraper/run-scraper.ts --no-cache",
     "scrape:one": "npx tsx tools/scraper/run-scraper.ts --insurer interseguro --no-cache",
-    "test": "npm run build -w @falabella/api && node --test tools/tests/api.test.mjs",
+    "test": "npm run build -w @falabella/api && node --test tools/tests/api.test.mjs tools/tests/soat-registry.test.mjs",
     "test:proxies": "node --test tools/tests/proxies.integration.mjs",
     "dev:consulta": "npm run dev -w @falabella/consulta"
   },
