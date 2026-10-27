@@ -20,6 +20,7 @@ async function proxy(request: NextRequest, { params }: { params: Promise<{ path:
     if (auth) headers['authorization'] = auth;
     const adminKey = request.headers.get('x-admin-key');
     if (adminKey) headers['x-admin-key'] = adminKey;
+    else if (process.env.ADMIN_API_KEY) headers['x-admin-key'] = process.env.ADMIN_API_KEY;
 
     const response = await fetch(target, {
       method: request.method,

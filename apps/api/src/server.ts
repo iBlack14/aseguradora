@@ -5,6 +5,8 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
+import { promisify } from 'util';
 
 // Cargar .env automáticamente en desarrollo si existe
 for (const envCandidate of [
@@ -113,6 +115,28 @@ let paymentConfig: PaymentConfig = {
 const demoMode = process.env.DEMO_MODE !== 'false';
 const database = process.env.DATABASE_URL ? new PrismaClient() : null;
 if (process.env.NODE_ENV === 'production' && !database) throw new Error('DATABASE_URL is required in production');
+
+const scryptAsync = promisify(crypto.scrypt);
+const temporaryUsers: Array<{ id: string; email: string; name: string; role: 'SALES' | 'OPERATIONS' | 'SUPPORT' | 'AUDITOR'; active: boolean; passwordHash: string; createdAt: string }> = [];
+async function hashUserPassword(password: string) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const derived = await scryptAsync(password, salt, 64) as Buffer;
+  return `${salt}:${derived.toString('hex')}`;
+}
+async function verifyUserPassword(password: string, stored: string) {
+  const [salt, hash] = stored.split(':');
+  if (!salt || !hash) return false;
+  const derived = await scryptAsync(password, salt, 64) as Buffer;
+  const expected = Buffer.from(hash, 'hex');
+  return expected.length === derived.length && crypto.timingSafeEqual(expected, derived);
+}
+function publicUser(user: { id: string; email: string; name: string; role: string; active: boolean; createdAt: Date | string }) {
+  return { id: user.id, email: user.email, name: user.name, role: user.role, active: user.active, createdAt: user.createdAt };
+}
+function validAdminKey(req: { headers: Record<string, string | string[] | undefined> }) {
+  const key = req.headers['x-admin-key'];
+  return !process.env.ADMIN_API_KEY || key === process.env.ADMIN_API_KEY;
+}
 
 async function getPaymentConfig(): Promise<PaymentConfig> {
   if (!database) return paymentConfig;
@@ -488,6 +512,80 @@ app.get('/health', async (_req, reply) => {
   } catch {
     return reply.status(503).send({ status: 'error', service: 'falabella-insurance-api', database: 'unavailable' });
   }
+});
+
+app.post('/v1/auth/login', async (req, reply) => {
+  const parsed = z.object({ email: z.string().email(), password: z.string().min(1) }).safeParse(req.body);
+  if (!parsed.success) return reply.status(401).send({ error: 'INVALID_CREDENTIALS' });
+  const email = parsed.data.email.trim().toLowerCase();
+  const configuredEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  if (configuredEmail && email === configuredEmail && parsed.data.password === process.env.ADMIN_PASSWORD) {
+    return { success: true, user: { email: configuredEmail, name: 'Administrador', role: 'ADMIN' } };
+  }
+  if (database) {
+    const user = await database.user.findUnique({ where: { email } });
+    if (user?.active && user.passwordHash && await verifyUserPassword(parsed.data.password, user.passwordHash)) {
+      return { success: true, user: publicUser(user) };
+    }
+  } else {
+    const user = temporaryUsers.find((candidate) => candidate.email === email && candidate.active);
+    if (user && await verifyUserPassword(parsed.data.password, user.passwordHash)) {
+      return { success: true, user: publicUser(user) };
+    }
+  }
+  return reply.status(401).send({ error: 'INVALID_CREDENTIALS' });
+});
+
+app.get('/v1/admin/users', async (req, reply) => {
+  if (!validAdminKey(req)) return reply.status(401).send({ error: 'UNAUTHORIZED' });
+  const users = database
+    ? (await database.user.findMany({ orderBy: { createdAt: 'desc' } })).map(publicUser)
+    : temporaryUsers.map(publicUser);
+  if (process.env.ADMIN_EMAIL) {
+    users.unshift({ id: 'env-admin', email: process.env.ADMIN_EMAIL, name: 'Administrador', role: 'ADMIN', active: true, createdAt: new Date(0) });
+  }
+  return { data: users };
+});
+
+app.post('/v1/admin/users', async (req, reply) => {
+  if (!validAdminKey(req)) return reply.status(401).send({ error: 'UNAUTHORIZED' });
+  const parsed = z.object({
+    name: z.string().trim().min(2).max(100),
+    email: z.string().email().transform((value) => value.trim().toLowerCase()),
+    password: z.string().min(8).max(100),
+    role: z.enum(['SALES', 'OPERATIONS', 'SUPPORT', 'AUDITOR']).default('SALES')
+  }).safeParse(req.body);
+  if (!parsed.success) return reply.status(400).send({ error: 'VALIDATION_ERROR', details: parsed.error.flatten() });
+  if (parsed.data.email === process.env.ADMIN_EMAIL?.trim().toLowerCase()) return reply.status(409).send({ error: 'EMAIL_ALREADY_EXISTS' });
+  const exists = database
+    ? await database.user.findUnique({ where: { email: parsed.data.email } })
+    : temporaryUsers.some((user) => user.email === parsed.data.email);
+  if (exists) return reply.status(409).send({ error: 'EMAIL_ALREADY_EXISTS' });
+  const passwordHash = await hashUserPassword(parsed.data.password);
+  if (database) {
+    const user = await database.user.create({ data: { name: parsed.data.name, email: parsed.data.email, passwordHash, role: parsed.data.role } });
+    return reply.status(201).send({ data: publicUser(user) });
+  }
+  const user = { id: crypto.randomUUID(), name: parsed.data.name, email: parsed.data.email, passwordHash, role: parsed.data.role, active: true, createdAt: new Date().toISOString() };
+  temporaryUsers.push(user);
+  return reply.status(201).send({ data: publicUser(user) });
+});
+
+app.patch('/v1/admin/users/:id', async (req, reply) => {
+  if (!validAdminKey(req)) return reply.status(401).send({ error: 'UNAUTHORIZED' });
+  const parsed = z.object({ active: z.boolean() }).safeParse(req.body);
+  if (!parsed.success) return reply.status(400).send({ error: 'VALIDATION_ERROR', details: parsed.error.flatten() });
+  if (req.params && typeof req.params === 'object' && 'id' in req.params && req.params.id === 'env-admin') return reply.status(400).send({ error: 'ENV_ADMIN_CANNOT_BE_CHANGED' });
+  const id = (req.params as { id: string }).id;
+  if (database) {
+    const user = await database.user.update({ where: { id }, data: { active: parsed.data.active } }).catch(() => null);
+    if (!user) return reply.status(404).send({ error: 'USER_NOT_FOUND' });
+    return { data: publicUser(user) };
+  }
+  const user = temporaryUsers.find((candidate) => candidate.id === id);
+  if (!user) return reply.status(404).send({ error: 'USER_NOT_FOUND' });
+  user.active = parsed.data.active;
+  return { data: publicUser(user) };
 });
 
 const insurers = [

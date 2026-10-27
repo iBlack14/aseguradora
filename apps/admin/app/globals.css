@@ -49,6 +49,7 @@
 .offers-table td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--line)}
 .tariff-card{margin:24px 0}.tariff-card>.topbar select{height:42px;border:1px solid #cfd8c5;border-radius:9px;background:#fff;padding:0 10px}.tariff-grid{display:grid;gap:10px;margin-top:18px}.tariff-row{display:grid;grid-template-columns:1.5fr 1fr 1fr .8fr auto;gap:12px;align-items:end;padding:12px 0;border-top:1px solid var(--line)}.tariff-row label{display:grid;gap:5px;font-size:12px;font-weight:800}.tariff-row input{width:100%;height:40px;border:1px solid #cfd8c5;border-radius:8px;padding:0 9px}.tariff-row input.price-editable{color:var(--green);font-weight:800;border-color:#b9d58a}.tariff-row input.price-editable:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(139,197,0,.16)}.tariff-name{display:grid;gap:4px}.tariff-name small,.tariff-note{font-size:12px;color:var(--muted)}.tariff-note{margin:14px 0 0;padding:10px;border-radius:8px;background:#fff8e6;color:#7c5200}
 .price-pill{font-weight:800;color:var(--green);font-size:14px}
+.users-layout{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);gap:20px;margin-top:24px}.user-form{display:grid;gap:14px;align-content:start}.user-form h2,.users-heading h2{margin:0 0 4px}.user-form p{margin:0 0 4px}.user-form label{display:grid;gap:7px;font-size:13px;font-weight:800}.user-form input,.user-form select{height:44px;border:1px solid #cfd8c5;border-radius:9px;background:#fff;padding:0 12px}.user-form input:focus,.user-form select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(139,197,0,.16)}.user-form .button{margin-top:4px}.users-heading{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}.user-alert{margin-top:18px;padding:12px 14px;border-radius:10px;font-size:13px;font-weight:700}.user-alert.error{background:#fff0ed;color:#a22915}.user-alert.success{background:#e9f8c7;color:var(--green)}.status.inactive{background:#eef0ed;color:#667085}.small-button{padding:7px 10px;font-size:12px}.users-table small{display:block;margin-top:4px;color:var(--muted)}
 .quote-actions{display:flex;gap:6px;flex-wrap:wrap}
 
 /* Responsive admin workspace */
@@ -60,6 +61,7 @@
   .table-scroll{width:100%;max-width:100%}
   .quotes-table{min-width:920px}
   .internal-quote-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .users-layout{grid-template-columns:1fr}
 }
 
 @media(max-width:850px){
