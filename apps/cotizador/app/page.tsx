@@ -4,6 +4,13 @@ import { FormEvent, useState } from 'react';
 
 type Vehicle = 'auto' | 'moto';
 
+function formatPlate(value: string, vehicle: Vehicle) {
+  const clean = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6);
+  if (vehicle === 'moto' && clean.length > 4) return `${clean.slice(0, 4)}-${clean.slice(4)}`;
+  if (vehicle === 'auto' && clean.length > 3) return `${clean.slice(0, 3)}-${clean.slice(3)}`;
+  return clean;
+}
+
 const faqs = [
   ['¿Qué es el SOAT y para qué sirve?', 'El Seguro Obligatorio de Accidentes de Tránsito (SOAT) es un seguro obligatorio establecido por ley que tiene como objetivo asegurar la atención, de manera inmediata e incondicional, a las víctimas de accidentes de tránsito en todo el territorio nacional que sufran lesiones corporales y muerte. Puedes cotizar SOAT para tu carro, moto o camión en La Positiva.'],
   ['¿Dónde comprar el SOAT?', 'Puedes cotizar y comprar un SOAT Virtual en La Positiva, donde contamos con diferentes coberturas y beneficios exclusivos. ¡Cotiza y descubre el precio SOAT hoy!.'],
@@ -25,6 +32,11 @@ export default function CotizadorPage() {
   const cleanPlate = plate.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
   const validPlate = cleanPlate.length >= 6;
   const canSubmit = validPlate && finalidadesAccepted && privacyAccepted && !loading;
+
+  function changeVehicle(next: Vehicle) {
+    setVehicle(next);
+    setPlate(formatPlate(plate, next));
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -49,10 +61,10 @@ export default function CotizadorPage() {
       <form className="quote" onSubmit={submit}>
         <div className="mobile-kicker">¡Qué buena elección!</div><h1>Cotiza tu <strong>SOAT 100% digital</strong></h1><p className="select-title">Selecciona tu vehículo</p>
         <div className="vehicle-grid">
-          <button type="button" className={`vehicle ${vehicle === 'auto' ? 'active' : ''}`} onClick={() => setVehicle('auto')}><img src="/assets/reference/soat_auto_desk.svg" alt="" /><strong>Autos, camionetas<br />y “Pick ups”</strong><small><img className="benefit-icon" src="/assets/reference/ticket-auto.svg" alt="" /> Para uso particular, taxi y carga</small><i>✓</i></button>
-          <button type="button" className={`vehicle ${vehicle === 'moto' ? 'active' : ''}`} onClick={() => setVehicle('moto')}><img src="/assets/reference/soat_moto_desk.svg" alt="" /><strong>Motos, mototaxis<br />y trimotos</strong><small><img className="benefit-icon" src="/assets/reference/tarjeta-moto.svg" alt="" /> Págalo <b>en cuotas</b> con tu tarjeta</small><i>✓</i></button>
+          <button type="button" className={`vehicle ${vehicle === 'auto' ? 'active' : ''}`} onClick={() => changeVehicle('auto')}><img src="/assets/reference/soat_auto_desk.svg" alt="" /><strong>Autos, camionetas<br />y “Pick ups”</strong><small><img className="benefit-icon" src="/assets/reference/ticket-auto.svg" alt="" /> Para uso particular, taxi y carga</small><i>✓</i></button>
+          <button type="button" className={`vehicle ${vehicle === 'moto' ? 'active' : ''}`} onClick={() => changeVehicle('moto')}><img src="/assets/reference/soat_moto_desk.svg" alt="" /><strong>Motos, mototaxis<br />y trimotos</strong><small><img className="benefit-icon" src="/assets/reference/tarjeta-moto.svg" alt="" /> Págalo <b>en cuotas</b> con tu tarjeta</small><i>✓</i></button>
         </div>
-        <p className="plate-title">Ingresa tu número de placa</p><div className={`plate-wrap ${plate && !validPlate ? 'invalid' : ''}`}><img src="/assets/reference/icono-placa.svg" alt="" /><input id="plate" className="plate" value={plate} onChange={e => setPlate(e.target.value.replace(/[^a-zA-Z0-9-]/g, '').toUpperCase())} placeholder="X9X999" maxLength={8} required /></div>
+        <p className="plate-title">Ingresa tu número de placa</p><div className={`plate-wrap ${plate && !validPlate ? 'invalid' : ''}`}><img src="/assets/reference/icono-placa.svg" alt="" /><input id="plate" className="plate" value={plate} onChange={e => setPlate(formatPlate(e.target.value, vehicle))} placeholder={vehicle === 'moto' ? '0000-AA' : 'ABC-123'} maxLength={7} required /></div>
         {plate && !validPlate && <div className="field-error">Debes ingresar una placa válida</div>}
         <label className="consent"><input type="checkbox" checked={finalidadesAccepted} onChange={e => setFinalidadesAccepted(e.target.checked)} />Acepto las <a href="#finalidades">Finalidades Secundarias</a></label>
         <label className="consent"><input type="checkbox" checked={privacyAccepted} onChange={e => setPrivacyAccepted(e.target.checked)} />Acepto las <a href="#privacidad">Políticas de Privacidad</a></label>
