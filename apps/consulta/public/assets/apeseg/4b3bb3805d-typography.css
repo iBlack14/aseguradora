@@ -1,0 +1,91 @@
+/*-------------------------
+        Tipography
+-------------------------*/
+
+@font-face {
+font-family: 'gibson';
+   src: url("/assets/apeseg/9e9cc3d824-Canada-Type-Gibson-Light.eot");
+   src: url("/assets/apeseg/1a4d9afde8-Canada-Type-Gibson-Light.eot") format('embedded-opentype'),
+        url("/assets/apeseg/3043a494ed-Canada-Type-Gibson-Light.woff") format('woff'),
+        url("/assets/apeseg/e97280d3c2-Canada-Type-Gibson-Light.ttf") format('truetype'),
+        url("/assets/apeseg/09b4cc7101-Canada-Type-Gibson-Light.svg") format('svg');
+  font-weight: 100;
+  font-style: normal;
+}
+
+@font-face {
+font-family: 'gibson';
+   src: url("/assets/apeseg/ca56ac65b3-Canada-Type-Gibson-LightIt.eot");
+   src: url("/assets/apeseg/75f193068c-Canada-Type-Gibson-LightIt.eot") format('embedded-opentype'),
+        url("/assets/apeseg/6e6f4cbd32-Canada-Type-Gibson-LightIt.woff") format('woff'),
+        url("/assets/apeseg/c83fa9fc11-Canada-Type-Gibson-LightIt.ttf") format('truetype'),
+        url("/assets/apeseg/f182f8eca1-Canada-Type-Gibson-LightIt.svg") format('svg');
+  font-weight: 100;
+  font-style: italic;
+}
+
+@font-face {
+font-family: 'gibson';
+   src: url("/assets/apeseg/805f6d997d-Canada-Type-Gibson-Regular.eot");
+   src: url("/assets/apeseg/0cb333317e-Canada-Type-Gibson-Regular.eot") format('embedded-opentype'),
+        url("/assets/apeseg/f07d388dde-Canada-Type-Gibson-Regular.woff") format('woff'),
+        url("/assets/apeseg/4a384beb43-Canada-Type-Gibson-Regular.ttf") format('truetype'),
+        url("/assets/apeseg/4ea0addc3f-Canada-Type-Gibson-Regular.svg") format('svg');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+font-family: 'gibson';
+   src: url("/assets/apeseg/c4501911aa-Canada-Type-Gibson-Italic.eot");
+   src: url("/assets/apeseg/cab37678d0-Canada-Type-Gibson-Italic.eot") format('embedded-opentype'),
+        url("/assets/apeseg/d97179bcf2-Canada-Type-Gibson-Italic.woff") format('woff'),
+        url("/assets/apeseg/8e92bc4f9e-Canada-Type-Gibson-Italic.ttf") format('truetype'),
+        url("/assets/apeseg/337acfc421-Canada-Type-Gibson-Italic.svg") format('svg');
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+font-family: 'gibson';
+   src: url("/assets/apeseg/296e04591b-Canada-Type-Gibson-SemiBold.eot");
+   src: url("/assets/apeseg/07389bb8f1-Canada-Type-Gibson-SemiBold.eot") format('embedded-opentype'),
+        url("/assets/apeseg/dad5b478f3-Canada-Type-Gibson-SemiBold.woff") format('woff'),
+        url("/assets/apeseg/2c358e0445-Canada-Type-Gibson-SemiBold.ttf") format('truetype'),
+        url("/assets/apeseg/96b9646d63-Canada-Type-Gibson-SemiBold.svg") format('svg');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+font-family: 'gibson';
+   src: url("/assets/apeseg/9faee8df0d-Canada-Type-Gibson-SemiboldIt.eot");
+   src: url("/assets/apeseg/c23decc473-Canada-Type-Gibson-SemiboldIt.eot") format('embedded-opentype'),
+        url("/assets/apeseg/29dd2afdaf-Canada-Type-Gibson-SemiboldIt.woff") format('woff'),
+        url("/assets/apeseg/a116bbfb58-Canada-Type-Gibson-SemiboldIt.ttf") format('truetype'),
+        url("/assets/apeseg/dc4ad47089-Canada-Type-Gibson-SemiboldIt.svg") format('svg');
+  font-weight: 700;
+  font-style: italic;
+}
+
+@font-face {
+font-family: 'gibson';
+   src: url("/assets/apeseg/2fda8cab03-Canada-Type-Gibson-Bold.eot");
+   src: url("/assets/apeseg/8e712330ea-Canada-Type-Gibson-Bold.eot") format('embedded-opentype'),
+        url("/assets/apeseg/523059c124-Canada-Type-Gibson-Bold.woff") format('woff'),
+        url("/assets/apeseg/a3cb12cc1a-Canada-Type-Gibson-Bold.ttf") format('truetype'),
+        url("/assets/apeseg/eafdb3cd1c-Canada-Type-Gibson-Bold.svg") format('svg');
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+font-family: 'gibson';
+   src: url("/assets/apeseg/57767e21c7-Canada-Type-Gibson-BoldItalic.eot");
+   src: url("/assets/apeseg/483f7c310f-Canada-Type-Gibson-BoldItalic.eot") format('embedded-opentype'),
+        url("/assets/apeseg/5a833b8763-Canada-Type-Gibson-BoldItalic.woff") format('woff'),
+        url("/assets/apeseg/d913930eca-Canada-Type-Gibson-BoldItalic.ttf") format('truetype'),
+        url("/assets/apeseg/0f8537793b-Canada-Type-Gibson-BoldItalic.svg") format('svg');
+  font-weight: 900;
+  font-style: italic;
+}

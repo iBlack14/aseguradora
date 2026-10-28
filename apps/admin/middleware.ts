@@ -28,6 +28,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/cotizaciones', '/configuracion', '/usuarios', '/login']
+  matcher: ['/', '/cotizaciones', '/registro-apeseg', '/configuracion', '/usuarios', '/login']
 };
 

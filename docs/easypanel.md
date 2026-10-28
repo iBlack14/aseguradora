@@ -51,3 +51,9 @@ Después de desplegar, activar un dominio para el servicio `cotizador`. No se de
 El servicio ya está incluido como `cotizador` en `docker-compose.yml`. En Easypanel, si se importa el Compose completo, publicar únicamente el puerto del servicio `cotizador` y mantener `API_URL=http://api:4000`.
 
 Antes de producción, cambiar los assets de referencia de `apps/cotizador/public/assets/reference` por recursos propios o autorizados.
+
+## Acceso interno y emisión
+
+Configura el mismo `ADMIN_API_KEY` aleatorio en los servicios `api` y `admin`. Es una credencial interna: no debe configurarse en `web`, `cotizador` ni variables `NEXT_PUBLIC_*`. En producción la API requiere esta clave para iniciar; el proxy administrativo requiere además una sesión válida y comprueba el rol. Solo ADMIN puede cambiar usuarios, tarifas y configuración; SUPPORT y AUDITOR tienen acceso de lectura.
+
+La emisión y la generación de certificados están deshabilitadas hasta integrar confirmación de pago y emisión oficial. Los números simulados anteriores no se muestran como pólizas vigentes en la consulta pública. Las tarifas modificadas se guardan en PostgreSQL mediante AppSetting; sin base de datos, el modo de desarrollo utiliza memoria temporal. Si falla una escritura con base de datos configurada, se devuelve un error sin anunciar éxito.

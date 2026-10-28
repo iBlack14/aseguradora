@@ -190,6 +190,7 @@ async function pushResultsToApi(apiBase: string, offers: ScrapedOffer[], input: 
       headers: {
         'Content-Type': 'application/json',
         'x-admin-key': process.env.ADMIN_API_KEY || '',
+        'x-admin-role': 'ADMIN',
       },
       body: JSON.stringify(tariffs),
     });

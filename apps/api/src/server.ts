@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { promisify } from 'util';
+import { registerSoatRegistry } from './soat-registry.js';
 
 // Cargar .env automáticamente en desarrollo si existe
 for (const envCandidate of [
@@ -22,7 +23,8 @@ for (const envCandidate of [
         if (!trimmed || trimmed.startsWith('#')) continue;
         const [k, ...rest] = trimmed.split('=');
         if (k && rest.length > 0 && !process.env[k.trim()]) {
-          process.env[k.trim()] = rest.join('=').trim();
+          const value = rest.join('=').trim();
+          process.env[k.trim()] = /^(["']).*\1$/.test(value) ? value.slice(1, -1) : value;
         }
       }
     } catch {}
@@ -88,7 +90,7 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '')
   .filter(Boolean);
 await app.register(cors, {
   origin: process.env.NODE_ENV === 'production' ? allowedOrigins : developmentOrigins,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 });
 await app.register(rateLimit, {
   max: Number(process.env.RATE_LIMIT_MAX || 120),
@@ -112,7 +114,8 @@ let paymentConfig: PaymentConfig = {
   yapeQrUrl: ''
 };
 // En modo de desarrollo o prototipo, el catálogo de contingencia se activa por defecto salvo que DEMO_MODE='false'
-const demoMode = process.env.DEMO_MODE !== 'false';
+const demoMode = process.env.NODE_ENV !== 'production' && process.env.DEMO_MODE === 'true';
+if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_API_KEY) throw new Error('ADMIN_API_KEY is required in production');
 const database = process.env.DATABASE_URL ? new PrismaClient() : null;
 if (process.env.NODE_ENV === 'production' && !database) throw new Error('DATABASE_URL is required in production');
 
@@ -136,8 +139,24 @@ function publicUser(user: { id: string; email: string; name: string; role: strin
 }
 function validAdminKey(req: { headers: Record<string, string | string[] | undefined> }) {
   const key = req.headers['x-admin-key'];
-  return !process.env.ADMIN_API_KEY || key === process.env.ADMIN_API_KEY;
+  return Boolean(process.env.ADMIN_API_KEY && typeof key === 'string' && key === process.env.ADMIN_API_KEY);
 }
+
+// Only the authenticated admin proxy may supply the internal key and role.
+app.addHook('preHandler', async (req, reply) => {
+  const route = req.routeOptions.url || '';
+  const publicRead = ['/health', '/v1/insurers', '/v1/offers', '/v1/payment-config', '/v1/vehicles/:plate', '/v1/soat/consulta'];
+  if (req.method === 'OPTIONS' || (req.method === 'GET' && publicRead.includes(route)) ||
+      (req.method === 'POST' && ['/v1/auth/login', '/v1/quotes'].includes(route))) return;
+  if (!validAdminKey(req)) return reply.status(401).send({ error: 'UNAUTHORIZED' });
+  const role = req.headers['x-admin-role'];
+  const allowedRoles = ['ADMIN', 'OPERATIONS', 'SALES', 'SUPPORT', 'AUDITOR'];
+  if (typeof role !== 'string' || !allowedRoles.includes(role)) return reply.status(403).send({ error: 'FORBIDDEN' });
+  if ((route.startsWith('/v1/admin/') && role !== 'ADMIN') ||
+      (req.method !== 'GET' && !['ADMIN', 'OPERATIONS', 'SALES'].includes(role))) {
+    return reply.status(403).send({ error: 'FORBIDDEN' });
+  }
+});
 
 async function getPaymentConfig(): Promise<PaymentConfig> {
   if (!database) return paymentConfig;
@@ -153,17 +172,14 @@ async function getPaymentConfig(): Promise<PaymentConfig> {
 }
 
 async function savePaymentConfig(next: PaymentConfig): Promise<void> {
-  paymentConfig = next;
-  if (!database) return;
-  try {
+  if (database) {
     await database.appSetting.upsert({
       where: { key: 'payment-config' },
       create: { key: 'payment-config', value: next },
       update: { value: next }
     });
-  } catch (error) {
-    app.log.error({ error }, 'No fue posible guardar la configuración de pagos');
   }
+  paymentConfig = next;
 }
 
 type StoredQuote = Prisma.QuoteGetPayload<{
@@ -225,16 +241,11 @@ function storedQuoteToApi(record: StoredQuote): Quote {
 
 async function loadStoredQuotes() {
   if (!database) return quotes;
-  try {
-    const records = await database.quote.findMany({
-      include: { customer: true, vehicle: true, offers: { include: { insurer: true } }, order: true },
-      orderBy: { createdAt: 'desc' }
-    });
-    return records.map(storedQuoteToApi);
-  } catch (err) {
-    app.log.warn({ err }, 'No fue posible consultar la base de datos para quotes, usando memoria local');
-    return quotes;
-  }
+  const records = await database.quote.findMany({
+    include: { customer: true, vehicle: true, offers: { include: { insurer: true } }, order: true },
+    orderBy: { createdAt: 'desc' }
+  });
+  return records.map(storedQuoteToApi);
 }
 
 // Base tariffs by vehicle type in Peru (PEN - S/)
@@ -304,6 +315,14 @@ export type DynamicTariff = {
 };
 
 const dynamicTariffs = new Map<string, DynamicTariff>();
+async function persistTariffs(next: Map<string, DynamicTariff>) {
+  if (database) {
+    const value = JSON.parse(JSON.stringify(Array.from(next.values())));
+    await database.appSetting.upsert({ where: { key: 'dynamic-tariffs' }, create: { key: 'dynamic-tariffs', value }, update: { value } });
+  }
+  dynamicTariffs.clear();
+  for (const [key, value] of next) dynamicTariffs.set(key, value);
+}
 
 function tariffKey(insurer: string, vehicleType: string, department: string, use: string): string {
   return `${insurer}_${vehicleType}_${department}_${use}`.toLowerCase().replace(/\s+/g, '-');
@@ -352,6 +371,12 @@ function loadScraperCacheTariffs() {
 }
 
 loadScraperCacheTariffs();
+if (database) {
+  const stored = await database.appSetting.findUnique({ where: { key: 'dynamic-tariffs' } });
+  if (Array.isArray(stored?.value)) {
+    for (const item of stored.value as unknown as DynamicTariff[]) dynamicTariffs.set(tariffKey(item.insurerSlug, item.vehicleType, item.department, item.vehicleUse), item);
+  }
+}
 
 export function calculateOffers(
   vehicleType: 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO',
@@ -625,8 +650,7 @@ app.get('/v1/tariffs', async () => {
 app.get('/v1/payment-config', async () => ({ data: await getPaymentConfig() }));
 
 app.put('/v1/admin/payment-config', async (req, reply) => {
-  const adminKey = req.headers['x-admin-key'];
-  if (process.env.ADMIN_API_KEY && adminKey !== process.env.ADMIN_API_KEY) {
+  if (!validAdminKey(req)) {
     return reply.status(401).send({ error: 'UNAUTHORIZED' });
   }
 
@@ -647,16 +671,27 @@ app.put('/v1/admin/payment-config', async (req, reply) => {
 });
 
 app.post('/v1/admin/tariffs', async (req, reply) => {
-  const adminKey = req.headers['x-admin-key'];
-  if (process.env.ADMIN_API_KEY && adminKey !== process.env.ADMIN_API_KEY) {
+  if (!validAdminKey(req)) {
     return reply.status(401).send({ error: 'UNAUTHORIZED' });
   }
 
-  const body = req.body;
-  const items = Array.isArray(body) ? body : [body];
+  const tariffSchema = z.object({
+    insurerSlug: z.enum(['falabella', 'la-positiva', 'mapfre', 'interseguro', 'pacifico', 'protecta']),
+    vehicleType: z.enum(['AUTO', 'MOTO', 'MOTOTAXI', 'VAN', 'CARGO']).default('AUTO'),
+    vehicleUse: z.string().trim().min(1).max(80).default('PARTICULAR'),
+    department: z.string().trim().min(2).max(80).default('Lima'),
+    annualPrice: z.number().finite().positive(),
+    installmentCount: z.number().int().positive().max(24).optional(),
+    installmentAmount: z.number().finite().positive().optional(),
+    source: z.string().max(80).optional(), notes: z.string().max(500).optional()
+  });
+  const parsed = z.array(tariffSchema).min(1).max(500).safeParse(Array.isArray(req.body) ? req.body : [req.body]);
+  if (!parsed.success) return reply.status(400).send({ error: 'VALIDATION_ERROR', details: parsed.error.flatten() });
+  const items = parsed.data;
   let updated = 0;
+  const nextTariffs = new Map(dynamicTariffs);
 
-  for (const item of items as any[]) {
+  for (const item of items) {
     if (!item.insurerSlug || !item.annualPrice || Number(item.annualPrice) <= 0) continue;
     const vehicleType = String(item.vehicleType || 'AUTO').toUpperCase();
     const installmentCount = Math.max(1, Math.floor(Number(item.installmentCount || (vehicleType === 'MOTO' ? 4 : 1))));
@@ -668,7 +703,7 @@ app.post('/v1/admin/tariffs', async (req, reply) => {
       item.department || 'Lima',
       item.vehicleUse || 'PARTICULAR'
     );
-    dynamicTariffs.set(key, {
+    nextTariffs.set(key, {
       insurerSlug: item.insurerSlug,
       vehicleType,
       vehicleUse: String(item.vehicleUse || 'PARTICULAR').toUpperCase(),
@@ -683,11 +718,17 @@ app.post('/v1/admin/tariffs', async (req, reply) => {
     updated++;
   }
 
+  await persistTariffs(nextTariffs);
   return reply.send({ success: true, updated, total: dynamicTariffs.size });
 });
 
 app.post('/v1/admin/tariffs/sync-scraper', async (_req, reply) => {
+  const previous = new Map(dynamicTariffs);
   loadScraperCacheTariffs();
+  const next = new Map(dynamicTariffs);
+  dynamicTariffs.clear();
+  for (const [key, value] of previous) dynamicTariffs.set(key, value);
+  await persistTariffs(next);
   return reply.send({ success: true, total: dynamicTariffs.size });
 });
 
@@ -968,7 +1009,7 @@ app.get('/v1/soat/consulta', async (req, reply) => {
   const matches = data
     .filter((quote) => quote.plate.replace(/-/g, '') === normalizedPlate)
     .filter((quote) => !documentNumber || quote.documentNumber === documentNumber)
-    .filter((quote) => quote.status === 'EMITIDA')
+    .filter((quote) => quote.status === 'EMITIDA' && quote.policyNumber && !quote.policyNumber.startsWith('SOAT-2026-FALA-'))
     .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
   const quote = matches[0];
 
@@ -1082,6 +1123,8 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 app.post('/v1/quotes', async (req, reply) => {
+  const internal = validAdminKey(req) && ['ADMIN', 'OPERATIONS', 'SALES'].includes(String(req.headers['x-admin-role']));
+  if ((req.body as { source?: string })?.source === 'MANUAL' && !internal) return reply.status(403).send({ error: 'FORBIDDEN' });
   const parsed = quoteInput.safeParse(req.body);
   if (!parsed.success) {
     return reply.status(400).send({ error: 'VALIDATION_ERROR', details: parsed.error.flatten() });
@@ -1110,7 +1153,7 @@ app.post('/v1/quotes', async (req, reply) => {
     vehicle: parsed.data.vehicle,
     holderName: parsed.data.holderName,
     selectedOfferId: selectedOffer.id,
-    selectedPrice: parsed.data.selectedPrice ?? selectedOffer.price,
+    selectedPrice: internal ? (parsed.data.selectedPrice ?? selectedOffer.price) : selectedOffer.price,
     advisorName: parsed.data.advisorName,
     assistedNotes: parsed.data.assistedNotes,
     offers,
@@ -1207,8 +1250,8 @@ app.post('/v1/quotes', async (req, reply) => {
         }
       });
     } catch (err) {
-      app.log.warn({ err }, 'Error guardando en base de datos, almacenando cotización en memoria');
-      quotes.unshift(quote);
+      app.log.error({ err }, 'Error guardando cotización');
+      return reply.status(503).send({ error: 'DATABASE_UNAVAILABLE', message: 'No se guardó la cotización. Inténtalo nuevamente.' });
     }
   } else {
     quotes.unshift(quote);
@@ -1216,137 +1259,12 @@ app.post('/v1/quotes', async (req, reply) => {
   return reply.status(201).send({ data: quote, offers });
 });
 
-app.post('/v1/quotes/:id/emit', async (req, reply) => {
-  const { id } = req.params as { id: string };
-  const body = (req.body || {}) as {
-    advisorName?: string;
-    realPrice?: number;
-    assistedNotes?: string;
-    selectedOfferId?: string;
-    holderName?: string;
-    vehicle?: {
-      brand?: string;
-      model?: string;
-      year?: number;
-      color?: string;
-      vin?: string;
-      chassisNumber?: string;
-      use?: string;
-      department?: string;
-    };
-    paymentMethod?: 'CASH' | 'INSTALLMENTS';
-    installmentCount?: number;
-    installmentAmount?: number;
-  };
-  const data = await loadStoredQuotes();
-  const quote = data.find((q) => q.id === id || q.code === id);
-  if (!quote) return reply.status(404).send({ error: 'QUOTE_NOT_FOUND' });
-
-  if (quote.status === 'EMITIDA') {
-    return reply.send({ data: quote });
-  }
-
-  if (!body.holderName?.trim() && !quote.holderName?.trim()) {
-    return reply.status(400).send({
-      error: 'HOLDER_NAME_REQUIRED',
-      message: 'Los nombres y apellidos del contratante son obligatorios para emitir la póliza.'
-    });
-  }
-
-  quote.status = 'EMITIDA';
-  quote.emittedAt = new Date().toISOString();
-  quote.policyNumber = quote.policyNumber || `SOAT-2026-FALA-${Math.floor(100000 + Math.random() * 900000)}`;
-  if (body.advisorName) quote.advisorName = body.advisorName;
-  if (body.realPrice) quote.selectedPrice = body.realPrice;
-  if (body.assistedNotes) quote.assistedNotes = body.assistedNotes;
-  if (body.selectedOfferId) quote.selectedOfferId = body.selectedOfferId;
-  if (body.holderName) quote.holderName = body.holderName;
-  if (body.vehicle) {
-    quote.vehicle = { ...(quote.vehicle || {}), ...body.vehicle };
-  }
-  if (body.paymentMethod) quote.paymentMethod = body.paymentMethod;
-  quote.installmentCount = body.paymentMethod === 'INSTALLMENTS' ? body.installmentCount : undefined;
-  quote.installmentAmount = body.paymentMethod === 'INSTALLMENTS' ? body.installmentAmount : undefined;
-
-  if (database) {
-    let customerId: string | undefined;
-    if (quote.holderName) {
-      const parts = quote.holderName.trim().split(/\s+/);
-      const firstName = parts[0] || 'Cliente';
-      const lastName = parts.slice(1).join(' ') || 'Titular';
-      const cust = await database.customer.upsert({
-        where: {
-          documentType_documentNumber: {
-            documentType: quote.documentType,
-            documentNumber: quote.documentNumber
-          }
-        },
-        update: { firstName, lastName },
-        create: {
-          documentType: quote.documentType,
-          documentNumber: quote.documentNumber,
-          firstName,
-          lastName,
-          email: `${quote.documentNumber.toLowerCase()}@segurosfalabella.pe`
-        }
-      }).catch(() => null);
-      if (cust) customerId = cust.id;
-    }
-
-    const storedQuote = await database.quote
-      .update({
-        where: { id: quote.id },
-        data: {
-          status: 'ISSUED',
-          selectedPrice: quote.selectedPrice,
-          selectedOfferId: quote.selectedOfferId,
-          ...(customerId ? { customerId } : {})
-        },
-        include: { offers: { include: { insurer: true } }, order: true }
-      })
-      .catch(() => null);
-
-    if (storedQuote) {
-      const selectedOffer = storedQuote.offers.find((offer) => offer.insurer.slug === quote.selectedOfferId);
-      if (selectedOffer) {
-        const order = await database.order.upsert({
-          where: { quoteId: quote.id },
-          update: {
-            status: 'ISSUED',
-            amount: quote.selectedPrice ?? Number(selectedOffer.annualPrice || 0),
-            policyNumber: quote.policyNumber
-          },
-          create: {
-            code: `ORD-${quote.code}`,
-            status: 'ISSUED',
-            quoteId: quote.id,
-            offerId: selectedOffer.id,
-            amount: quote.selectedPrice ?? Number(selectedOffer.annualPrice || 0),
-            policyNumber: quote.policyNumber
-          }
-        }).catch(() => null);
-        if (order) quote.emittedAt = order.updatedAt.toISOString();
-      }
-    }
-
-    if (quote.vehicle && (quote.vehicle.brand || quote.vehicle.model)) {
-      await database.vehicle
-        .update({
-          where: { plate: quote.plate },
-          data: {
-            brand: quote.vehicle.brand,
-            model: quote.vehicle.model,
-            year: quote.vehicle.year ? Number(quote.vehicle.year) : undefined,
-            chassisNumber: quote.vehicle.chassisNumber || quote.vehicle.vin,
-            use: quote.vehicle.use || quote.vehicleUse || undefined,
-            department: quote.vehicle.department || quote.department
-          }
-        })
-        .catch(() => {});
-    }
-  }
-  return reply.send({ data: quote });
-});
+app.post('/v1/quotes/:id/emit', async (_req, reply) =>
+  reply.status(501).send({
+    error: 'ISSUANCE_PROVIDER_NOT_CONNECTED',
+    message: 'La emisión está deshabilitada hasta verificar el pago y recibir la póliza oficial de la aseguradora.'
+  })
+);
 
 app.post('/v1/orders', async (_req, reply) =>
   reply.status(501).send({
@@ -1355,13 +1273,15 @@ app.post('/v1/orders', async (_req, reply) =>
   })
 );
 
+await registerSoatRegistry(app, database);
+
 const port = Number(process.env.API_PORT || 4000);
 if (database) {
   try {
     await database.$connect();
     app.log.info('Conexión con PostgreSQL establecida');
   } catch (err) {
-    app.log.warn({ err }, 'No se pudo conectar con PostgreSQL al iniciar. Operando en memoria / modo contingencia.');
+    throw err;
   }
 }
 app.addHook('onClose', async () => {

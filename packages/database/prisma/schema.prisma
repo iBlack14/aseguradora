@@ -173,3 +173,34 @@ model AppSetting {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model SoatCertificate {
+  id                     String   @id @default(cuid())
+  Placa                  String
+  NombreCompania         String
+  NumeroPoliza           String
+  FechaInicio            String
+  FechaFin               String
+  Estado                 String
+  NombreUsoVehiculo      String
+  NombreClaseVehiculo    String
+  TipoCertificado        String
+  CodigoUnicoPoliza      String?
+  CodigoSBSAseguradora   String?
+  FechaControlPolicial   String?
+  NombreContratante      String?
+  NombreUbigeo           String?
+  NumeroSerieMotor       String?
+  NumeroSerieChasis      String?
+  NumeroAseguradora      String?
+  FechaCreacion          String?
+  FechaAnulacion         String?
+  NumeroAsientos         Int?
+  ModeloVehiculo         String?
+  Marca                  String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@unique([Placa, NombreCompania, NumeroPoliza])
+  @@index([Placa, FechaInicio])
+}

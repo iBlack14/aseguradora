@@ -8,6 +8,7 @@ COPY apps/api/package.json apps/api/package.json
 COPY packages/database/package.json packages/database/package.json
 COPY packages/ui/package.json packages/ui/package.json
 COPY packages/validation/package.json packages/validation/package.json
+COPY apps/consulta/package.json apps/consulta/package.json
 RUN npm ci
 COPY tsconfig.base.json ./
 COPY apps/cotizador apps/cotizador

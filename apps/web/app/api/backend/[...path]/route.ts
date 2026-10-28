@@ -8,6 +8,10 @@ async function proxy(request: NextRequest, { params }: { params: Promise<{ path:
     return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
   }
   const path = segments.join('/');
+  const allowed = request.method === 'GET'
+    ? /^(v1\/(insurers|offers|payment-config|soat\/consulta)|v1\/vehicles\/[A-Za-z0-9-]+)$/.test(path)
+    : request.method === 'POST' && path === 'v1/quotes';
+  if (!allowed) return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
   const target = new URL(path, `${apiBaseUrl().replace(/\/$/, '')}/`);
   target.search = request.nextUrl.search;
 
