@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState, useEffect } from 'react';
-import { getBrandsForType, getModelsForBrand } from '@/lib/vehicleCatalog';
+import { getBrandsForType, getModelsForBrand, resolveCatalogBrand } from '@/lib/vehicleCatalog';
 
 type VehicleType = 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO';
 
@@ -396,7 +396,7 @@ export default function ResultsPage() {
                   <label className="font-bold text-[#161c22] block mb-1">Clase / Categoría</label>
                   <select
                     value={editType}
-                    onChange={(e) => setEditType(e.target.value as VehicleType)}
+                    onChange={(e) => { setEditType(e.target.value as VehicleType); setEditBrand(''); setEditModel(''); setIsCustomBrand(false); setIsCustomModel(false); }}
                     className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] text-xs font-semibold outline-none focus:border-[#486800] bg-white"
                   >
                     <option value="AUTO">Auto / Camioneta</option>
@@ -409,19 +409,16 @@ export default function ResultsPage() {
                 <div>
                   <label className="font-bold text-[#161c22] block mb-1">Marca del vehículo</label>
                   <select
-                    value={isCustomBrand ? '__OTRA__' : (modalAvailableBrands.includes(editBrand) ? editBrand : (editBrand ? '__OTRA__' : ''))}
+                    value={isCustomBrand ? '__OTRA__' : (modalAvailableBrands.includes(resolveCatalogBrand(editType, editBrand)) ? resolveCatalogBrand(editType, editBrand) : (editBrand ? '__OTRA__' : ''))}
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val === '__OTRA__') {
-                        setIsCustomBrand(true);
+                        setIsCustomBrand(true); setEditBrand(''); setEditModel(''); setIsCustomModel(false);
                       } else {
                         setIsCustomBrand(false);
                         setEditBrand(val);
-                        const models = getModelsForBrand(editType, val);
-                        if (models.length > 0) {
-                          setEditModel(models[0]);
-                          setIsCustomModel(false);
-                        }
+                        setEditModel('');
+                              setIsCustomModel(false);
                       }
                     }}
                     className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] text-xs font-semibold outline-none focus:border-[#486800] bg-white"
@@ -434,7 +431,7 @@ export default function ResultsPage() {
                     ))}
                     <option value="__OTRA__">Otra marca (escribir)...</option>
                   </select>
-                  {(isCustomBrand || (editBrand && !modalAvailableBrands.includes(editBrand))) && (
+                  {(isCustomBrand || (editBrand && !modalAvailableBrands.includes(resolveCatalogBrand(editType, editBrand)))) && (
                     <input
                       type="text"
                       value={editBrand}

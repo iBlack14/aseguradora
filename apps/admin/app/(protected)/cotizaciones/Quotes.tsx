@@ -1,7 +1,7 @@
 'use client';
 import { FormEvent, useCallback, useEffect, useState, useMemo } from 'react';
 import { generateAndDownloadSoatPdf } from '@/lib/generateSoatPdf';
-import { getBrandsForType, getModelsForBrand } from '@/lib/vehicleCatalog';
+import { getBrandsForType, getModelsForBrand, resolveCatalogBrand } from '@/lib/vehicleCatalog';
 
 type OfferDetail = {
   id: string;
@@ -404,6 +404,12 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
 
   // Update offers if the operator manually changes the vehicle type
   async function handleVehicleTypeChange(newType: Vehicle['vehicleType'], department = adminDepartment, use = adminUse) {
+    if (newType !== vehicleType) {
+      setAdminBrand('');
+      setAdminModel('');
+      setAdminCustomBrand(false);
+      setAdminCustomModel(false);
+    }
     setVehicleType(newType);
     const plate = (document.getElementById('plate') as HTMLInputElement)?.value.trim() || 'ABC-123';
     try {
@@ -605,14 +611,13 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
                 </select>
               </label>
               <label>
-                Marca
-                <select value={adminCustomBrand ? '__OTRA__' : (adminAvailableBrands.includes(adminBrand) ? adminBrand : (adminBrand ? '__OTRA__' : ''))} onChange={(e) => {
+                Marca ({adminAvailableBrands.length} disponibles)
+                <select value={adminCustomBrand ? '__OTRA__' : (adminAvailableBrands.includes(resolveCatalogBrand(vehicleType, adminBrand)) ? resolveCatalogBrand(vehicleType, adminBrand) : (adminBrand ? '__OTRA__' : ''))} onChange={(e) => {
                   const val = e.target.value;
-                  if (val === '__OTRA__') setAdminCustomBrand(true);
+                  if (val === '__OTRA__') { setAdminCustomBrand(true); setAdminBrand(''); setAdminModel(''); setAdminCustomModel(false); }
                   else {
                     setAdminCustomBrand(false); setAdminBrand(val);
-                    const models = getModelsForBrand(vehicleType, val);
-                    if (models.length > 0) { setAdminModel(models[0]); setAdminCustomModel(false); }
+                    setAdminModel(''); setAdminCustomModel(false);
                   }
                 }}>
                   <option value="">Selecciona una marca</option>
@@ -620,7 +625,7 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
                   <option value="__OTRA__">Otra marca</option>
                 </select>
               </label>
-              {(adminCustomBrand || (adminBrand && !adminAvailableBrands.includes(adminBrand))) && <label>Escribe la marca<input value={adminBrand} onChange={(e) => setAdminBrand(e.target.value)} /></label>}
+              {(adminCustomBrand || (adminBrand && !adminAvailableBrands.includes(resolveCatalogBrand(vehicleType, adminBrand)))) && <label>Escribe la marca<input value={adminBrand} onChange={(e) => setAdminBrand(e.target.value)} /></label>}
               <label>
                 Modelo
                 {adminAvailableModels.length > 0 ? <select value={adminCustomModel ? '__OTRO__' : (adminAvailableModels.includes(adminModel) ? adminModel : (adminModel ? '__OTRO__' : ''))} onChange={(e) => {
@@ -1108,22 +1113,20 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
 
                   <div>
                     <label style={{ display: 'block', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
-                      Marca del vehículo (Selector) <span style={{ color: '#dc2626' }}>*</span>
+                      Marca del vehículo ({modalAvailableBrands.length} disponibles) <span style={{ color: '#dc2626' }}>*</span>
                     </label>
                     <select
-                      value={editCustomBrand ? '__OTRA__' : (modalAvailableBrands.includes(editBrand) ? editBrand : (editBrand ? '__OTRA__' : ''))}
+                      value={editCustomBrand ? '__OTRA__' : (modalAvailableBrands.includes(resolveCatalogBrand(modalVehicleType, editBrand)) ? resolveCatalogBrand(modalVehicleType, editBrand) : (editBrand ? '__OTRA__' : ''))}
                       onChange={(e) => {
                         const val = e.target.value;
                         if (val === '__OTRA__') {
                           setEditCustomBrand(true);
+                          setEditBrand(''); setEditModel(''); setEditCustomModel(false);
                         } else {
                           setEditCustomBrand(false);
                           setEditBrand(val);
-                          const models = getModelsForBrand(modalVehicleType, val);
-                          if (models.length > 0) {
-                            setEditModel(models[0]);
-                            setEditCustomModel(false);
-                          }
+                          setEditModel('');
+                          setEditCustomModel(false);
                         }
                       }}
                       style={{
@@ -1143,7 +1146,7 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
                       ))}
                       <option value="__OTRA__">Otra marca (escribir)...</option>
                     </select>
-                    {(editCustomBrand || (editBrand && !modalAvailableBrands.includes(editBrand))) && (
+                    {(editCustomBrand || (editBrand && !modalAvailableBrands.includes(resolveCatalogBrand(modalVehicleType, editBrand)))) && (
                       <input
                         value={editBrand}
                         onChange={(e) => setEditBrand(e.target.value)}

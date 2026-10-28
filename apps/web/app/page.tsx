@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState, useRef, useMemo } from 'react';
-import { getBrandsForType, getModelsForBrand } from '@/lib/vehicleCatalog';
+import { getBrandsForType, getModelsForBrand, resolveCatalogBrand } from '@/lib/vehicleCatalog';
 
 type VehicleType = 'AUTO' | 'MOTO' | 'MOTOTAXI' | 'VAN' | 'CARGO';
 
@@ -376,6 +376,7 @@ export default function HomePage() {
                     type="button"
                     onClick={() => {
                       setVehicleType(tab.type);
+                      if (tab.type !== vehicleType) { setBrand(''); setModel(''); setIsCustomBrand(false); setIsCustomModel(false); }
                       setLookupMessage(null);
                     }}
                     className={`flex-1 min-w-[90px] py-2.5 px-3 rounded-xl text-center text-[13px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
@@ -414,6 +415,7 @@ export default function HomePage() {
                       type="button"
                       onClick={() => {
                         setVehicleType(tab.type);
+                        if (tab.type !== vehicleType) { setBrand(''); setModel(''); setIsCustomBrand(false); setIsCustomModel(false); }
                         setLookupMessage(null);
                         setShowMoreVehicleTypes(false);
                       }}
@@ -510,23 +512,20 @@ export default function HomePage() {
                     <div className="mt-2.5 p-3.5 bg-[#f8faf4] border border-[#d8e7bd] rounded-xl grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs animate-fade-in">
                       <div>
                         <label className="font-bold text-[#161c22] block mb-1">
-                          Marca del vehículo <span className="text-[#ba1a1a]">*</span>
+                          Marca del vehículo ({availableBrands.length} disponibles) <span className="text-[#ba1a1a]">*</span>
                         </label>
                         {/* Selector desplegable de Marca */}
                         <select
-                          value={isCustomBrand ? '__OTRA__' : (availableBrands.includes(brand) ? brand : (brand ? '__OTRA__' : ''))}
+                          value={isCustomBrand ? '__OTRA__' : (availableBrands.includes(resolveCatalogBrand(vehicleType, brand)) ? resolveCatalogBrand(vehicleType, brand) : (brand ? '__OTRA__' : ''))}
                           onChange={(e) => {
                             const val = e.target.value;
                             if (val === '__OTRA__') {
-                              setIsCustomBrand(true);
+                              setIsCustomBrand(true); setBrand(''); setModel(''); setIsCustomModel(false);
                             } else {
                               setIsCustomBrand(false);
                               setBrand(val);
-                              const models = getModelsForBrand(vehicleType, val);
-                              if (models.length > 0 && !models.includes(model)) {
-                                setModel(models[0]);
-                                setIsCustomModel(false);
-                              }
+                              setModel('');
+                              setIsCustomModel(false);
                             }
                           }}
                           className="w-full h-10 px-3 rounded-lg border border-[#dde3eb] bg-white text-xs font-semibold outline-none focus:border-[#486800] focus:ring-2 focus:ring-[#8bc500]/20"
@@ -541,7 +540,7 @@ export default function HomePage() {
                         </select>
 
                         {/* Entrada manual para otra marca */}
-                        {(isCustomBrand || (brand && !availableBrands.includes(brand))) && (
+                        {(isCustomBrand || (brand && !availableBrands.includes(resolveCatalogBrand(vehicleType, brand)))) && (
                           <input
                             type="text"
                             value={brand}
