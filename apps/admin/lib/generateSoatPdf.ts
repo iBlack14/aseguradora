@@ -184,7 +184,8 @@ export async function generateAndDownloadSoatPdf(quote: QuoteForPdf) {
 
   const vin = quote.vehicle?.vin || quote.vehicle?.chassisNumber || 'NO INFORMADO';
   const vehicleClass = quote.vehicleType || 'Vehículo Menor';
-  const holder = quote.holderName?.trim() || `TITULAR ${quote.documentType || 'DNI'} ${quote.documentNumber}`;
+  const holder = quote.holderName?.trim().replace(/\s+titular$/i, '').trim();
+  if (!holder || /^titular$/i.test(holder)) throw new Error('Completa el nombre del contratante antes de generar el PDF.');
   const price = quote.selectedPrice || 0;
 
   // 1. Logo oficial del MTC en la cabecera superior izquierda

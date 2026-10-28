@@ -956,7 +956,7 @@ export default function Quotes({ isAdmin, canSell = false }: { isAdmin: boolean;
               </div>
             </div>
 
-            {selectedQuote.offers && selectedQuote.offers.length > 0 && (
+            {selectedQuote.status !== 'EMITIDA' && selectedQuote.status !== 'ANULADA' && selectedQuote.offers && selectedQuote.offers.length > 0 && (
               <div>
                 <h3 style={{ margin: '14px 0 8px', fontSize: 15 }}>Comparativa de Aseguradoras para esta Placa</h3>
                 <table className="offers-table">

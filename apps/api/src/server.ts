@@ -218,7 +218,7 @@ function storedQuoteToApi(record: StoredQuote): Quote {
       }
     : undefined;
   const holderName = record.customer
-    ? `${record.customer.firstName} ${record.customer.lastName}`.trim()
+    ? `${record.customer.firstName} ${/^titular$/i.test(record.customer.lastName.trim()) ? '' : record.customer.lastName}`.trim()
     : undefined;
   return {
     id: record.id,
@@ -1175,7 +1175,7 @@ app.post('/v1/quotes', async (req, reply) => {
         if (quote.holderName) {
           const parts = quote.holderName.trim().split(/\s+/);
           const firstName = parts[0] || 'Cliente';
-          const lastName = parts.slice(1).join(' ') || 'Titular';
+          const lastName = parts.slice(1).join(' ');
           const customer = await transaction.customer.upsert({
             where: {
               documentType_documentNumber: {
