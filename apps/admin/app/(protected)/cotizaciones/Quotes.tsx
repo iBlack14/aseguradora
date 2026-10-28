@@ -1,6 +1,7 @@
 'use client';
 import { FormEvent, useCallback, useEffect, useState, useMemo } from 'react';
 import { generateAndDownloadSoatPdf } from '@/lib/generateSoatPdf';
+
 import { getBrandsForType, getModelsForBrand, resolveCatalogBrand } from '@/lib/vehicleCatalog';
 
 type OfferDetail = {
@@ -38,6 +39,7 @@ type Quote = {
   assistedNotes?: string;
   emittedAt?: string;
   policyNumber?: string;
+  policyUrl?: string;
   paymentMethod?: 'CASH' | 'INSTALLMENTS';
   installmentCount?: number;
   installmentAmount?: number;
@@ -123,7 +125,7 @@ const basePriceByVehicle: Record<Vehicle['vehicleType'], number> = {
 type TariffEditor = { annualPrice: string; installmentAmount: string; installmentCount: string };
 type TariffResponse = { baseTariffs: Record<string, Record<string, number>>; tariffs: Array<{ insurerSlug: string; vehicleType: string; vehicleUse: string; department: string; annualPrice: number; installmentAmount?: number; installmentCount?: number }> };
 
-export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
+export default function Quotes({ isAdmin, canSell = false }: { isAdmin: boolean; canSell?: boolean }) {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -133,9 +135,10 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
   const [offers, setOffers] = useState<OfferDetail[]>([]);
   const [selectedOfferId, setSelectedOfferId] = useState<string>('la-positiva');
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
-  const [emissionQuote, setEmissionQuote] = useState<Quote | null>(null);
+
   const [emitting, setEmitting] = useState(false);
-  const [copiedPlate, setCopiedPlate] = useState(false);
+  const [paymentReference, setPaymentReference] = useState('');
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [realPriceOverride, setRealPriceOverride] = useState('');
   const [advisorName, setAdvisorName] = useState('Asesor de operaciones');
   const [assistedNotes, setAssistedNotes] = useState('');
@@ -181,6 +184,8 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
   const modalAvailableModels = useMemo(() => getModelsForBrand(modalVehicleType, editBrand), [modalVehicleType, editBrand]);
 
   function openQuoteDetail(q: Quote) {
+    setPaymentReference('');
+    setPaymentConfirmed(false);
     setSelectedQuote(q);
     setEditHolderName(q.holderName || '');
     setEditBrand(q.vehicle?.brand || '');
@@ -193,9 +198,9 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
     setEditPrice(q.selectedPrice ? q.selectedPrice.toFixed(2) : `${basePriceByVehicle[q.vehicleType] || 65}.00`);
     const selectedOffer = q.offers?.find((offer) => offer.id === q.selectedOfferId);
     const hasInstallments = Boolean(selectedOffer?.installmentCount && selectedOffer.installmentCount > 1);
-    setEditPaymentMethod(hasInstallments ? 'INSTALLMENTS' : 'CASH');
-    setEditInstallmentCount(String(selectedOffer?.installmentCount || 4));
-    setEditInstallmentAmount(selectedOffer?.installmentAmount?.toFixed(2) || '');
+    setEditPaymentMethod(q.paymentMethod || (hasInstallments ? 'INSTALLMENTS' : 'CASH'));
+    setEditInstallmentCount(String(q.installmentCount || selectedOffer?.installmentCount || 4));
+    setEditInstallmentAmount((q.installmentAmount || selectedOffer?.installmentAmount)?.toFixed(2) || '');
     setEditCustomBrand(false);
     setEditCustomModel(false);
   }
@@ -254,7 +259,7 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
     updatedVehicle?: Partial<NonNullable<Quote['vehicle']>>,
     payment?: { method: 'CASH' | 'INSTALLMENTS'; installmentCount?: number; installmentAmount?: number }
   ) {
-    if (q.status === 'EMITIDA' || q.status === 'ANULADA' || emitting) return;
+    if (!canSell || q.status === 'EMITIDA' || q.status === 'ANULADA' || emitting) return;
     const finalOfferId = offerId || q.selectedOfferId || selectedOfferId || 'la-positiva';
     const finalPrice = overridePrice || (realPriceOverride ? parseFloat(realPriceOverride) : q.selectedPrice);
     const finalHolderName = updatedHolderName !== undefined ? updatedHolderName : q.holderName;
@@ -266,6 +271,8 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          paymentReference: paymentReference.trim(),
+          paymentConfirmed,
           advisorName,
           assistedNotes,
           realPrice: finalPrice,
@@ -279,23 +286,26 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
       });
       if (res.ok) {
         const result = await res.json();
-        const emittedData = result.data || {
-          ...q,
-          selectedOfferId: finalOfferId,
-          selectedPrice: finalPrice,
-          holderName: finalHolderName,
-          vehicle: finalVehicle
-        };
+        const emittedData: Quote = result.data;
+        if (!emittedData?.policyNumber || emittedData.status !== 'EMITIDA') {
+          alert('No se recibió la póliza emitida. Actualiza la lista para verificar el estado antes de reintentar.');
+          return;
+        }
         if (!emittedData.selectedOfferId) emittedData.selectedOfferId = finalOfferId;
         if (!emittedData.holderName && finalHolderName) emittedData.holderName = finalHolderName;
         if (!emittedData.vehicle && finalVehicle) emittedData.vehicle = finalVehicle;
         emittedData.paymentMethod = payment?.method;
         emittedData.installmentCount = payment?.installmentCount;
         emittedData.installmentAmount = payment?.installmentAmount;
-        setEmissionQuote(emittedData);
+        setSelectedQuote(emittedData);
         setQuotes((currentQuotes) => currentQuotes.map((currentQuote) =>
           currentQuote.id === emittedData.id ? emittedData : currentQuote
         ));
+        try {
+          await generateAndDownloadSoatPdf(emittedData);
+        } catch {
+          alert(`La póliza ${emittedData.policyNumber} está guardada. No se pudo descargar el PDF; vuelve a intentarlo con Descargar PDF.`);
+        }
       } else {
         const failure = await res.json().catch(() => null) as { message?: string } | null;
         alert(failure?.message || 'No fue posible emitir la póliza. Inténtalo nuevamente.');
@@ -505,12 +515,12 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
           <p className="muted">Operaciones SOAT</p>
           <h1>Bandeja de Cotizaciones</h1>
         </div>
-        <button className="button" onClick={() => setShowForm((v) => !v)}>
+        {canSell && <button className="button" onClick={() => setShowForm((v) => !v)}>
           {showForm ? 'Cerrar formulario' : '+ Nueva cotización'}
-        </button>
+        </button>}
       </header>
 
-      {showForm && (
+      {canSell && showForm && (
         <form className="card quote-form" onSubmit={submit}>
           <div className="form-heading">
             <div>
@@ -820,22 +830,13 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
                     <td data-label="Fecha">{new Date(q.createdAt).toLocaleString('es-PE')}</td>
                     <td data-label="Acciones">
                       <div className="quote-actions">
-                        {q.status !== 'EMITIDA' && (
-                          <button
-                            className="button ghost"
-                            style={{ padding: '6px 10px', fontSize: 12 }}
-                            onClick={() => openQuoteDetail(q)}
-                          >
-                            Ver detalle
-                          </button>
-                        )}
-                        {q.status !== 'ANULADA' && <button
-                            className="button"
-                            style={{ padding: '6px 12px', fontSize: 12, background: q.status === 'EMITIDA' ? '#0f766e' : '#16a34a' }}
-                            onClick={() => openQuoteDetail(q)}
-                          >
-                            Ver detalle
-                          </button>}
+                        <button
+                          className="button ghost"
+                          style={{ padding: '6px 10px', fontSize: 12 }}
+                          onClick={() => openQuoteDetail(q)}
+                        >
+                          Ver detalle
+                        </button>
                         {q.status === 'EMITIDA' ? (
                           <button
                             className="button ghost"
@@ -965,7 +966,7 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
                       <th>Plan</th>
                       <th>Beneficio Destacado</th>
                         <th>Precio Anual</th>
-                        {isAdmin && <th>Cuotas</th>}
+                        {canSell && <th>Cuotas</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -1012,72 +1013,13 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
                         <td>{off.plan}</td>
                         <td>{off.extras[0] || 'Asistencia en ruta'}</td>
                         <td className="price-pill">S/ {off.price.toFixed(2)}</td>
-                        {isAdmin && <td>{off.installmentAmount && off.installmentCount && off.installmentCount > 1 ? `${off.installmentCount} × S/ ${off.installmentAmount.toFixed(2)}` : 'Pago único'}</td>}
+                        {canSell && <td>{off.installmentAmount && off.installmentCount && off.installmentCount > 1 ? `${off.installmentCount} × S/ ${off.installmentAmount.toFixed(2)}` : 'Pago único'}</td>}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             )}
-
-            {/* Módulo de Cotización Asistida para esta cotización */}
-            <div style={{ marginTop: 16, padding: 14, background: '#f8faf4', border: '1.5px solid #d8e7bd', borderRadius: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                <div>
-                  <strong style={{ fontSize: 13, color: 'var(--green)' }}>
-                    Cotización Asistida Oficial (5 Aseguradoras)
-                  </strong>
-                  <p style={{ margin: 0, fontSize: 11, color: 'var(--muted)' }}>
-                    Verifica la placa en el cotizador oficial de cada aseguradora antes de emitir:
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="button ghost"
-                  style={{ fontSize: 11, padding: '4px 10px' }}
-                  onClick={() => {
-                    navigator.clipboard.writeText(selectedQuote.plate);
-                    setCopiedPlate(true);
-                    setTimeout(() => setCopiedPlate(false), 2000);
-                  }}
-                >
-                  {copiedPlate ? '✓ ¡Placa copiada!' : `📋 Copiar placa: ${selectedQuote.plate}`}
-                </button>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
-                {[
-                  { id: 'la-positiva', name: 'La Positiva', url: 'https://www.lapositiva.com.pe/wps/portal/corporativo/home/cotizador/' },
-                  { id: 'pacifico', name: 'Pacífico', url: 'https://www.pacifico.com.pe/seguros/soat' },
-                  { id: 'mapfre', name: 'MAPFRE', url: 'https://www.mapfre.com.pe/seguro-soat/' },
-                  { id: 'interseguro', name: 'Interseguro', url: 'https://www.interseguro.pe/soat' },
-                  { id: 'protecta', name: 'Protecta Security', url: 'https://www.protectasecurity.pe/soat' },
-                ].map((ins) => (
-                  <a
-                    key={ins.id}
-                    href={ins.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '6px 10px',
-                      background: '#fff',
-                      border: '1px solid #cfd8c5',
-                      borderRadius: 6,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: '#18210d',
-                      textDecoration: 'none'
-                    }}
-                  >
-                    <span>{ins.name}</span>
-                    <span style={{ color: 'var(--green)' }}>↗</span>
-                  </a>
-                ))}
-              </div>
-            </div>
 
             {/* Formulario de Verificación y Relleno de Datos Oficiales Antes de Emitir */}
             {selectedQuote.status !== 'EMITIDA' && selectedQuote.status !== 'ANULADA' && (
@@ -1294,7 +1236,7 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
 
                 </div>
 
-                {isAdmin && <div className="payment-config">
+                {canSell && <div className="payment-config">
                   <div className="payment-config-heading">
                     <div>
                       <strong>Forma de pago</strong>
@@ -1329,6 +1271,12 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
                     )}
                   </div>
                 </div>}
+                {canSell && <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
+                  <strong>Emisión y certificado PDF</strong>
+                  <p style={{ margin: 0, fontSize: 12 }}>Al emitir se asignará un número único de la serie 120605000-0 en adelante y se descargará el PDF.</p>
+                  <label>Referencia del pago / comprobante *<input value={paymentReference} onChange={e => setPaymentReference(e.target.value)} maxLength={200} /></label>
+                  <label><input type="checkbox" checked={paymentConfirmed} onChange={e => setPaymentConfirmed(e.target.checked)} /> Confirmo que verifiqué el pago recibido y los datos para emitir.</label>
+                </div>}
               </div>
             )}
 
@@ -1336,21 +1284,24 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
               <button className="button ghost" onClick={() => setSelectedQuote(null)}>
                 Cerrar detalle
               </button>
-              {selectedQuote.status !== 'ANULADA' && <button
+              {selectedQuote.status === 'EMITIDA' && selectedQuote.policyUrl && <a className="button" href={selectedQuote.policyUrl} target="_blank" rel="noopener noreferrer">Ver póliza oficial</a>}
+              {(selectedQuote.status === 'EMITIDA' || selectedQuote.status === 'ANULADA') && selectedQuote.policyNumber && <span style={{ alignSelf: 'center' }}>Póliza: <strong>{selectedQuote.policyNumber}</strong></span>}
+              {selectedQuote.status === 'EMITIDA' && selectedQuote.policyNumber && <button className="button" onClick={() => generateAndDownloadSoatPdf(selectedQuote).catch(() => alert('No se pudo descargar el PDF. La póliza sigue guardada.'))}>Descargar PDF</button>}
+              {canSell && selectedQuote.status !== 'EMITIDA' && selectedQuote.status !== 'ANULADA' && <button
                 className="button"
-                disabled={true} title="Emisión y certificados deshabilitados hasta conectar la aseguradora"
-                style={{ background: selectedQuote.status === 'EMITIDA' ? '#0f766e' : '#16a34a' }}
+                disabled={emitting || !paymentConfirmed || !paymentReference.trim()} title="Confirma los datos y el pago para emitir"
+                style={{ background: '#16a34a' }}
                 onClick={() => {
                   const q = selectedQuote;
-                  if (q.status === 'EMITIDA') {
-                    setSelectedQuote(null);
-                    setEmissionQuote(q);
-                  } else {
                     if (!editHolderName.trim()) {
                       alert('Por favor ingresa los Nombres y Apellidos del Contratante / Titular antes de emitir.');
                       return;
                     }
-                    const finalP = parseFloat(editPrice) || q.selectedPrice || 65;
+                    const finalP = Number(editPrice);
+                    if (!Number.isFinite(finalP) || finalP <= 0) {
+                      alert('Ingresa un precio total válido.');
+                      return;
+                    }
                     const installmentCount = Number(editInstallmentCount);
                     const installmentAmount = Number(editInstallmentAmount);
                     if (editPaymentMethod === 'INSTALLMENTS' && (!Number.isInteger(installmentCount) || installmentCount < 2 || !installmentAmount || installmentAmount <= 0)) {
@@ -1362,7 +1313,6 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
                     const finalYear = Number(editYear) || q.vehicle?.year || 2023;
                     const finalVin = editVin || q.vehicle?.chassisNumber || q.vehicle?.vin || '';
 
-                    setSelectedQuote(null);
                     handleEmit(
                       q,
                       finalP,
@@ -1381,264 +1331,15 @@ export default function Quotes({ isAdmin }: { isAdmin: boolean }) {
                         ? { method: 'INSTALLMENTS', installmentCount, installmentAmount }
                         : { method: 'CASH' }
                     );
-                  }
                 }}
               >
-                {selectedQuote.status === 'EMITIDA'
-                  ? 'Certificado pendiente de verificación'
-                  : 'Emisión no disponible'}
+                {emitting ? 'Emitiendo…' : 'Emitir SOAT y generar PDF'}
               </button>}
             </div>
           </div>
         </div>
       )}
 
-      {/* Official SOAT Certificate Modal */}
-      {emissionQuote && (
-        <div className="modal-overlay" onClick={() => setEmissionQuote(null)}>
-          <div
-            className="modal-box"
-            style={{ maxWidth: 840, padding: 24, background: '#fff' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div>
-                <strong style={{ fontSize: 16, color: 'var(--green)' }}>
-                  Certificado de Póliza SOAT Oficial
-                </strong>
-                <p style={{ margin: 0, fontSize: 12, color: 'var(--muted)' }}>
-                  Documento electrónico generado conforme a la Ley N° 27181 y D.S. N° 024-2002-MTC
-                </p>
-              </div>
-              <button className="modal-close" onClick={() => setEmissionQuote(null)}>
-                ✕
-              </button>
-            </div>
-
-            {/* Official Sheet */}
-            <div
-              className="soat-printable-sheet"
-              style={{
-                border: '2px solid #cbd5e1',
-                padding: 24,
-                background: '#fff',
-                fontSize: 12,
-                lineHeight: 1.5,
-                position: 'relative'
-              }}
-            >
-              {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: 12 }}>
-                <div>
-                  <strong style={{ fontSize: 14 }}>Corredores de Seguros Falabella S.A.C.</strong>
-                  <div style={{ fontSize: 10, color: '#64748b' }}>
-                    RUC: 20509608467 · Registro SBS N° J-0723<br />
-                    Intermediario Oficial de Seguros
-                  </div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    República del Perú
-                  </span>
-                  <h3 style={{ margin: '2px 0', fontSize: 15, fontWeight: 900 }}>CERTIFICADO SOAT ELECTRÓNICO</h3>
-                  <span style={{ fontSize: 10, color: 'var(--green)', fontWeight: 700 }}>
-                    Supervisado por la SBS y MTC
-                  </span>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: 10, color: '#64748b' }}>N° DE PÓLIZA:</span>
-                  <strong style={{ display: 'block', fontSize: 13, fontFamily: 'monospace', color: '#0f172a' }}>
-                    {emissionQuote.policyNumber || emissionQuote.code}
-                  </strong>
-                  <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
-                    <img
-                      src={`/assets/logos/${(emissionQuote.selectedOfferId || 'la-positiva').toLowerCase().replace(/[^a-z-]/g, '')}.png`}
-                      alt="Logo aseguradora"
-                      style={{ height: 22, maxWidth: 100, objectFit: 'contain' }}
-                      onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
-                    />
-                    <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--green)' }}>
-                      {emissionQuote.selectedOfferId ? emissionQuote.selectedOfferId.toUpperCase().replace('-', ' ') : 'LA POSITIVA'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Status Bar */}
-              <div
-                style={{
-                  margin: '12px 0',
-                  padding: '6px 12px',
-                  background: '#f0fdf4',
-                  border: '1px solid #86efac',
-                  borderRadius: 6,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontWeight: 700,
-                  fontSize: 11,
-                  color: '#166534'
-                }}
-              >
-                <span>ESTADO: PÓLIZA VIGENTE REGISTRADA EN APESEG</span>
-                <span>VALIDEZ PROBATORIA NACIONAL (MTC / PNP)</span>
-              </div>
-
-              {/* Sections */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 12 }}>
-                <div style={{ border: '1px solid #e2e8f0', padding: 12, borderRadius: 8 }}>
-                  <strong style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', marginBottom: 6, color: '#334155' }}>
-                    1. Datos del Contratante / Titular
-                  </strong>
-                  <div>
-                    <strong>Contratante / Titular:</strong>{' '}
-                    <span style={{ color: 'var(--green)', fontWeight: 800 }}>
-                      {emissionQuote.holderName || `TITULAR ${emissionQuote.documentType} ${emissionQuote.documentNumber}`}
-                    </span>
-                  </div>
-                  <div><strong>Documento:</strong> {emissionQuote.documentType} {emissionQuote.documentNumber}</div>
-                  <div><strong>Departamento:</strong> {emissionQuote.department}</div>
-                  <div><strong>Canal de Emisión:</strong> {emissionQuote.source === 'WEB' ? 'Web Pública' : 'Gestión Comercial Interna'}</div>
-                </div>
-
-                <div style={{ border: '1px solid #e2e8f0', padding: 12, borderRadius: 8 }}>
-                  <strong style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', marginBottom: 6, color: '#334155' }}>
-                    2. Identificación del Vehículo
-                  </strong>
-                  <div>
-                    <strong>Placa:</strong>{' '}
-                    <span style={{ background: '#fef08a', padding: '2px 8px', borderRadius: 4, fontWeight: 900 }}>
-                      {emissionQuote.plate}
-                    </span>
-                  </div>
-                  <div>
-                    <strong>Marca / Modelo:</strong> {emissionQuote.vehicle ? `${emissionQuote.vehicle.brand} ${emissionQuote.vehicle.model} (${emissionQuote.vehicle.year})` : vehicleLabels[emissionQuote.vehicleType]}
-                  </div>
-                  <div><strong>Chasis / VIN:</strong> {emissionQuote.vehicle?.chassisNumber || 'No informado'}</div>
-                </div>
-              </div>
-
-              {/* Legal Coverage Table */}
-              <div style={{ marginTop: 12, border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
-                <div style={{ background: '#f8fafc', padding: '6px 12px', fontWeight: 800, fontSize: 11, borderBottom: '1px solid #e2e8f0' }}>
-                  3. COBERTURAS OBLIGATORIAS DE LEY (UIT 2026 = S/ 5,500)
-                </div>
-                <table style={{ width: '100%', fontSize: 11 }}>
-                  <tbody>
-                    <tr>
-                      <td style={{ padding: '4px 12px' }}>• Muerte (cada persona)</td>
-                      <td style={{ padding: '4px 12px', textAlign: 'center', fontWeight: 700 }}>4 UIT</td>
-                      <td style={{ padding: '4px 12px', textAlign: 'right', fontWeight: 700 }}>S/ 22,000.00</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '4px 12px' }}>• Invalidez permanente (cada persona)</td>
-                      <td style={{ padding: '4px 12px', textAlign: 'center', fontWeight: 700 }}>Hasta 4 UIT</td>
-                      <td style={{ padding: '4px 12px', textAlign: 'right', fontWeight: 700 }}>Hasta S/ 22,000.00</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '4px 12px' }}>• Incapacidad temporal (cada persona)</td>
-                      <td style={{ padding: '4px 12px', textAlign: 'center', fontWeight: 700 }}>Hasta 1 UIT</td>
-                      <td style={{ padding: '4px 12px', textAlign: 'right', fontWeight: 700 }}>Hasta S/ 5,500.00</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '4px 12px' }}>• Gastos de atención médica y hospitalaria</td>
-                      <td style={{ padding: '4px 12px', textAlign: 'center', fontWeight: 700 }}>Hasta 5 UIT</td>
-                      <td style={{ padding: '4px 12px', textAlign: 'right', fontWeight: 700 }}>Hasta S/ 27,500.00</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '4px 12px' }}>• Gastos de sepelio (cada persona)</td>
-                      <td style={{ padding: '4px 12px', textAlign: 'center', fontWeight: 700 }}>Hasta 1 UIT</td>
-                      <td style={{ padding: '4px 12px', textAlign: 'right', fontWeight: 700 }}>Hasta S/ 5,500.00</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Economic Breakdown */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 12 }}>
-                <div style={{ border: '1px solid #e2e8f0', padding: 12, borderRadius: 8 }}>
-                  <strong style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', marginBottom: 4 }}>
-                    4. Vigencia de Póliza
-                  </strong>
-                  <div>Inicio: <strong>{emissionQuote.startsAt ? emissionQuote.startsAt.split('T')[0] : '01/03/2026'} a las 00:00 hrs</strong></div>
-                  <div>Vigencia: <strong>1 año calendario completo</strong></div>
-                  <div>Fecha de emisión: <strong>{new Date(emissionQuote.createdAt).toLocaleString('es-PE')}</strong></div>
-                </div>
-
-                <div style={{ border: '1px solid #e2e8f0', padding: 12, borderRadius: 8, background: '#f8fafc' }}>
-                  <strong style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', marginBottom: 4 }}>
-                    5. Liquidación de Prima
-                  </strong>
-                  {(() => {
-                    const price = emissionQuote.selectedPrice || 65.0;
-                    const net = price / 1.18;
-                    const igv = price - net;
-                    return (
-                      <>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>Prima Comercial Neta:</span>
-                          <strong>S/ {net.toFixed(2)}</strong>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>IGV (18%):</span>
-                          <strong>S/ {igv.toFixed(2)}</strong>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #cbd5e1', paddingTop: 4, marginTop: 4, fontSize: 14, color: 'var(--green)' }}>
-                          <span>PRIMA TOTAL:</span>
-                          <strong>S/ {price.toFixed(2)}</strong>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
-                          <span>Forma de pago:</span>
-                          <strong>
-                            {emissionQuote.paymentMethod === 'INSTALLMENTS'
-                              ? `${emissionQuote.installmentCount} cuotas de S/ ${(emissionQuote.installmentAmount || 0).toFixed(2)}`
-                              : 'Al contado'}
-                          </strong>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              </div>
-
-              {/* Footer Stamp */}
-              <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: 10, color: '#64748b', maxWidth: 400 }}>
-                  Consulta electrónica en <em>apeseg.org.pe/consultas-soat</em> mediante la placa vehicular. Certificado válido conforme al D.S. N° 024-2002-MTC.
-                </div>
-                <div style={{ textAlign: 'right', fontSize: 10, color: '#475569' }}>
-                  <strong>CORREDORES DE SEGUROS FALABELLA S.A.C.</strong><br />
-                  Firma y Sello Electrónico Autorizado SBS
-                </div>
-              </div>
-            </div>
-
-            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-              <button className="button ghost" onClick={() => setEmissionQuote(null)}>
-                Cerrar
-              </button>
-              <button
-                type="button"
-                className="button"
-                style={{
-                  background: 'var(--green)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  fontWeight: 800,
-                  fontSize: 14,
-                  padding: '10px 20px',
-                  boxShadow: '0 4px 14px rgba(78, 127, 0, 0.35)',
-                  cursor: 'pointer'
-                }}
-                disabled title="Certificado oficial no disponible"
-              >
-                <span style={{ fontSize: 16 }}>📥</span>
-                <span>Descargar PDF</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

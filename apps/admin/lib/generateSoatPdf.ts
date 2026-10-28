@@ -125,6 +125,7 @@ function loadImageDataUrl(url: string): Promise<string> {
 }
 
 export async function generateAndDownloadSoatPdf(quote: QuoteForPdf) {
+  if (!quote.policyNumber?.trim()) throw new Error('La emisión debe tener un número de póliza asignado.');
   // Same compact vertical proportion as the official electronic certificate model.
   const pageWidth = 65.26;
   const pageHeight = 120.30;
@@ -174,7 +175,7 @@ export async function generateAndDownloadSoatPdf(quote: QuoteForPdf) {
   const end = new Date(start);
   end.setUTCFullYear(end.getUTCFullYear() + 1);
   const emitted = parseDate(quote.emittedAt || quote.createdAt);
-  const policy = quote.policyNumber || quote.code || 'SIN-NÚMERO';
+  const policy = quote.policyNumber;
 
   // Identificar la aseguradora elegida
   const rawOfferId = quote.selectedOfferId || (quote.offers && quote.offers[0]?.id) || 'la-positiva';

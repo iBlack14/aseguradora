@@ -8,6 +8,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { promisify } from 'util';
 import { registerSoatRegistry } from './soat-registry.js';
+import { reserveLocalPolicyNumber } from './policy-number.js';
 
 // Cargar .env automáticamente en desarrollo si existe
 for (const envCandidate of [
@@ -72,6 +73,8 @@ type Quote = {
   holderName?: string;
   emittedAt?: string;
   policyNumber?: string;
+  policyUrl?: string;
+  paymentReference?: string;
   paymentMethod?: 'CASH' | 'INSTALLMENTS';
   installmentCount?: number;
   installmentAmount?: number;
@@ -235,7 +238,10 @@ function storedQuoteToApi(record: StoredQuote): Quote {
     selectedPrice: record.selectedPrice ? Number(record.selectedPrice) : undefined,
     offers,
     emittedAt: record.order?.updatedAt.toISOString(),
-    policyNumber: record.order?.policyNumber || undefined
+    policyNumber: record.order?.policyNumber || undefined,
+    policyUrl: record.order?.policyUrl || undefined,
+    paymentReference: record.order?.paymentReference || undefined,
+    ...((record.order?.manualDetails as { paymentMethod?: 'CASH' | 'INSTALLMENTS'; installmentCount?: number; installmentAmount?: number } | null) || {})
   };
 }
 
@@ -1259,12 +1265,61 @@ app.post('/v1/quotes', async (req, reply) => {
   return reply.status(201).send({ data: quote, offers });
 });
 
-app.post('/v1/quotes/:id/emit', async (_req, reply) =>
-  reply.status(501).send({
-    error: 'ISSUANCE_PROVIDER_NOT_CONNECTED',
-    message: 'La emisión está deshabilitada hasta verificar el pago y recibir la póliza oficial de la aseguradora.'
-  })
-);
+app.post('/v1/quotes/:id/emit', async (req, reply) => {
+  const parsed = z.object({
+    paymentConfirmed: z.literal(true),
+    paymentReference: z.string().trim().min(1).max(200),
+    holderName: z.string().trim().min(3).max(200),
+    selectedOfferId: z.string().trim().min(1),
+    realPrice: z.number().positive().max(100000),
+    vehicle: z.object({ brand: z.string().trim().min(1), model: z.string().trim().min(1), year: z.number().int().min(1900).max(new Date().getFullYear() + 1), vin: z.string().max(100).optional(), chassisNumber: z.string().max(100).optional(), use: z.string().min(1), department: z.string().min(1) }),
+    paymentMethod: z.enum(['CASH', 'INSTALLMENTS']),
+    installmentCount: z.number().int().min(2).max(24).optional(),
+    installmentAmount: z.number().positive().optional()
+  }).superRefine((data, context) => {
+    if (data.paymentMethod === 'INSTALLMENTS' && (!data.installmentCount || !data.installmentAmount)) context.addIssue({ code: 'custom', message: 'Completa las cuotas y su monto.' });
+  }).safeParse(req.body);
+  if (!parsed.success) return reply.status(400).send({ error: 'VALIDATION_ERROR', message: 'Completa los datos y la confirmación del pago.', details: parsed.error.flatten() });
+  const { id } = req.params as { id: string };
+  const data = parsed.data;
+  const manualDetails = { paymentMethod: data.paymentMethod, ...(data.paymentMethod === 'INSTALLMENTS' ? { installmentCount: data.installmentCount!, installmentAmount: data.installmentAmount! } : {}) };
+  try {
+    if (database) {
+      await database.$transaction(async tx => {
+        const quote = await tx.quote.findFirst({ where: { OR: [{ id }, { code: id }] }, include: { offers: { include: { insurer: true } } } });
+        if (!quote) throw new Error('QUOTE_NOT_FOUND');
+        const offer = quote.offers.find(item => item.insurer.slug === data.selectedOfferId);
+        if (!offer) throw new Error('INVALID_OFFER');
+        const claimed = await tx.quote.updateMany({ where: { id: quote.id, status: { notIn: ['ISSUED', 'CANCELLED'] } }, data: { status: 'ISSUED', selectedOfferId: data.selectedOfferId, selectedPrice: data.realPrice, department: data.vehicle.department } });
+        if (!claimed.count) throw new Error('QUOTE_CLOSED');
+        const [reserved] = await tx.$queryRaw<Array<{ value: string }>>`SELECT nextval('policy_number_seq')::text AS value`;
+        const policyNumber = `${reserved.value}-0`;
+        const [firstName, ...lastNames] = data.holderName.split(/\s+/);
+        const customer = await tx.customer.upsert({ where: { documentType_documentNumber: { documentType: quote.documentType, documentNumber: quote.documentNumber } }, update: { firstName, lastName: lastNames.join(' ') }, create: { documentType: quote.documentType, documentNumber: quote.documentNumber, firstName, lastName: lastNames.join(' '), email: `${quote.documentNumber}@segurosfalabella.pe` } });
+        await tx.quote.update({ where: { id: quote.id }, data: { customerId: customer.id } });
+        await tx.vehicle.update({ where: { id: quote.vehicleId }, data: data.vehicle });
+        await tx.order.create({ data: { code: `VENTA-${crypto.randomUUID()}`, status: 'ISSUED', quoteId: quote.id, offerId: offer.id, amount: data.realPrice, paymentReference: data.paymentReference, policyNumber, manualDetails } });
+        await tx.auditLog.create({ data: { action: 'POLICY_ISSUED', entity: 'Quote', entityId: quote.id, ipAddress: req.ip, metadata: { role: String(req.headers['x-admin-role']), policyNumber, paymentReference: data.paymentReference } } });
+      });
+      const result = (await loadStoredQuotes()).find(quote => quote.id === id || quote.code === id);
+      return { data: result };
+    }
+    const quote = quotes.find(item => item.id === id || item.code === id);
+    if (!quote) throw new Error('QUOTE_NOT_FOUND');
+    if (quote.status === 'EMITIDA' || quote.status === 'ANULADA') throw new Error('QUOTE_CLOSED');
+    if (!quote.offers?.some(offer => offer.id === data.selectedOfferId)) throw new Error('INVALID_OFFER');
+    const policyNumber = reserveLocalPolicyNumber();
+    Object.assign(quote, { status: 'EMITIDA', emittedAt: new Date().toISOString(), holderName: data.holderName, vehicle: { ...quote.vehicle, ...data.vehicle }, department: data.vehicle.department, selectedOfferId: data.selectedOfferId, selectedPrice: data.realPrice, policyNumber, paymentReference: data.paymentReference, ...manualDetails });
+    return { data: quote };
+  } catch (error) {
+    const code = (error as Error).message;
+    if (code === 'QUOTE_NOT_FOUND') return reply.status(404).send({ error: code });
+    if (code === 'QUOTE_CLOSED') return reply.status(409).send({ error: code, message: 'La cotización ya fue emitida o anulada.' });
+    if (code === 'INVALID_OFFER') return reply.status(400).send({ error: code, message: 'Selecciona una aseguradora de la cotización.' });
+    req.log.error(error);
+    return reply.status(503).send({ error: 'ISSUANCE_SAVE_FAILED', message: 'No se pudo registrar la emisión. Verifica el estado antes de reintentar.' });
+  }
+});
 
 app.post('/v1/orders', async (_req, reply) =>
   reply.status(501).send({

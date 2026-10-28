@@ -43,18 +43,22 @@ Sin `DATABASE_URL`, la API usa memoria únicamente en desarrollo. Los precios y 
 5. En un VPS, publica `127.0.0.1:3000` para la web y `127.0.0.1:3001` para el panel mediante un proxy HTTPS. En Easypanel, configura dominios propios para `web` y `admin`; no uses `https://localhost:3001`, porque `3001` es solo el puerto interno del contenedor. PostgreSQL y la API quedan solo en la red interna de Docker.
 6. Verifica `docker compose ps`, `curl http://127.0.0.1:3000` y el acceso al panel administrativo.
 
-La API aplica automáticamente las migraciones Prisma al iniciar. El endpoint de emisión/pago continúa deshabilitado hasta conectar una pasarela y los adaptadores reales de aseguradoras.
+La API aplica automáticamente las migraciones Prisma al iniciar en el despliegue. El cobro y la emisión automáticos continúan pendientes de integrar una pasarela y los adaptadores reales de aseguradoras.
 
 ## Acceso interno y emisión
 
 Configura el mismo `ADMIN_API_KEY` aleatorio en los servicios `api` y `admin`. Es una credencial interna: no debe configurarse en `web`, `cotizador` ni variables `NEXT_PUBLIC_*`. En producción la API requiere esta clave para iniciar; el proxy administrativo requiere además una sesión válida y comprueba el rol. Solo ADMIN puede cambiar usuarios, tarifas y configuración; SUPPORT y AUDITOR tienen acceso de lectura.
 
-La emisión y la generación de certificados están deshabilitadas hasta integrar confirmación de pago y emisión oficial. Los números simulados anteriores no se muestran como pólizas vigentes en la consulta pública. Las tarifas modificadas se guardan en PostgreSQL mediante AppSetting; sin base de datos, el modo de desarrollo utiliza memoria temporal. Si falla una escritura con base de datos configurada, se devuelve un error sin anunciar éxito.
+La web pública solo cotiza. ADMIN, OPERATIONS y SALES pueden crear cotizaciones manuales y emitir ventas de ambos canales tras confirmar el pago y su referencia. El servidor asigna una secuencia global desde `120605000-0`, con sufijo fijo `-0`, para todas las aseguradoras. El panel genera el PDF con el número guardado y permite descargarlo nuevamente. No se requiere ingresar un número o enlace al PDF. Esta operación no llama a servicios externos de aseguradoras.
+
+PostgreSQL reserva los números con una secuencia BIGINT sin ciclo y un índice único en Order.policyNumber. Las anulaciones conservan su número; las transacciones fallidas pueden dejar saltos. No se configura un límite comercial. Los datos, cuotas y auditoría se guardan en una transacción. Antes de iniciar una API local ya existente, ejecuta `npm run migrate:deploy -w @falabella/database`. La migración continúa por encima de los números existentes de esta serie; si existen duplicados previos, el índice exige corregirlos antes de desplegar.
+
+Sin base de datos, las cotizaciones de desarrollo permanecen en memoria, pero los números reservados se conservan en `.local-data/policy-numbers.log` y no se reutilizan al reiniciar. Conserva este directorio: no debe borrarse ni compartirse mediante copias independientes entre servidores. Si hay un cierre inesperado con un archivo `policy-numbers.lock`, revisa que no exista otro emisor activo antes de retirar ese bloqueo. En producción se requiere PostgreSQL. Las tarifas modificadas se guardan mediante AppSetting.
 
 ## Verificación
 
 - `npm run typecheck`: comprobación de tipos de todos los paquetes.
-- `npm test`: compila la API y comprueba acceso por roles, emisión deshabilitada, validación de tarifas y cotización pública en un proceso aislado sin base de datos.
+- `npm test`: compila la API y comprueba acceso por roles, registro de ventas manuales y web, confirmación de pago, validación de tarifas y cotización pública en un proceso aislado sin base de datos.
 - `npm run build` y después `npm run test:proxies`: compila las aplicaciones y prueba sus proxies HTTP con sesiones válidas, inválidas y distintos roles.
 
 Para desarrollo local, configura la misma clave `ADMIN_API_KEY` en `apps/api/.env` y `apps/admin/.env.local` (archivos ignorados por Git). En Docker/Easypanel se inyecta mediante variables de entorno.

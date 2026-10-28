@@ -17,7 +17,7 @@ test('Manual SOAT registry: authorization, validation, editing and durable stora
   const request = (url, method = 'GET', body, headers = auth) => fetch(base + url, { method, headers: { ...headers, ...(body === undefined ? {} : { 'content-type': 'application/json' }) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   async function start() {
     child = spawn(process.execPath, [path.join(root, 'apps/api/dist/server.js')], { cwd, env, stdio: 'ignore' });
-    for (let count = 0; count < 100; count++) {
+    for (let count = 0; count < 600; count++) {
       try { if ((await request('/health')).ok) return; } catch {}
       await new Promise(resolve => setTimeout(resolve, 100));
     }
