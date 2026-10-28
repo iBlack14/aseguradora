@@ -9,7 +9,7 @@ async function proxy(request: NextRequest, { params }: { params: Promise<{ path:
     return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
   }
   const path = segments.join('/');
-  if (path === 'v1/admin/users' || path.startsWith('v1/admin/users/')) {
+  if (path === 'v1/admin/users' || path.startsWith('v1/admin/users/') || path === 'v1/admin/tariffs' || path.startsWith('v1/admin/tariffs/')) {
     const role = await sessionRole(request.cookies.get(SESSION_COOKIE)?.value);
     if (role !== 'ADMIN') return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
   }
