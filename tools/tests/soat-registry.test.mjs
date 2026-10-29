@@ -50,6 +50,13 @@ test('Manual SOAT registry: authorization, validation, editing and durable stora
     assert.equal(record.NumeroPoliza, '0000012345');
     assert.equal(record.Estado, 'VIGENTE');
     assert.equal(record.source, 'INTERNAL_REGISTER');
+    const consultation = await (await request('/v1/soat/consulta?plate=ABC-123', 'GET', undefined, {})).json();
+    assert.equal(consultation.data.policyNumber, '0000012345');
+    assert.equal(consultation.data.status, 'VIGENTE');
+    assert.equal(consultation.data.history.length, 1);
+    assert.equal(consultation.data.NombreContratante, undefined);
+    assert.equal(JSON.stringify(consultation).includes('Titular de prueba'), false);
+    assert.equal((await (await request('/v1/soat/consulta?plate=ZZZ123', 'GET', undefined, {})).json()).data.found, false);
     assert.equal((await request('/v1/soat-registry', 'POST', certificate)).status, 409);
     const update = await request(`/v1/soat-registry/${record.id}`, 'PUT', { ...certificate, Marca: '', NombreContratante: '', Estado: 'ANULADO', FechaAnulacion: '2026-10-01' });
     assert.equal(update.status, 200);
@@ -57,6 +64,8 @@ test('Manual SOAT registry: authorization, validation, editing and durable stora
     assert.equal(updated.Marca, null);
     assert.equal(updated.NombreContratante, null);
     assert.equal(updated.Estado, 'ANULADO');
+    const cancelled = await (await request('/v1/soat/consulta?plate=ABC123', 'GET', undefined, {})).json();
+    assert.equal(cancelled.data.status, 'ANULADO');
     assert.equal((await request('/v1/soat-registry/missing', 'PUT', certificate)).status, 404);
     const readOnly = await request('/v1/soat-registry?plate=ABC-123', 'GET', undefined, { ...auth, 'x-admin-role': 'SUPPORT' });
     assert.equal(readOnly.status, 200);

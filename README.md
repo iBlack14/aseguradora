@@ -2,7 +2,7 @@
 
 ## Registro manual de certificados
 
-En el panel, **Registro APESEG** (`/registro-apeseg`) permite registrar, buscar por placa y editar certificados con los 22 campos observados en el resultado de consulta SOAT. Conserva números de póliza con ceros iniciales y calcula la vigencia a partir de las fechas, respetando las anulaciones. Estos registros son internos: no inscriben certificados ante APESEG ni emiten pólizas.
+En el panel, **Registro APESEG** (`/registro-apeseg`) permite registrar, buscar por placa y editar certificados con los 22 campos observados en el resultado de consulta SOAT. Conserva números de póliza con ceros iniciales y calcula la vigencia a partir de las fechas, respetando las anulaciones. Estos registros son internos: no inscriben certificados ante APESEG ni emiten pólizas. Se consultan por placa tanto desde la Web como desde la página de consulta similar a APESEG, mediante `/v1/soat/consulta`; la página independiente también muestra el historial.
 
 ADMIN, OPERATIONS y SALES pueden guardar cambios; SUPPORT y AUDITOR solo consultan. Las rutas `/v1/soat-registry` (GET y POST) y `/v1/soat-registry/:id` (PUT) requieren autenticación interna y rol.
 

@@ -110,4 +110,22 @@ export async function registerSoatRegistry(app: FastifyInstance, database: Prism
       }
     } });
   }
+  return async (plate: string) => {
+    const matches = database
+      ? await database.soatCertificate.findMany({ where: { Placa: plate }, orderBy: { FechaInicio: 'desc' }, take: 100 })
+      : records.filter(record => record.Placa === plate).sort((a, b) => b.FechaInicio.localeCompare(a.FechaInicio)).slice(0, 100);
+    // Public projection deliberately excludes holder, motor, chassis and internal identifiers.
+    return matches.map(record => {
+      const value = present(record);
+      return {
+        found: true, plate: value.Placa, policyNumber: value.NumeroPoliza,
+        insurer: value.NombreCompania,
+        status: value.Estado === 'AUN_NO_VIGENTE' ? 'AÚN_NO_VIGENTE' : value.Estado,
+        startsAt: value.FechaInicio, expiresAt: value.FechaFin,
+        source: 'INTERNAL_REGISTER', certificateType: value.TipoCertificado,
+        vehicleUse: value.NombreUsoVehiculo, vehicleClass: value.NombreClaseVehiculo
+      };
+    });
+  };
+
 }

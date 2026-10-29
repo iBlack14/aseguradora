@@ -67,7 +67,8 @@ for style in soup.find_all('style'):
     # Leave embedded SVG data URLs untouched.
     style.string = url_re.sub(lambda m: m[0] if m[2].startswith('data:') else f'url("{register(m[2])}")', text)
 for frame in soup.find_all('iframe'):
-    frame['title'] = 'Consulta oficial de SOAT — APESEG'
+    frame['src'] = '/consulta-interna.html'
+    frame['title'] = 'Consulta del registro interno'
     frame['referrerpolicy'] = 'strict-origin-when-cross-origin'
 
 pending, downloaded = set(assets), set()

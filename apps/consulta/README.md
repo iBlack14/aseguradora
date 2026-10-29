@@ -15,9 +15,13 @@ Para producción: `npm run build -w @falabella/consulta` y `npm run start -w @fa
 - `reference/manifest.json`: mapa de cada URL original a su archivo local.
 - `reference/original.html`: HTML original archivado como referencia.
 - `reference/consulta-ui.css`: copia de referencia de los estilos oficiales del formulario, los resultados y el historial.
-- `app/route.ts`: entrega del documento, sin acceso a la API privada del proyecto.
+- `app/route.ts`: entrega del documento.
+- `public/consulta-interna.html`: formulario, resultado e historial internos.
+- `app/api/consulta/route.ts`: proxy de solo lectura a la consulta pública compartida.
 
-El formulario permanece como iframe oficial de webapp.apeseg.org.pe. La consulta, el captcha y la verificación humana dependen de APESEG y de una conexión a Internet. No se simulan resultados ni se duplican sus servicios privados. Los enlaces de contenido apuntan a las páginas originales; la consulta enlaza a esta aplicación.
+El formulario consulta los certificados del registro interno mediante `/api/consulta`, que usa la misma API que la Web (`/v1/soat/consulta`). Muestra resultado, historial y anulaciones sin exponer datos del contratante, motor o chasis. Las cotizaciones emitidas con número de póliza real siguen disponibles como respaldo cuando no hay certificados registrados para la placa.
+
+Configurar `API_INTERNAL_URL` (o `API_URL`) con la URL de la API; en desarrollo se usa `http://127.0.0.1:4000` y Docker Compose usa `http://api:4000`. El formulario indica que los datos son internos y enlaza a la consulta oficial para certificados externos. No envía registros a APESEG ni habilita emisión oficial. La integración externa queda pendiente.
 
 Se conservan marcas, textos y créditos de la referencia para la comparación visual solicitada. Los scripts de analítica y seguimiento del sitio de origen se excluyen de la copia local. Esta aplicación no se ha publicado.
 
@@ -37,4 +41,7 @@ Las vistas siguen siendo las oficiales cargadas en el iframe. La comparación vi
 
 ## Docker / Easypanel
 
-Usar `infrastructure/docker/consulta.Dockerfile` con contexto en la raíz del repositorio. Puerto interno: **3003**. No requiere claves ni base de datos. El servicio `consulta` también está incluido en `docker-compose.yml`.
+Usar `infrastructure/docker/consulta.Dockerfile` con contexto en la raíz del repositorio. Puerto interno: **3003**. No requiere claves propias; requiere acceso a la API para consultar. El servicio `consulta` también está incluido en `docker-compose.yml`.
+
+
+Las comparaciones visuales y pruebas del iframe descritas arriba corresponden a la captura anterior. El formulario activo ahora es el registro interno.

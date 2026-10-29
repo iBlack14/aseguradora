@@ -5,7 +5,7 @@ import { FormEvent, useState } from 'react';
 
 type Consultation = {
   found: boolean;
-  status: 'VIGENTE' | 'VENCIDO' | 'AÚN_NO_VIGENTE' | 'NO_ENCONTRADO';
+  status: 'VIGENTE' | 'VENCIDO' | 'AÚN_NO_VIGENTE' | 'NO_ENCONTRADO' | 'ANULADO';
   plate: string;
   policyNumber?: string;
   insurer?: string;
@@ -18,12 +18,13 @@ const statusCopy: Record<Consultation['status'], { title: string; detail: string
   VIGENTE: { title: 'SOAT vigente', detail: 'El certificado se encuentra activo en nuestros registros.', tone: 'border-[#b8d889] bg-[#f3f9e8] text-[#315300]' },
   VENCIDO: { title: 'SOAT vencido', detail: 'El certificado registrado ya no se encuentra vigente.', tone: 'border-[#f0c7bd] bg-[#fff4f1] text-[#8d2817]' },
   AÚN_NO_VIGENTE: { title: 'SOAT aún no vigente', detail: 'La fecha de inicio del certificado todavía no ha llegado.', tone: 'border-[#ead69e] bg-[#fff9e8] text-[#765300]' },
+  ANULADO: { title: 'SOAT anulado', detail: 'El certificado está anulado en nuestros registros.', tone: 'border-[#f0c7bd] bg-[#fff4f1] text-[#8d2817]' },
   NO_ENCONTRADO: { title: 'No encontramos un SOAT emitido', detail: 'Verifica la placa ingresada o solicita una nueva cotización.', tone: 'border-[#dce3d5] bg-white text-[#434935]' }
 };
 
 function formatDate(value?: string) {
   if (!value) return '—';
-  return new Intl.DateTimeFormat('es-PE', { dateStyle: 'long' }).format(new Date(value));
+  return new Intl.DateTimeFormat('es-PE', { dateStyle: 'long' }).format(new Date(value.length === 10 ? `${value}T12:00:00-05:00` : value));
 }
 
 export default function ConsultarSoatPage() {
@@ -79,7 +80,7 @@ export default function ConsultarSoatPage() {
             {error && <p className="rounded-lg border border-[#f0c7bd] bg-[#fff4f1] p-3 text-sm text-[#8d2817]">{error}</p>}
             <button type="submit" disabled={loading} className="h-12 rounded-lg bg-[#4e7f00] px-5 font-extrabold text-white transition hover:bg-[#3d6500] disabled:cursor-wait disabled:opacity-60">{loading ? 'Consultando…' : 'Consultar SOAT'}</button>
           </form>
-          <p className="mt-5 text-xs leading-5 text-[#667085]">La consulta muestra únicamente información de certificados emitidos por esta plataforma. Para una validación oficial, revisa también los canales del MTC y APESEG.</p>
+          <p className="mt-5 text-xs leading-5 text-[#667085]">La consulta muestra únicamente información de certificados registrados en esta plataforma. Para una validación oficial, revisa también los canales del MTC y APESEG.</p>
         </div>
 
         <div className="consult-result-card rounded-2xl border border-[#dce3d5] bg-[#f9fbf6] p-6 sm:p-8">

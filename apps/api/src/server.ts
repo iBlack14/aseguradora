@@ -996,15 +996,22 @@ app.get('/v1/quotes', async () => {
   };
 });
 
+const lookupRegisteredCertificates = await registerSoatRegistry(app, database);
+
 app.get('/v1/soat/consulta', async (req, reply) => {
   const query = req.query as { plate?: string; documentNumber?: string };
   const plate = String(query.plate || '').trim().toUpperCase().replace(/\s+/g, '');
   const documentNumber = String(query.documentNumber || '').trim().toUpperCase();
-  if (!plate || !/^[A-Z0-9]{5,8}-?[A-Z0-9]{1,3}$/.test(plate)) {
+  if (!plate || !/^[A-Z0-9]{6,8}$/.test(plate.replace(/-/g, ''))) {
     return reply.status(400).send({ error: 'INVALID_PLATE', message: 'Ingresa una placa válida.' });
   }
 
   const normalizedPlate = plate.replace(/-/g, '');
+  const registered = documentNumber ? [] : await lookupRegisteredCertificates(normalizedPlate);
+  if (registered.length) {
+    const current = registered.find(record => record.status === 'VIGENTE') || registered[0];
+    return reply.header('Cache-Control', 'no-store').send({ data: { ...current, history: registered } });
+  }
   const data = await loadStoredQuotes();
   const matches = data
     .filter((quote) => quote.plate.replace(/-/g, '') === normalizedPlate)
@@ -1272,8 +1279,6 @@ app.post('/v1/orders', async (_req, reply) =>
     message: 'La emisión real se habilitará al configurar la pasarela y las integraciones de aseguradoras.'
   })
 );
-
-await registerSoatRegistry(app, database);
 
 const port = Number(process.env.API_PORT || 4000);
 if (database) {

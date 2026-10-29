@@ -84,6 +84,7 @@ services:
       dockerfile: infrastructure/docker/consulta.Dockerfile
     environment:
       NODE_ENV: production
+      API_INTERNAL_URL: http://api:4000
     expose: ["3003"]
 volumes:
   postgres_data:
