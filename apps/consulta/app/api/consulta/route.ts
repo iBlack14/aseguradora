@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { captchaCookie, verifyCaptcha } from '../../../lib/captcha';
 export const dynamic = 'force-dynamic';
-export async function GET(request: NextRequest) {
-  const plate = request.nextUrl.searchParams.get('plate') || '';
+export async function POST(request: NextRequest) {
+  const body = await request.json().catch(() => null);
+  if (!verifyCaptcha(request.cookies.get(captchaCookie)?.value, body?.captcha)) {
+    return NextResponse.json({ message: 'El codigo de verificacion es incorrecto o vencio. Ingresa el nuevo codigo.' }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
+  }
+  const plate = typeof body?.plate === 'string' ? body.plate : '';
   if (!/^[a-zA-Z0-9-]{6,9}$/.test(plate)) return NextResponse.json({ message: 'Ingresa una placa valida.' }, { status: 400 });
   const base = process.env.API_INTERNAL_URL || process.env.API_URL || 'http://127.0.0.1:4000';
   try {

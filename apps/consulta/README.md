@@ -45,3 +45,12 @@ Usar `infrastructure/docker/consulta.Dockerfile` con contexto en la raíz del re
 
 
 Las comparaciones visuales y pruebas del iframe descritas arriba corresponden a la captura anterior. El formulario activo ahora es el registro interno.
+
+
+## Captcha interno
+
+La consulta requiere un código de imagen propio, validado por el servidor antes de consultar la API. Caduca en cinco minutos y cada intento lo consume. El botón de actualizar genera otro código. No requiere claves de terceros.
+
+Los desafíos se guardan en memoria del proceso: ejecutar una sola instancia de `consulta`. Un reinicio invalida los códigos anteriores; en un despliegue con varias réplicas se requiere almacenamiento compartido para los desafíos.
+
+Verificación: `npx tsx --test tools/tests/captcha.test.ts`.
