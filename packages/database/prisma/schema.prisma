@@ -143,8 +143,9 @@ model Order {
   offerId          String      @unique
   amount           Decimal     @db.Decimal(10, 2)
   paymentReference String?
-  policyNumber     String?
+  policyNumber     String?     @unique
   policyUrl        String?
+  manualDetails    Json?
   quote            Quote       @relation(fields: [quoteId], references: [id])
   offer            Offer       @relation(fields: [offerId], references: [id])
   createdAt        DateTime    @default(now())

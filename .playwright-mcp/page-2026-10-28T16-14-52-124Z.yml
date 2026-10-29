@@ -1,0 +1,31 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - img "Seguros Falabella" [ref=e4]
+      - generic [ref=e5]:
+        - text: Portal interno de operaciones
+        - heading "Gestiona cotizaciones, ventas y emisiones desde un solo lugar." [level=1] [ref=e6]
+        - paragraph [ref=e7]: Acceso exclusivo para colaboradores autorizados de Seguros Falabella.
+      - generic [ref=e8]: Corredores de Seguros Falabella S.A.C. · Entorno administrativo
+    - generic [ref=e10]:
+      - generic [ref=e11]: ●
+      - text: Acceso seguro
+      - heading "Inicia sesión" [level=2] [ref=e12]
+      - paragraph [ref=e13]: Ingresa tus credenciales corporativas.
+      - generic [ref=e14]:
+        - text: Correo corporativo
+        - textbox "Correo corporativo" [ref=e15]:
+          - /placeholder: nombre@segurosfalabella.com.pe
+      - generic [ref=e16]:
+        - text: Contraseña
+        - textbox "Contraseña" [ref=e17]:
+          - /placeholder: ••••••••••
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - checkbox "Recordarme" [ref=e20]
+          - text: Recordarme
+        - link "¿Olvidaste tu contraseña?" [ref=e21] [cursor=pointer]:
+          - /url: "#"
+      - button "Ingresar al sistema" [ref=e22] [cursor=pointer]
+      - paragraph [ref=e23]: ¿Necesitas ayuda? Contacta al administrador del sistema.
+  - alert [ref=e24]

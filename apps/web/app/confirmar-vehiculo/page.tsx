@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
-import { getBrandsForType, getModelsForBrand, VehicleType } from '@/lib/vehicleCatalog';
+import { getBrandsForType, getModelsForBrand, resolveCatalogBrand, VehicleType } from '@/lib/vehicleCatalog';
 
 const vehicleLabels: Record<string, string> = {
   AUTO: 'Auto / Camioneta',
@@ -19,7 +19,9 @@ function ConfirmarVehiculoContent() {
   const plate = searchParams.get('placa') || '';
   const type = searchParams.get('tipo') || 'AUTO';
   const catalogType = (['AUTO', 'MOTO', 'MOTOTAXI', 'VAN', 'CARGO'].includes(type) ? type : 'AUTO') as VehicleType;
-  const [brand, setBrand] = useState(searchParams.get('marca') || '');
+  const [brand, setBrand] = useState(resolveCatalogBrand(catalogType, searchParams.get('marca') || ''));
+  const [customBrand, setCustomBrand] = useState(false);
+  const [customModel, setCustomModel] = useState(false);
   const [model, setModel] = useState(searchParams.get('modelo') || '');
   const [year, setYear] = useState(searchParams.get('ano') || '');
   const [department, setDepartment] = useState(searchParams.get('dep') || 'lima');
@@ -98,8 +100,33 @@ function ConfirmarVehiculoContent() {
 
           <div className="vehicle-confirm-details">
             <div><span>Placa</span><strong>{plate || '—'}</strong></div>
-            <label><span>Marca <small>{availableBrands.length} disponibles</small></span><select value={brand} onChange={(event) => { setBrand(event.target.value); setModel(''); }}><option value="">Selecciona una marca</option>{availableBrands.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-            <label><span>Modelo</span>{availableModels.length > 0 ? <select value={model} onChange={(event) => setModel(event.target.value)}><option value="">Selecciona un modelo</option>{availableModels.map((item) => <option key={item} value={item}>{item}</option>)}</select> : <input value={model} onChange={(event) => setModel(event.target.value)} placeholder="Ingresa el modelo" />}</label>
+            <label><span>Marca <small>{catalogBrands.length} disponibles</small></span>
+              <select value={customBrand ? '__OTRA__' : brand} onChange={(event) => {
+                const value = event.target.value;
+                setCustomBrand(value === '__OTRA__');
+                setBrand(value === '__OTRA__' ? '' : value);
+                setModel(''); setCustomModel(false);
+              }}>
+                <option value="">Selecciona una marca</option>
+                {availableBrands.map((item) => <option key={item} value={item}>{item}</option>)}
+                <option value="__OTRA__">Otra marca (escribir)</option>
+              </select>
+              {customBrand && <input aria-label="Escribe la marca" value={brand} onChange={(event) => { setBrand(event.target.value); setModel(''); }} placeholder="Escribe la marca" />}
+            </label>
+            <label><span>Modelo</span>
+              {availableModels.length > 0 && !customBrand ? <>
+                <select value={customModel || (model && !availableModels.includes(model)) ? '__OTRO__' : model} onChange={(event) => {
+                  const value = event.target.value;
+                  setCustomModel(value === '__OTRO__');
+                  setModel(value === '__OTRO__' ? '' : value);
+                }}>
+                  <option value="">Selecciona un modelo</option>
+                  {availableModels.map((item) => <option key={item} value={item}>{item}</option>)}
+                  <option value="__OTRO__">Otro modelo (escribir)</option>
+                </select>
+                {(customModel || (model && !availableModels.includes(model))) && <input aria-label="Escribe el modelo" value={model} onChange={(event) => setModel(event.target.value)} placeholder="Escribe el modelo" />}
+              </> : <input value={model} onChange={(event) => setModel(event.target.value)} placeholder="Ingresa el modelo" />}
+            </label>
             <div><span>Año de fabricación</span><input value={year} onChange={(event) => setYear(event.target.value)} inputMode="numeric" placeholder="Año" /></div>
             <label><span>Zona de circulación</span><select value={department} onChange={(event) => setDepartment(event.target.value)}><option value="lima">Lima y Callao</option><option value="arequipa">Arequipa</option><option value="la-libertad">La Libertad</option><option value="cusco">Cusco</option><option value="piura">Piura</option><option value="otro">Otro departamento</option></select></label>
             <label><span>Uso del vehículo</span><select value={use} onChange={(event) => setUse(event.target.value)}><option value="PARTICULAR">Particular</option><option value="PUBLICO">Servicio público</option><option value="COMERCIAL">Comercial / carga</option></select></label>
