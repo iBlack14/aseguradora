@@ -81,6 +81,10 @@ test('API access control, manual sales issuance and validated writes', async () 
     assert.equal(manualIssued.installmentCount, 2);
     assert.equal(manualIssued.policyNumber, '120605001-0');
     assert.equal((await request(`/v1/quotes/${manual.id}/annul`, 'POST', sales)).status, 200);
+    const consultation = await (await request(`/v1/soat/consulta?plate=${manual.plate}`, 'GET', {})).json();
+    const annulledPolicy = consultation.data.history.find(record => record.policyNumber === '120605001-0');
+    assert.equal(annulledPolicy.status, 'ANULADO', 'annulled sales remain publicly searchable');
+
     assert.equal((await request(`/v1/quotes/${manual.id}/emit`, 'POST', sales, issuance)).status, 409);
     assert.equal((await (await request(`/v1/quotes/${manual.id}`, 'GET', sales)).json()).data.policyNumber, '120605001-0', 'annulment retains the number');
 

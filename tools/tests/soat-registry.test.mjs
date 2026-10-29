@@ -66,6 +66,8 @@ test('Manual SOAT registry: authorization, validation, editing and durable stora
     assert.equal(updated.Estado, 'ANULADO');
     const cancelled = await (await request('/v1/soat/consulta?plate=ABC123', 'GET', undefined, {})).json();
     assert.equal(cancelled.data.status, 'ANULADO');
+    assert.equal(cancelled.data.cancelledAt, '2026-10-01');
+    assert.equal(cancelled.data.history[0].cancelledAt, '2026-10-01');
     assert.equal((await request('/v1/soat-registry/missing', 'PUT', certificate)).status, 404);
     const readOnly = await request('/v1/soat-registry?plate=ABC-123', 'GET', undefined, { ...auth, 'x-admin-role': 'SUPPORT' });
     assert.equal(readOnly.status, 200);

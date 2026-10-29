@@ -1014,41 +1014,34 @@ app.get('/v1/soat/consulta', async (req, reply) => {
 
   const normalizedPlate = plate.replace(/-/g, '');
   const registered = documentNumber ? [] : await lookupRegisteredCertificates(normalizedPlate);
-  if (registered.length) {
-    const current = registered.find(record => record.status === 'VIGENTE') || registered[0];
-    return reply.header('Cache-Control', 'no-store').send({ data: { ...current, history: registered } });
-  }
   const data = await loadStoredQuotes();
   const matches = data
-    .filter((quote) => quote.plate.replace(/-/g, '') === normalizedPlate)
-    .filter((quote) => !documentNumber || quote.documentNumber === documentNumber)
-    .filter((quote) => quote.status === 'EMITIDA' && quote.policyNumber && !quote.policyNumber.startsWith('SOAT-2026-FALA-'))
+    .filter(quote => quote.plate.replace(/-/g, '') === normalizedPlate)
+    .filter(quote => !documentNumber || quote.documentNumber === documentNumber)
+    .filter(quote => ['EMITIDA', 'ANULADA'].includes(quote.status) && quote.policyNumber && !quote.policyNumber.startsWith('SOAT-2026-FALA-'))
     .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
-  const quote = matches[0];
-
-  if (!quote) {
-    return reply.send({ data: { found: false, status: 'NO_ENCONTRADO', plate } });
-  }
-
-  const startsAt = new Date(quote.startsAt);
-  const expiresAt = new Date(startsAt);
-  expiresAt.setFullYear(expiresAt.getFullYear() + 1);
   const now = new Date();
-  const status = expiresAt >= now && startsAt <= now ? 'VIGENTE' : expiresAt < now ? 'VENCIDO' : 'AÚN_NO_VIGENTE';
-  const selectedOffer = quote.offers?.find((offer) => offer.id === quote.selectedOfferId);
-
-  return reply.send({
-    data: {
-      found: true,
-      status,
-      plate: quote.plate,
-      policyNumber: quote.policyNumber || 'Pendiente de asignación',
+  const issued = matches.map(quote => {
+    const startsAt = new Date(quote.startsAt);
+    const expiresAt = new Date(startsAt);
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+    const selectedOffer = quote.offers?.find(offer => offer.id === quote.selectedOfferId);
+    return {
+      found: true, plate: quote.plate, policyNumber: quote.policyNumber!,
       insurer: selectedOffer?.name || quote.selectedOfferId || 'Aseguradora registrada',
-      vehicle: quote.vehicle ? { brand: quote.vehicle.brand, model: quote.vehicle.model, year: quote.vehicle.year } : undefined,
-      startsAt: startsAt.toISOString(),
-      expiresAt: expiresAt.toISOString(),
-      consultedAt: now.toISOString()
-    }
+      status: quote.status === 'ANULADA' ? 'ANULADO' : expiresAt < now ? 'VENCIDO' : startsAt > now ? 'AÚN_NO_VIGENTE' : 'VIGENTE',
+      startsAt: startsAt.toISOString(), expiresAt: expiresAt.toISOString(),
+      cancelledAt: null, source: 'INTERNAL_ISSUANCE',
+      vehicle: quote.vehicle ? { brand: quote.vehicle.brand, model: quote.vehicle.model, year: quote.vehicle.year } : undefined
+    };
+  });
+  const history = [...registered, ...issued.filter(quote => !registered.some(record =>
+    record.policyNumber === quote.policyNumber && record.insurer.toUpperCase() === quote.insurer.toUpperCase()))]
+    .sort((left, right) => right.startsAt.localeCompare(left.startsAt));
+  const current = history.find(record => record.status === 'VIGENTE') || history[0];
+  return reply.header('Cache-Control', 'no-store').send({ data: current
+    ? { ...current, history, consultedAt: now.toISOString() }
+    : { found: false, status: 'NO_ENCONTRADO', plate }
   });
 });
 

@@ -13,8 +13,9 @@ export function createCaptcha(previous?: string) {
   const id = randomBytes(24).toString('hex');
   challenges.set(id, { answer, expires: now + lifetime });
   const lines = Array.from({ length: 7 }, () => `<path d="M${randomInt(240)} ${randomInt(70)} L${randomInt(240)} ${randomInt(70)}" stroke="#8ea5b5" opacity=".5"/>`).join('');
-  const letters = [...answer].map((letter, index) => `<text x="${20 + index * 43}" y="${44 + randomInt(10)}" transform="rotate(${randomInt(-15, 16)} ${20 + index * 43} 38)" font-size="32" font-weight="bold" font-family="monospace" fill="#245574">${letter}</text>`).join('');
-  return { id, svg: `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="70" viewBox="0 0 240 70"><rect width="240" height="70" rx="6" fill="#edf4f8"/>${lines}${letters}</svg>` };
+  const colors = ['#68358f', '#00a784', '#932c9c', '#3f2389', '#168979'];
+  const letters = [...answer].map((letter, index) => `<text x="${20 + index * 43}" y="${44 + randomInt(10)}" transform="rotate(${randomInt(-15, 16)} ${20 + index * 43} 38)" font-size="52" font-weight="bold" font-family="monospace" fill="${colors[index % colors.length]}">${letter}</text>`).join('');
+  return { id, svg: `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="70" viewBox="0 0 240 70"><rect width="240" height="70" rx="6" fill="#eeeeee"/>${lines}${letters}</svg>` };
 }
 export function verifyCaptcha(id: string | undefined, answer: unknown) {
   if (!id) return false;

@@ -123,6 +123,7 @@ export async function registerSoatRegistry(app: FastifyInstance, database: Prism
         status: value.Estado === 'AUN_NO_VIGENTE' ? 'AÚN_NO_VIGENTE' : value.Estado,
         startsAt: value.FechaInicio, expiresAt: value.FechaFin,
         source: 'INTERNAL_REGISTER', certificateType: value.TipoCertificado,
+        cancelledAt: value.FechaAnulacion,
         vehicleUse: value.NombreUsoVehiculo, vehicleClass: value.NombreClaseVehiculo
       };
     });
